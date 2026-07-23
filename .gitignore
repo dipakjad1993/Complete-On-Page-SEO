@@ -1,5 +1,6 @@
 node_modules/
 .env
+.seo-audit-tool-backup/
 *.log
 err.txt
 error.txt
