@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: seo-deep-audit-360
+    env: node
+    region: oregon
+    buildCommand: npm run render-build
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: PUPPETEER_SKIP_DOWNLOAD
+        value: false

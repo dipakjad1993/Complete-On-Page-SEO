@@ -33,12 +33,11 @@ const {
   level16, level17, level18, level19, level20, level21
 } = require('./levels');
 
-const CHROME_PATH = 'C:\\Users\\deepa\\.cache\\puppeteer\\chrome\\win64-150.0.7871.24\\chrome-win64\\chrome.exe';
+const CHROME_PATH = process.env.CHROME_PATH || null;
 
 async function launchBrowser() {
-  return puppeteer.launch({
+  const opts = {
     headless: 'new',
-    executablePath: CHROME_PATH,
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
@@ -46,7 +45,9 @@ async function launchBrowser() {
       '--disable-gpu',
       '--window-size=1920,1080'
     ]
-  });
+  };
+  if (CHROME_PATH) opts.executablePath = CHROME_PATH;
+  return puppeteer.launch(opts);
 }
 
 async function fetchRawHtml(url) {
