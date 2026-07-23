@@ -3,6 +3,7 @@ services:
     name: seo-deep-audit-360
     env: node
     region: oregon
+    rootDir: src
     buildCommand: npm run render-build
     startCommand: npm start
     envVars:
