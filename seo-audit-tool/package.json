@@ -1,0 +1,40 @@
+{
+  "name": "seo-deep-audit-360",
+  "version": "1.0.0",
+  "description": "End-to-End Complete On-Page SEO Audit Tool with 21 Analysis Levels",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "watch": "nodemon --watch . -e js,json,html server.js"
+  },
+  "keywords": [
+    "seo",
+    "audit",
+    "on-page",
+    "analysis"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "axios": "^1.18.1",
+    "cheerio": "^1.2.0",
+    "compression": "^1.8.1",
+    "compromise": "^14.16.0",
+    "cors": "^2.8.6",
+    "css-select": "^7.0.0",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.6.0",
+    "helmet": "^8.3.0",
+    "node-fetch": "^2.7.0",
+    "puppeteer": "^25.3.0",
+    "schema-dts": "^2.0.0",
+    "terser": "^5.49.0",
+    "uuid": "^14.0.1",
+    "winston": "^3.19.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
