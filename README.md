@@ -1,7 +1,5 @@
 # Complete ON Page SEO 2026
 
-**🔗 Live Tool:** [https://complete-on-page-seo.onrender.com/](https://complete-on-page-seo.onrender.com/)
-
 ![Version](https://img.shields.io/badge/version-1.0.0-blue)
 ![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)
 ![License](https://img.shields.io/badge/license-ISC-blue)
@@ -10,6 +8,8 @@
 A production-grade, **AI-era on-page SEO auditing engine** that runs a **21-level deep audit** on any public URL in ~60–120 seconds, then hands you **14 concrete, ready-to-use deliverables** — from technical health scoring to auto-generated GitHub pull requests, edge-worker patches, CI/CD gatekeeper configs and a dollar-valued revenue-at-risk dashboard.
 
 Built with **Node.js + Express + Cheerio + Puppeteer**, featuring a Google Pixel–style UI (Google Sans / Roboto), dark & light themes, real-time progress streaming, and zero plugins required.
+
+**🔗 Live Tool:** [https://complete-on-page-seo.onrender.com/](https://complete-on-page-seo.onrender.com/)
 
 ---
 
