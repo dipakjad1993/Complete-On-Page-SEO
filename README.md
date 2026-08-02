@@ -1,11 +1,13 @@
-# SEO Deep Audit 360 — Complete On-Page SEO Analysis Engine
+# Complete ON Page SEO 2026
 
-![Version](https://img.shields.io/badge/version-1.0.0-indigo)
+![Version](https://img.shields.io/badge/version-1.0.0-blue)
 ![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)
 ![License](https://img.shields.io/badge/license-ISC-blue)
 ![Puppeteer](https://img.shields.io/badge/puppeteer-25.x-yellow)
 
-A comprehensive, production-grade on-page SEO auditing tool that analyzes web pages across **21 deep analysis levels**, delivering granular sub-function breakdowns, real data-driven scoring, and actionable remediation. Built with Node.js + Express + Cheerio + Puppeteer. Features a modern glassmorphic UI with real-time progress tracking and PDF export.
+A production-grade, **AI-era on-page SEO auditing engine** that runs a **21-level deep audit** on any public URL in ~60–120 seconds, then hands you **14 concrete, ready-to-use deliverables** — from technical health scoring to auto-generated GitHub pull requests, edge-worker patches, CI/CD gatekeeper configs and a dollar-valued revenue-at-risk dashboard.
+
+Built with **Node.js + Express + Cheerio + Puppeteer**, featuring a Google Pixel–style UI (Google Sans / Roboto), dark & light themes, real-time progress streaming, and zero plugins required.
 
 ---
 
@@ -13,14 +15,22 @@ A comprehensive, production-grade on-page SEO auditing tool that analyzes web pa
 
 - [Overview](#overview)
 - [Key Features](#key-features)
+  - [21 Specialized Analysis Levels](#-21-specialized-analysis-levels)
+  - [14 Concrete Executive Deliverables](#-14-concrete-executive-deliverables)
+  - [Real Data, No Fabrication](#-real-data-no-fabrication)
+  - [Smart Auto-Configuration](#-smart-auto-configuration)
+  - [Modern Google Pixel UI](#-modern-google-pixel-ui)
+  - [Production-Ready](#-production-ready)
 - [Architecture](#architecture)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
-- [The 21 Analysis Levels — Complete Breakdown](#the-21-analysis-levels--complete-breakdown)
+- [Using the Tool — 3-Step Flow](#using-the-tool--3-step-flow)
+- [The 21 Analysis Levels](#the-21-analysis-levels)
+- [The 14 Executive Deliverables](#the-14-executive-deliverables)
+- [Inputs & Configuration](#inputs--configuration)
 - [API Reference](#api-reference)
-- [Helper Functions Library](#helper-functions-library)
-- [Technologies Used](#technologies-used)
 - [Project Structure](#project-structure)
+- [Deployment](#deployment)
 - [Troubleshooting](#troubleshooting)
 - [FAQ](#faq)
 - [Roadmap](#roadmap)
@@ -31,15 +41,15 @@ A comprehensive, production-grade on-page SEO auditing tool that analyzes web pa
 
 ## Overview
 
-SEO Deep Audit 360 is a **server-based** on-page SEO analysis tool that performs a deep, multi-dimensional audit of any public URL. Unlike superficial SEO checkers that return a handful of generic checks, this engine runs **21 independent analysis modules** (called "levels"), each designed to probe a specific facet of on-page optimization, technical SEO health, content quality, SERP readiness, and financial impact.
+Complete ON Page SEO 2026 is a **server-based** on-page SEO analysis tool that performs a deep, multi-dimensional audit of any public URL. Unlike superficial SEO checkers that return a handful of generic checks, this engine runs **21 independent analysis modules** ("levels"), each probing a specific facet of on-page optimization, technical SEO health, content quality, AI / LLM & RAG visibility, SERP readiness, automation and financial impact.
 
 Each level produces:
 
 - A **quantitative score** (0–100) reflecting that dimension's health.
-- A **list of issues** with severity (critical / warning / info), impact, concrete fix instructions, and links to documentation.
-- A **structured data object** broken into named **sub-functions**, each containing granular computed metrics derived entirely from real page data — no synthetic or fabricated values.
+- A **list of issues** with severity (critical / warning / info), impact, concrete fix instructions and recommendations.
+- A **structured data object** broken into named sub-functions, each containing granular metrics derived entirely from real page data — no synthetic or fabricated values.
 
-The system uses **Puppeteer** to render JavaScript-heavy pages (SPAs, React, Angular, Vue) so the analysis reflects what Googlebot sees after JS execution. It also compares server-side (raw) HTML against rendered HTML to detect SSR/CSR discrepancies.
+The system uses **Puppeteer** to render JavaScript-heavy pages (SPAs, React, Angular, Vue) so the analysis reflects what Googlebot *and* AI crawlers see after JS execution. It also compares server-side (raw) HTML against rendered HTML to detect SSR/CSR discrepancies.
 
 ---
 
@@ -49,59 +59,91 @@ The system uses **Puppeteer** to render JavaScript-heavy pages (SPAs, React, Ang
 
 | # | Level Name | Focus Area |
 |---|-----------|-----------|
-| 1 | Core Hygiene & Technical Baseline | Titles, meta descriptions, viewport, robots, canonicals, headings, images, HTTP headers, internal links |
-| 2 | SSR/CSR Rendering & DOM Depth | JavaScript rendering analysis, DOM size, node depth, schema validation |
-| 3 | Content Readability & Keyword Authority | Flesch-Kincaid, keyword density, bigrams, transition words, content quality flags |
-| 4 | Information Gain & LLM Citation Worthiness | NLP analysis, information gain, LLM citation simulation, direct answer scoring |
-| 5 | Semantic Entity Extraction & Anchor Text Topology | Knowledge graph entities, anchor text context, entity salience, internal link entity distribution |
-| 6 | Core Web Vitals & HTTP Header Hardening | CWV simulation, security headers, cache policy, cookie attributes, HTTP/2, mixed content |
-| 7 | Multi-Modal Content & Spatial Asset Auditing | Images (alt, dimensions, lazy loading, format), video, audio, SVG, accessibility |
-| 8 | Predictive SERP Volatility & Algorithm Impact Simulator | SERP volatility, quality thresholds, SERP features (AI Overview, featured snippet, PAA, local, shopping, knowledge panel), thin content, monetization, E-E-A-T, algorithm resilience, zero-click risk |
-| 9 | Continuous SEO A/B Testing & Rollback Safety Nets | Baseline metrics, testability assessment, title/meta variants, rollback safety, catastrophic patterns, statistical significance |
-| 10 | Real-Time Log-Stream Intelligence & Bot Behavior Mapping | Status code analysis, redirect chain, crawl budget estimation, bot behavior, freshness signals, log stream configuration |
-| 11 | Multi-Model Synthetic User & LLM Behavior Simulation | Synthetic agent behavior, RAG chunk simulation, CTA parsability, form accessibility, JS dependency, LLM readiness |
-| 12 | Advanced Readability & Semantic Discourse Profiling | Flesch-Kincaid grade level, sentence length distribution, passive voice, jargon density, paragraph coherence, lexical diversity |
-| 13 | Unhelpful Content Ratio & AI Search Devaluation Risk | Unhelpful content detection, AI pattern recognition, content thinness, auto-generated content detection, helpful content system alignment |
-| 14 | Financial Attribution & Revenue Impact Engine | Page type classification, business metrics, revenue at risk, ROI analysis, quarterly projections, priority action plan, traffic estimates, competitive loss, cost-benefit summary, issue registry |
-| 15 | Passage Vector & Cosine Similarity Profiler | Entity overlap, passage similarity, heading drift, heading-content alignment, section entity consistency, bigram density, entity transition maps, content clustering, document distance |
-| 16 | Third-Party Consensus & Entity Alignment Scorer | Entity consensus, citation quality, knowledge panel readiness, factual claims, trust level scoring |
-| 17 | Autonomous Sandbox Rollback Simulator & Fix Validator | Schema validation, heading hierarchy fixes, canonical fixes, auto-generated fixes with test code, diagnostic workflow |
-| 18 | Zero-Click & Agentic Commerce Visibility Metrics | AI Overview readiness, featured snippet optimization, zero-click CTR estimation, agentic commerce audit, brand mention share, entity prominence, visibility share |
-| 19 | Self-Healing Edge Config & Canary Deployment Safety | Edge worker script generation, canary deployment config, progressive rollout, rollback triggers, error budget monitoring |
-| 20 | Adversarial Red Team & Prompt Injection Audit | Prompt injection testing, output manipulation, hallucination triggers, jailbreak patterns, data extraction attempts, injection risk scoring |
-| 21 | Site-Wide Risk Aggregation & Executive Dashboard | Cross-page pattern analysis, risk distribution, portfolio scoring, executive summary, kpi dashboard |
+| 1 | Core Hygiene & Technical Baseline | Title, meta, viewport, robots, canonical, headings, links |
+| 2 | DOM Reality, Rendering & Structural Diagnostics | SSR vs CSR diff, DOM depth, schema validation |
+| 3 | Semantic Architecture, Entities & Information Gain | Word count, readability, keyword density, AI detection |
+| 4 | Generative Search, LLM & RAG Visibility | RAG chunking, passage vectors, direct answer scoring |
+| 5 | Dev Automation & Auto-Fix Generation | Auto-generated patches, edge worker scripts, CI/CD hooks |
+| 6 | Edge Computing & Serverless Integration | Edge worker configs, security headers, CORS, caching |
+| 7 | Multi-Modal Content & Spatial Asset Auditing | Image alt text, video captions, SVG accessibility |
+| 8 | Predictive SERP Volatility & Algorithm Impact | SERP volatility scoring, ranking stability prediction |
+| 9 | Continuous SEO A/B Testing & Rollback Safety | Test variants, statistical significance, rollback safety |
+| 10 | Log-Stream Intelligence & Bot Behavior Mapping | Bot detection, crawl patterns, security headers |
+| 11 | Multi-Model Synthetic User & LLM Behavior Simulation | LLM citation scoring, passage retrievability |
+| 12 | Reverse-Engineered Core Algorithm & Quality Classifier | Content freshness, E-E-A-T signals, quality thresholds |
+| 13 | Edge-Native Patching & CI/CD Gatekeeping | Pre-commit hooks, CI/CD rules, edge deployment |
+| 14 | Financial Attribution & Revenue Impact Engine | Revenue-at-risk per issue, ROI matrix, business impact |
+| 15 | Passage Vector & Cosine Similarity Profiler | Passage-level retrieval scoring, topic cluster detection |
+| 16 | Third-Party Consensus & Entity Alignment Scorer | Entity cross-referencing, brand mention analysis |
+| 17 | Multi-Agent Autonomous Sandbox & Fix Validator | Autonomous fix generation, red-team testing |
+| 18 | Zero-Click & Agentic Commerce Visibility | Featured snippet readiness, product schema, commerce signals |
+| 19 | Edge Orchestration & Canary Deployment Safety | Edge worker deployment, canary testing, self-healing scripts |
+| 20 | Adversarial Red Team & Prompt Injection Audit | Security testing, information disclosure, cloaking detection |
+| 21 | Site-Wide Risk Aggregation & Executive Dashboard | Cross-level risk scoring, executive summary, revenue impact |
+
+### 📦 14 Concrete Executive Deliverables
+
+The **Report page** (step 3) generates 14 ready-to-consume engineering artifacts straight from the audit's measured data:
+
+1. **SSR vs. CSR Diff Report** — Visual split-view + machine-readable JSON diff of raw vs rendered HTML.
+2. **DOM Tree Health Score** — Node count, max/avg depth, bucket histograms, reference thresholds.
+3. **Schema Validation Audit** — Valid/invalid breakdown, missing required props, circular refs.
+4. **RAG Chunking Simulator** — Sliding-window retrievability analysis for AI answer engines.
+5. **Information Gain Delta** — KL-divergence and novel-term profile vs. background corpus.
+6. **Entity Mapping Grid** — Knowledge-graph + NLP entity extraction with type/count chips.
+7. **Automated Engineering Pull Requests** — Branch + commit + file-diff + regression tests.
+8. **Self-Healing Edge Workers** — Deploy-ready Cloudflare Worker / Vercel Edge / Edgio code.
+9. **CI/CD Build Gatekeeper Logs** — GitHub Actions workflow, GitLab CI config, pre-commit hook.
+10. **Log-Stream Bot Behavior Maps** — Freshness signals + drop-in log configs (Cloudflare, CloudWatch, Datadog).
+11. **Algorithmic Quality Threshold Alerts** — Thin-content, quality-flag and threshold-watch monitoring.
+12. **Multi-Modal Asset Diagnostics** — Image/video/audio compliance and alt-text health.
+13. **Revenue-at-Risk Dashboard** — Monetized financial impact model (probability × exposure × loss).
+14. **Effort-to-Impact Prioritization Matrix** — Ranked remediation queue with impact-score bars.
 
 ### 🧠 Real Data, No Fabrication
 
 Every metric across all 21 levels is derived from **actual page content**, not hardcoded defaults or synthesized values:
 
 - **SERP volatility** is computed from real page structure (word count, headings, images, links, lists, sentence/paragraph statistics).
-- **Revenue at risk** is calculated from real page signals (title presence, meta description, canonical, H1, schema, viewport, word count, image dimensions, server timing, security headers).
+- **Revenue at risk** is calculated from real page signals (title presence, meta description, canonical, H1, schema, viewport, word count, image dimensions, server timing, security headers) **combined with optional GA4 business inputs** you supply (traffic, AOV, conversion rate, currency).
 - **Entity consensus** uses actual page text for self-mentions and optional external content — no fake "trusted sources."
 - **Passage similarity** uses real Jaccard/TF-IDF overlap on actual content passages.
 - **Brand mention share** counts real occurrences in page text.
 - **Readability scores** use real Flesch-Kincaid calculations on actual content.
 
-### 🖥️ Modern Glassmorphic UI
+### ✨ Smart Auto-Configuration
 
-- Dark theme with indigo/violet/cyan gradients.
-- Real-time progress tracking with animated scan line effect.
-- Circular score visualization with color-coded segments.
-- Per-level accordion with severity badges (critical/warning/info).
-- Interactive issue display with expandable evidence and recommendations.
-- PDF export of full audit report.
-- Fully responsive (desktop + mobile).
+As you type a target URL, the tool automatically analyzes it and pre-fills:
+
+- **Page type**, **brand / entity name**, **keywords**, **sitemap URL**
+- **Viewport**, **geo-location**, **currency**, **user-agent**
+- **Competitor discovery** — real-time web search (DuckDuckGo) with live verification and domain/brand filtering to find genuine competitors, not SEO-tool spam.
+
+Each auto-filled field shows a green **AUTO** badge so you can review and adjust before starting.
+
+### 🖥️ Modern Google Pixel UI
+
+- **Google Sans / Roboto** typography with a Google-brand color palette (blue / green / red / yellow).
+- **Dark & light themes** with one-click toggle.
+- **3-step flow**: Configure → Analyze → Report, with a sticky top nav and progress states.
+- **Welcome hero** + "What to Expect" cards on the configure page.
+- **Help & User Guide modal** — what the tool does, requirements, every input explained, what to expect, and usage tips (opened via the Help button or `Esc` to close).
+- **Real-time progress streaming** (Server-Sent Events) during the 21-level run.
+- **Per-module accordions** with severity badges and expandable evidence/fixes.
+- **Jump-to-section table of contents** on the report page.
+- **14 expandable deliverable cards**, plus a 5-phase executive deep-dive and per-module full analysis.
+- Export as **JSON**, **CSV** or **PDF** — fully responsive (desktop + mobile).
 
 ### 🚀 Production-Ready
 
-- Rate limiting (200 req/15 min per API key).
+- Rate limiting (200 req/15 min).
 - Helmet security headers.
 - CORS enabled.
 - Compression (gzip/brotli).
-- Request body size limits (10 MB).
+- Request body size limits.
 - Graceful error handling at every level — a failure in one level never crashes the full audit.
-- 15-second fetch timeout.
 - Unified logging with rotation support.
+- **Render.com** deployment ready (dynamic Chrome path, `render.yaml`).
 
 ---
 
@@ -148,12 +190,12 @@ Every metric across all 21 levels is derived from **actual page content**, not h
 
 1. **User submits URL** via the web UI or REST API.
 2. **Server fetches raw HTML** using `node-fetch` (simulating what Googlebot sees without JavaScript).
-3. **Server launches headless Chrome** via Puppeteer, navigates to the URL, waits for network idle, captures performance metrics (TTFB, DOM Content Loaded, Load Complete) and the fully rendered HTML.
+3. **Server launches headless Chrome** via Puppeteer, navigates to the URL, waits for network idle, captures performance metrics and the fully rendered HTML.
 4. **Cheerio parses the rendered HTML** into a jQuery-compatible DOM.
 5. **Each of the 21 level functions** receives the parsed DOM, raw text, response headers, URL, and performance data. They run independently — if one crashes, it returns an error result without affecting others.
-6. **Levels import 60+ helper functions** from `helpers.js` for specialized analysis (readability, keyword density, entity extraction, schema validation, CWV simulation, etc.).
-7. **Results are aggregated**: overall score (average of all 21 level scores), issue counts by severity, and per-level structured data.
-8. **JSON response is sent** to the client. The web UI renders it with animations, score visualization, and issue accordion. PDF export is available via a separate endpoint.
+6. **Levels import 60+ helper functions** from `helpers.js` for specialized analysis.
+7. **Results are aggregated**: overall score, issue counts by severity, and per-level structured data.
+8. **JSON response is sent** to the client, which renders the module grid, the 5-phase deep-dive, and the 14 deliverables.
 
 ---
 
@@ -164,14 +206,14 @@ Every metric across all 21 levels is derived from **actual page content**, not h
 - Node.js **18.x** or higher (20.x recommended)
 - npm **9.x** or higher
 - Git
-- Chrome/Chromium (Puppeteer will download its own by default)
+- Chrome/Chromium (Puppeteer downloads its own by default)
 
 ### Step-by-Step
 
 ```bash
 # 1. Clone the repository
 git clone https://github.com/dipakjad1993/Complete-On-Page-SEO.git
-cd Complete-On-Page-SEO/seo-audit-tool
+cd Complete-On-Page-SEO/src
 
 # 2. Install dependencies
 npm install
@@ -186,7 +228,7 @@ npm start
 # http://localhost:3000
 ```
 
-> **Note**: Puppeteer downloads Chromium (~300 MB) on first `npm install`. If you have Chrome installed and want to use it instead, set the `CHROME_PATH` variable in `server.js` to your Chrome executable path.
+> **Note**: Puppeteer downloads Chromium (~300 MB) on first install. To use an existing Chrome install instead, set the `CHROME_PATH` variable in `src/server.js`.
 
 ### Environment Variables (Optional)
 
@@ -202,362 +244,155 @@ npm start
 ## Quick Start
 
 ```bash
-# Start in development mode with auto-restart
-npm run dev
-
-# Or standard mode
+# Standard mode
 npm start
 
-# Server starts at http://localhost:3000
+# Development mode with auto-restart
+npm run dev
 ```
 
-1. Open `http://localhost:3000` in your browser.
-2. Enter a URL (e.g., `https://example.com`) and click "Audit Now".
-3. Watch the real-time progress bar as all 21 levels execute.
-4. Explore the results: overall score, per-level breakdowns, detailed issues, and sub-function data.
-5. Click "Export PDF" to generate a downloadable audit report.
+1. Open `http://localhost:3000`.
+2. Enter a URL (e.g., `https://example.com`) — the tool auto-fills most settings for you.
+3. Click **"Start 21-Level Deep Audit"**.
+4. Watch the live progress stream across all 21 modules (~60–120 s).
+5. Browse per-module results, then open the **Report** for the executive summary and 14 deliverables.
 
 ---
 
-## The 21 Analysis Levels — Complete Breakdown
+## Using the Tool — 3-Step Flow
+
+### Step 1: Configure
+
+- **Target URL** (required) — the only mandatory field.
+- **Optional crawler settings** — user-agent (Chrome / Googlebot / GPTBot / PerplexityBot / Applebot / custom), page type, viewport, geo-location.
+- **Optional content fields** — target keywords, competitor URLs (or auto-discovery), brand name, sitemap URL.
+- **Business Intelligence** (optional, powers the financial report) — monthly organic traffic, average order value, conversion rate, currency.
+- Click **Help** in the top bar for the full user guide at any time.
+
+### Step 2: Analyze
+
+Watch all 21 modules execute with a live progress bar and per-level status text. When complete, every module shows a **0–100 score** with critical / warning / info counts. Click any module card to expand its complete data and fixes.
+
+### Step 3: Report
+
+- Overall score ring + issue counts.
+- **14 Executive Deliverables** (expandable, ready-to-use artifacts).
+- **5-Phase Executive Deep-Dive** — every module fully rendered and open, grouped by business phase.
+- **All Findings & Executive Issue Log** with live keyword search.
+- **Detailed Module Analysis** — all 21 modules with nested sections.
+- Export as **JSON**, **CSV**, or **Print/PDF**.
+
+---
+
+## The 21 Analysis Levels
 
 ### Level 1: Core Hygiene & Technical Baseline
+Title length/truncation/pixel width, meta description, viewport, robots meta + X-Robots-Tag header, canonical integrity, heading hierarchy (H1 count, skipped levels), image alt text & formats, HTTP headers, internal link quality, link density.
 
-**Sub-functions:** `titleAnalysis`, `metaDescription`, `viewport`, `robotsMeta`, `xRobotsTagHeader`, `canonical`, `headingHierarchy`, `mediaOptimization`, `httpHeaders`, `internalLinks`, `linkDensity`, `headingDetail`, `perLinkAnalysis`, `perHeadingAnalysis`
+### Level 2: DOM Reality, Rendering & Structural Diagnostics
+SSR vs CSR diff (raw HTML vs rendered DOM), DOM node count / max depth / child distribution, schema.org validation (valid/invalid, missing required, circular refs, warnings).
 
-Analyzes the fundamental building blocks of on-page SEO:
+### Level 3: Semantic Architecture, Entities & Information Gain
+Word count, Flesch-Kincaid readability, keyword density, bigrams, transition words, content structure, information-gain delta (KL-divergence, novel terms), entity extraction.
 
-- **Title Tag**: Length (byte and pixel), truncation risk, dynamic substitution detection, H1 alignment, OG title consistency, keyword position.
-- **Meta Description**: Length analysis, CTA presence, keyword inclusion, OG description alignment, truncation risk.
-- **Viewport Meta**: Presence, width=device-width, initial-scale, zoom restrictions (accessibility).
-- **Robots Directives**: Meta robots (noindex, nofollow, nosnippet, noimageindex), X-Robots-Tag HTTP header.
-- **Canonical Tag**: Presence, self-referencing, cross-domain, multiple canonicals, parameter handling.
-- **Heading Hierarchy**: H1 count, missing H1, skipped levels, empty headings, visual vs. semantic headings.
-- **Media Optimization**: Alt text coverage, width/height dimensions, image format (WebP/AVIF vs PNG/GIF), lazy loading, SVG accessibility.
-- **HTTP Headers**: Status code, security headers, caching headers.
-- **Internal Links**: Dead fragments, empty links, generic anchor text, noopener missing, nofollow ratio, link density.
+### Level 4: Generative Search, LLM & RAG Visibility
+RAG chunk simulation with per-chunk retrievability scores, passage vectors, direct answer scoring, LLM citation worthiness, redundant phrasing, section entropy.
 
-**Scoring Penalties (worst):** Missing title (+25), no index (+30), missing H1 (+20), images without alt (+20), missing viewport (+20), missing meta description (+20), missing canonical (+15), multiple H1 (+10).
+### Level 5: Dev Automation & Auto-Fix Generation
+Auto-generated patches (schema JSON-LD, heading hierarchy, canonical fixes) with regression test code, diagnostic workflow, rollback plans.
 
----
-
-### Level 2: SSR/CSR Rendering & DOM Depth
-
-**Sub-functions:** `ssrVsCsr`, `domDepth`, `domDepthDistribution`, `childDistribution`, `schemaValidation`
-
-Evaluates JavaScript rendering health and DOM complexity:
-
-- **SSR/CSR Comparison**: Compares raw (server) HTML against Puppeteer-rendered HTML. Detects JS-dependent content that Googlebot may miss.
-- **DOM Analysis**: Total node count, max nesting depth, distribution by depth, child element distribution.
-- **Schema Validation**: Schema count, valid/invalid breakdown, missing required fields, circular references, warnings.
-
-**Scoring Penalties:** SSR ratio <50% (+20), SSR ratio <85% (+10), DOM >1500 nodes (+10), DOM depth >32 (+8), invalid schemas (+12).
-
----
-
-### Level 3: Content Readability & Keyword Authority
-
-**Sub-functions:** `readability`, `keywordDensity`, `bigrams`, `contentStructure`, `transitionWords`, `keywordAnalysis`, `readabilityBreakdown`, `paragraphStats`
-
-Deep textual analysis:
-
-- **Readability**: Flesch-Kincaid score, grade level, reading ease, sentence/word/syllable statistics.
-- **Keyword Density**: Top keywords with frequency, density percentage, stop-word filtered analysis.
-- **Bigram Analysis**: Top bigrams, co-occurrence patterns.
-- **Content Structure**: Paragraph count, average paragraph length, short/long paragraph ratios, heading-per-word density.
-- **Transition Words**: Count, ratio, specific transition categories (addition, contrast, cause, sequence, conclusion).
-- **Quality Flags**: Sentence starts with "and/but/because", exclamation marks, all-caps sentences, ellipsis abuse, passive voice indicators, hedging language.
-
----
-
-### Level 4: Information Gain & LLM Citation Worthiness
-
-**Sub-functions:** `informationGain`, `keywordRichness`, `textDiversity`, `redundantPhrases`, `llmCitation`, `directAnswer`, `uniqueBigrams`, `sectionEntropy`, `uniqueSections`, `lowInformationPassages`
-
-Measures the unique value your content provides beyond the baseline web:
-
-- **Information Gain**: Compares keyword distribution against a baseline corpus (common English), calculating how much novel information the page contributes.
-- **LLM Citation Simulation**: Extracts factual claims and simulates whether an LLM would cite the page as a source.
-- **Direct Answer Scoring**: For question-based queries, determines if the page provides concise, extractable answers.
-- **Text Diversity**: Unique word ratio, type-token ratio, bigram uniqueness.
-- **Section Entropy**: Information-theoretic entropy across content sections — higher entropy means more diverse, information-rich content.
-- **Redundant Phrasing**: Detects repeated templates and boilerplate language.
-
----
-
-### Level 5: Semantic Entity Extraction & Anchor Text Topology
-
-**Sub-functions:** `entityExtraction`, `entityRelations`, `entityOccurrenceMap`, `entityDensity`, `anchorTextClusters`, `entitySalience`
-
-Maps the knowledge graph entities referenced in your content:
-
-- **Entity Extraction**: Named entity recognition (people, organizations, locations, products, concepts) with frequency counting.
-- **Entity Salience**: Determines which entities are most central to the page based on frequency, position, and distribution.
-- **Anchor Text Context**: For each internal link, captures the surrounding text and classifies the anchor context.
-- **Entity Co-occurrence**: Builds an entity relationship graph showing which entities appear together.
-- **Internal Link Entity Distribution**: Maps which entities are linked from which sections.
-
----
-
-### Level 6: Core Web Vitals & HTTP Header Hardening
-
-**Sub-functions:** `coreWebVitals`, `httpSecurity`, `cachePolicy`, `cookieAnalysis`, `serverTiming`, `hsts`, `csp`, `mixedContent`
-
-Security and performance hardening:
-
-- **Core Web Vitals Simulation**: TTFB, LCP (simulated via DOM), CLS (simulated via layout shifts), FID (simulated via DOM complexity), INP estimation.
-- **HTTP Security Headers**: Content-Security-Policy, Strict-Transport-Security, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy.
-- **Cache Policy**: Cache-Control, Expires headers, ETag validation.
-- **Cookie Analysis**: Secure flag, HttpOnly flag, SameSite attribute.
-- **Server Timing**: Server-Timing header parsing, request duration breakdown.
-- **Mixed Content**: Detection of HTTP resources on HTTPS pages.
-
----
+### Level 6: Edge Computing & Serverless Integration
+Edge worker code generation, security headers, cache policy, CORS, cookie attributes, mixed-content detection.
 
 ### Level 7: Multi-Modal Content & Spatial Asset Auditing
+Image analysis (alt text, dimensions, lazy loading, srcset, modern formats), video captions/posters, audio transcripts, SVG accessibility.
 
-**Sub-functions:** `imageAnalysis`, `videoAnalysis`, `audioAnalysis`, `svgAnalysis`, `accessibilityScore`, `semanticCaptions`
+### Level 8: Predictive SERP Volatility & Algorithm Impact
+SERP volatility from real page structure, quality thresholds, SERP feature readiness (AI Overview, featured snippet, PAA, local, shopping, knowledge panel), thin content, E-E-A-T signals, algorithm resilience.
 
-Comprehensive media and accessibility audit:
+### Level 9: Continuous SEO A/B Testing & Rollback Safety
+Baseline extraction, testability assessment, title/meta variants, rollback safety, statistical significance, sample size estimation.
 
-- **Image Analysis**: Total, formats (modern vs legacy), missing alt, empty alt (decorative), generic alt, long alt, missing dimensions, lazy loading coverage, srcset presence.
-- **Video Analysis**: Native HTML5 videos, embedded (YouTube, Vimeo, Wistia, Loom), captions/subtitles, poster images, controls, missing titles on embeds.
-- **Audio Analysis**: Native audio elements, linked audio files (MP3, WAV, OGG), transcript presence.
-- **SVG Analysis**: Inline SVGs, missing aria labels, missing dimensions, text content, accessible roles.
-- **Accessibility Score**: Aggregate accessibility health based on media and semantic elements.
-- **Semantic Captions**: Figure/figcaption, table/caption usage.
-
----
-
-### Level 8: Predictive SERP Volatility & Algorithm Impact Simulator
-
-**Sub-functions:** `serpVolatility`, `qualityThresholds`, `serpFeatures`, `thinContentAnalysis`, `monetizationAnalysis`, `eeatSignals`, `algorithmResilience`, `zeroClickRisk`
-
-The most advanced level — simulates how Google algorithms may treat the page:
-
-- **SERP Volatility**: Derived from real page structure signals (word count, heading density, image density, link density, list density). No fake date/ranking arrays.
-- **Quality Thresholds**: Multi-dimension quality scoring using `calculateQualityThresholds` helper.
-- **SERP Features Readiness**:
-  - *AI Overview*: Definition sentences, numbered lists (3+), comparison tables, authoritative citations, sufficient length.
-  - *Featured Snippet*: Paragraph format, list format, table format, question-answer patterns.
-  - *People Also Ask*: Question count, direct answer formats.
-  - *Local Pack*: LocalBusiness schema, phone links.
-  - *Shopping Graph*: Product schema.
-  - *Knowledge Panel*: Organization schema, social profiles, logo.
-- **Thin Content Analysis**: Word count threshold, paragraph thin ratio, lexical diversity.
-- **Monetization Analysis**: Affiliate link count, ratio, safe threshold (<30%).
-- **E-E-A-T Signals**: Author attribution, publisher info, published/modified dates, citations, factual claims, disclaimers, author bio.
-- **Algorithm Resilience Score**: Helpful Content System alignment score, vulnerable pattern detection, resilience grade (A–D).
-- **Zero-Click Risk Projection**: AI Overview risk, featured snippet risk, estimated CTR impact, mitigation strategy.
-
----
-
-### Level 9: Continuous SEO A/B Testing & Rollback Safety Nets
-
-**Sub-functions:** `baseline`, `testability`, `titleVariants`, `metaVariants`, `rollbackSafety`, `statisticalSignificance`
-
-SEO experimentation framework:
-
-- **Baseline Extraction**: Captures current title, meta description, H1, word count, image count, link counts, schema count, heading structure, paragraph count, CTA count.
-- **Testability Assessment**: Identifies which elements are A/B testable (title, meta description, H1, CTAs), variant count estimation.
-- **Title Variants**: Generates 3 variants (control, front-loaded, benefit-driven) with CTR hypotheses.
-- **Meta Variants**: Generates 3 variants (control, benefit-first, question+answer) with CTR hypotheses.
-- **Rollback Safety**: Catastrophic pattern detection (noindex, missing canonical), monitoring config with metrics and alert thresholds.
-- **Sample Size Estimation**: Based on content length and CTA count.
-- **Statistical Significance**: Recommended duration and confidence levels.
-
----
-
-### Level 10: Real-Time Log-Stream Intelligence & Bot Behavior Mapping
-
-**Sub-functions:** `statusCode`, `redirectChain`, `crawlBudget`, `botBehavior`, `logStreamConfig`
-
-Crawl optimization and bot behavior analysis:
-
-- **Status Code Analysis**: Current status, status category, redirect chain length and loop detection.
-- **URL Analysis**: Path depth, parameter count, parameter cleanliness, session param detection.
-- **Crawl Budget Estimation**: Efficiency score, parametric risk assessment, waste analysis.
-- **Bot Behavior**: Freshness signals (published/modified dates), estimated crawl frequency, crawl budget waste items.
-- **Log Stream Configuration**: Pre-configured schemas for Cloudflare Logpush, AWS CloudWatch Logs, Datadog Logs.
-- **Session Parameter Detection**: Identifies tracking/analytics parameters that create infinite URL permutations.
-
----
+### Level 10: Log-Stream Intelligence & Bot Behavior Mapping
+Status code & redirect chain, crawl budget estimation, bot behavior / freshness signals, drop-in log stream configs (Cloudflare, CloudWatch, Datadog).
 
 ### Level 11: Multi-Model Synthetic User & LLM Behavior Simulation
+Synthetic agent behavior, RAG chunk simulation, agentic readiness (CTA parsability, form accessibility, JS dependency), LLM readiness.
 
-**Sub-functions:** `syntheticAgentBehavior`, `ragChunkSimulation`, `agenticReadiness`, `llmReadiness`, `chunkSelfContainment`
+### Level 12: Reverse-Engineered Core Algorithm & Quality Classifier
+Content freshness, E-E-A-T signals, quality thresholds, quality flags, helpful-content alignment.
 
-Simulates how AI agents and LLMs interact with your page:
-
-- **Synthetic Agent Behavior**: `analyzeSyntheticAgentBehavior` extracts structured data patterns, entity clusters, key facts, tabular data, list data, and semantic HTML elements.
-- **RAG Chunk Simulation**: `ragChunkSimulator` splits content into chunks and scores each for self-containment (can the chunk be understood in isolation?).
-- **Agentic Readiness**: CTA parsability (can an agent identify the call-to-action?), form accessibility (can an agent fill out forms?), JS dependency (is the page functional without JS?).
-- **LLM Readiness**: Entity clarity score (how well-defined are the entities?), machine-readable formats (tables, lists, key facts), semantic markup coverage, multi-format readiness.
-- **Chunk Self-Containment**: Average retrievability score, low-quality chunk count.
-
----
-
-### Level 12: Advanced Readability & Semantic Discourse Profiling
-
-**Sub-functions:** `readabilityAdvanced`, `fleschKincaid`, `gradeLevel`, `sentenceLengthDistribution`, `passiveVoice`, `jargonDensity`, `paragraphCoherence`, `lexicalDiversity`, `transitions`, `discourseAnalysis`, `readabilitySubscores`
-
-Advanced linguistic profiling:
-
-- **Flesch-Kincaid Grade Level**: Grade level with label (college, high school, middle school, elementary).
-- **Reading Ease**: Flesch Reading Ease score (0–100).
-- **Sentence Length Distribution**: Short (<12 words), medium (12–25), long (>25) sentences with percentages.
-- **Passive Voice Detection**: Count and ratio of passive constructions.
-- **Jargon Density**: Detects industry-specific terminology based on sentence complexity metrics.
-- **Paragraph Coherence**: Average sentences per paragraph, transition coverage.
-- **Lexical Diversity**: Type-token ratio, unique word count.
-- **Transition Analysis**: Transition word count by category (addition, contrast, cause, sequence, conclusion).
-- **Discourse Analysis**: Structure coherence scoring.
-
----
-
-### Level 13: Unhelpful Content Ratio & AI Search Devaluation Risk
-
-**Sub-functions:** `unhelpfulContentRatio`, `aiPatterns`, `contentThinnessScore`, `autoGeneratedScore`, `helpfulContentAlignment`, `gapAnalysis`
-
-Aligned with Google's Helpful Content System:
-
-- **Unhelpful Content Ratio**: `calculateUnhelpfulContentRatio` analyzes content against known unhelpful patterns (lack of expertise, insufficient depth, no original research, thin affiliate content, auto-generated text).
-- **AI Pattern Detection**: `detectAIPatterns` checks for formulaic AI-generated text patterns, repetitive sentence starters, low-perplexity sequences, and templated phrasing.
-- **Content Thinness Score**: Composite score based on word count, paragraph depth, entity density, and section structure.
-- **Auto-Generated Content Score**: Detection of boilerplate templates, generic filler phrases, and low-information sections.
-- **Helpful Content Alignment**: Overall alignment score (0–100) with actionable gap analysis.
-
----
+### Level 13: Edge-Native Patching & CI/CD Gatekeeping
+Pre-commit hooks, GitHub Actions workflow, GitLab CI config, Cloudflare Worker / Vercel Edge code, self-healing rules.
 
 ### Level 14: Financial Attribution & Revenue Impact Engine
-
-**Sub-functions:** `pageTypeClassification`, `businessMetrics`, `revenueAtRisk`, `roiAnalysis`, `quarterlyProjections`, `priorityActionPlan`, `trafficEstimates`, `competitiveLoss`, `costBenefitSummary`, `issueRegistry`
-
-The only level that quantifies SEO issues in dollar terms:
-
-- **Page Type Classification**: Determines if the page is product, checkout, landing, category, informational, or blog based on URL patterns and content signals.
-- **Business Metrics**: Page quality score, organic traffic estimate (by page type), conversion rate, average order value, estimated monthly/annual revenue.
-- **Revenue at Risk**: Real page-signal-based risk calculation (title, meta description, canonical, H1, schema, viewport, word count, image dimensions, internal links, server timing, security headers). No hardcoded traffic values.
-- **ROI Analysis**: Fix effort estimation, fix cost at $150/hr, annual ROI percentage, break-even days, fix recommendation.
-- **Quarterly Projections**: Q1–Q4 revenue at risk with compounding loss visualization.
-- **Priority Action Plan**: Ranked issues by impact with revenue impact per issue.
-- **Traffic Estimates**: Monthly/annual visits, traffic loss risk by severity, recovery potential.
-- **Competitive Loss**: Share of voice loss, position drop risk, click share loss, dollar impact of position drops.
-- **Cost-Benefit Summary**: Annual/monthly/weekly/daily loss rates, break-even analysis, recommended action.
-
----
+Revenue-at-risk per issue, ROI analysis, quarterly projections, priority action plan, traffic estimates, competitive loss, cost-benefit summary, issue registry.
 
 ### Level 15: Passage Vector & Cosine Similarity Profiler
-
-**Sub-functions:** `vectorSimilarity`, `passageSimilarity`, `passageEntityFlow`, `headings`, `headingDrift`, `headingContentAlignment`, `sectionEntityConsistency`, `bigramPassageDensity`, `entityTransitionMap`, `documentDistance`, `contentClusters`
-
-Ensures topical coherence across all passages:
-
-- **Passage Similarity**: Splits content into word-based passages, computes entity overlap with primary entities, flags low-similarity passages.
-- **Entity Flow Tracking**: Tracks entity appearance across passages, detects abrupt transitions.
-- **Heading Drift Analysis**: Compares heading text tokens against primary entity tokens, flags high-drift headings.
-- **Heading-Content Alignment**: Checks that content under each heading shares token overlap with the heading.
-- **Section Entity Consistency**: Sliding window analysis of entity consistency across sentences.
-- **Bigram Density**: Per-passage bigram repetition ratio — flags repetitive/templated sections.
-- **Content Clustering**: K-means-like clustering of passage similarity scores, detects orphan clusters.
-- **Document Distance**: Average similarity, min/max, standard deviation, drift visualization.
-
----
+Passage-level retrieval scoring, entity flow tracking, heading drift, content clustering, document distance.
 
 ### Level 16: Third-Party Consensus & Entity Alignment Scorer
+Entity consensus, citation quality, knowledge panel readiness, factual claims, trust-level scoring.
 
-**Sub-functions:** `extractedEntities`, `namedEntities`, `entityConsensus`, `consensusSummary`, `externalLinks`, `citationQuality`, `citationFormatting`, `knowledgePanelReadiness`, `factualClaims`, `contradictoryClaims`, `consensusScore`, `trustLevel`
+### Level 17: Multi-Agent Autonomous Sandbox & Fix Validator
+Schema/heading/canonical auto-fixes with validation tests, diagnostic workflow, fix validation.
 
-Measures how well your page's entities align with established knowledge:
+### Level 18: Zero-Click & Agentic Commerce Visibility
+AI Overview readiness, featured snippet optimization, zero-click CTR estimation, agentic commerce audit, brand mention share, entity prominence.
 
-- **Entity Consensus**: For each primary entity, checks self-mentions, external content references, computes consensus ratio and level (strong/moderate/weak).
-- **Citation Quality**: External outbound link analysis, authoritative domain ratio (.edu, .gov, research), citation formatting.
-- **Knowledge Panel Readiness**: Organization/Person schema, logo, social profiles, site name — schema completeness score.
-- **Factual Claims**: Extracts percentages, monetary values, years. Verifies which claims are backed by consensus.
-- **Contradictory Claims**: Flags unverifiable or contradictory factual claims.
-- **Consensus Score**: Composite score combining entity consensus, citation quality, knowledge panel readiness, and formatting.
-
----
-
-### Level 17: Autonomous Sandbox Rollback Simulator & Fix Validator
-
-**Sub-functions:** `schemas`, `headings`, `canonical`, `autoFixes`, `diagWorkflow`
-
-Generates auto-fix code for common SEO issues:
-
-- **Schema Auto-Fix**: For invalid/missing schemas, generates corrected JSON-LD with validation test code.
-- **Heading Hierarchy Fix**: For skipped heading levels or missing H1, generates corrected heading markup with hierarchy test code.
-- **Canonical Fix**: For missing/broken canonicals, generates corrected link tags.
-- **Diagnostic Workflow**: Creates a sandbox validation workflow with pre-conditions, fixes, and post-condition checks.
-- **Auto-Fix Registry**: All generated fixes with code, description, risk assessment, and rollback plan.
-
----
-
-### Level 18: Zero-Click & Agentic Commerce Visibility Metrics
-
-**Sub-functions:** `serpVolatility`, `contentStructure`, `readability`, `aiOverviewReadiness`, `featuredSnippet`, `estimatedCTR`, `commerceAudit`, `mentionShare`, `entityProminence`, `entityCountForAI`, `visibilityShare`
-
-Prepares your page for the AI-powered search future:
-
-- **SERP Volatility**: Real page-derived volatility score (no fake date/ranking arrays).
-- **AI Overview Readiness**: Question-answer format detection, structured list analysis, comparison tables, definition statements, content length optimization, readability optimization, heading structure.
-- **Featured Snippet Optimization**: Paragraph length analysis, list/table suitability, question format, definition clarity.
-- **Zero-Click CTR Estimation**: With and without zero-click features, uplift calculation.
-- **Agentic Commerce Audit**: Product detection (heuristic + schema), price/availability completeness, add-to-cart detection, cart/checkout navigation.
-- **Brand Mention Share**: Real brand term mentions in content, share of voice.
-- **Entity Prominence**: Knowledge graph entity extraction with count-based prominence.
-
----
-
-### Level 19: Self-Healing Edge Config & Canary Deployment Safety
-
-**Sub-functions:** `edgeConfig`, `generatedEdgeWorkerScript`, `canaryDeployment`, `rollbackTriggers`, `errorBudget`, `deploymentChecklist`
-
-For enterprise SEO operations:
-
-- **Edge Worker Script Generation**: Generates deployable edge worker code (Cloudflare Workers, Akamai EdgeWorkers, Fastly Compute@Edge) that:
-  - Self-corrects missing canonicals.
-  - Injects missing schemas.
-  - Fixes truncating titles.
-  - Handles 404 → 301 redirects.
-  - Upgrades HTTP → HTTPS.
-  - Manages noindex tags.
-  - Collapses URL parameters.
-  - Fixes hreflang annotations.
-- **Canary Deployment Config**: Progressive rollout percentages (5% → 25% → 50% → 100%), watch durations, auto-rollback thresholds.
-- **Rollback Triggers**: Impression drop, CTR drop, position drop, crawl error spike, Core Web Vitals regression.
-- **Error Budget Monitoring**: Monthly budget with burn rate tracking.
-- **Deployment Checklist**: Pre-flight, validation, monitoring, and rollback procedures.
-
----
+### Level 19: Edge Orchestration & Canary Deployment Safety
+Edge worker deployment, canary (progressive rollout), rollback triggers, error budget monitoring, deployment checklist.
 
 ### Level 20: Adversarial Red Team & Prompt Injection Audit
+Prompt injection testing, output manipulation, hallucination triggers, jailbreak patterns, data extraction attempts, injection risk scoring.
 
-**Sub-functions:** `redTeamResults`, `injectionTypes`, `hallucinationTriggers`, `jailbreakPatterns`, `dataExtraction`, `injectionRiskScore`, `vulnerableFields`
-
-Security testing for LLM-powered search:
-
-- **Prompt Injection Testing**: Tests common injection patterns on page content (ignore previous instructions, system prompt override, roleplay scenarios).
-- **Output Manipulation**: Checks if content can be manipulated to produce misleading outputs.
-- **Hallucination Triggers**: Detects patterns that may cause LLMs to hallucinate (false claims, unverifiable statements, fabricated data).
-- **Jailbreak Patterns**: Tests for DAN (Do Anything Now) and similar jailbreak techniques.
-- **Data Extraction Attempts**: Checks if sensitive data (emails, API keys, internal URLs) is exposed to injection.
-- **Injection Risk Score**: Composite score (0–100) with vulnerable field identification.
+### Level 21: Site-Wide Risk Aggregation & Executive Dashboard
+Cross-page pattern analysis, risk distribution, portfolio scoring, executive summary, KPI dashboard, benchmark comparison.
 
 ---
 
-### Level 21: Site-Wide Risk Aggregation & Executive Dashboard
+## The 14 Executive Deliverables
 
-**Sub-functions:** `pages`, `siteWideRisk`, `riskDistribution`, `portfolioScores`, `executiveSummary`, `kpiDashboard`, `benchmarkComparison`
+| # | Deliverable | Output Type | Data Source |
+|---|-------------|-------------|-------------|
+| 1 | SSR vs. CSR Diff Report | Visual split-view + JSON diff | Level 2 `ssrVsCsr` |
+| 2 | DOM Tree Health Score | Metrics + bucket histograms | Level 2 `domDepth` |
+| 3 | Schema Validation Audit | Schema.org compliance report | Level 2 `schemaValidation` |
+| 4 | RAG Chunking Simulator | Sliding-window retrievability | Level 4 `ragChunks` |
+| 5 | Information Gain Delta | KL-divergence profile | Level 3 `informationGain` |
+| 6 | Entity Mapping Grid | KG + NLP entity chips | Levels 3 & 16 |
+| 7 | Automated Engineering PRs | Branch + files + tests | Level 17 `pullRequests` |
+| 8 | Self-Healing Edge Workers | Deploy-ready code | Levels 6, 13, 19 |
+| 9 | CI/CD Build Gatekeeper Logs | Workflow + hook + pipeline | Level 13 |
+| 10 | Log-Stream Bot Behavior Maps | Freshness signals + log configs | Level 10 |
+| 11 | Algorithmic Quality Threshold Alerts | Flag + threshold watch | Levels 8, 12, 20 |
+| 12 | Multi-Modal Asset Diagnostics | Image/video/audio compliance | Level 7 |
+| 13 | Revenue-at-Risk Dashboard | Monetized financial model | Level 14 |
+| 14 | Effort-to-Impact Prioritization Matrix | Ranked remediation queue | Levels 14 & 21 |
 
-The meta-analysis level — requires multiple page results:
+---
 
-- **Site-Wide Risk**: `calculateSiteWideRisk` aggregates scores across all audited pages, computes risk level, distribution metrics.
-- **Risk Distribution**: Score histogram (0–20, 21–40, 41–60, 61–80, 81–100) across all pages.
-- **Portfolio Scores**: Average, median, min, max, standard deviation of page scores.
-- **Executive Summary**: Overall health rating, critical page count, top site-wide issues, recommended priorities.
-- **KPI Dashboard**: Average score, total issues, pages needing attention, top patterns.
-- **Benchmark Comparison**: Compares against industry segments for context.
+## Inputs & Configuration
+
+### Audit Config (client → `POST /api/audit`)
+
+| Field | Type | Default | Purpose |
+|-------|------|---------|---------|
+| `url` | string | — | Target URL to audit (required) |
+| `config.userAgent` | string | `chrome-desktop` | Crawl as Chrome / Googlebot / GPTBot / PerplexityBot / Applebot |
+| `config.customUA` | string | — | Custom user-agent string |
+| `config.viewportWidth` | number | `1920` | Rendering viewport width |
+| `config.viewportHeight` | number | `1080` | Rendering viewport height |
+| `config.geo` | string | — | Geo-location (e.g., `US`, `GB`, `DE`, `IN`) |
+| `config.keywords` | string | — | Comma-separated target keywords |
+| `config.competitors` | array | — | Competitor URLs (or auto-discovered) |
+| `config.sitemap` | string | — | XML sitemap URL |
+| `config.brand` | string | — | Brand / entity name |
+| `config.pageType` | string | `auto` | Homepage / product / category / article / landing / local / FAQ / documentation |
+| `config.monthlyTraffic` | number | `0` | GA4 organic sessions/month (powers revenue-at-risk) |
+| `config.avgOrderValue` | number | `0` | GA4 average order value |
+| `config.conversionRate` | number | `0` | Conversion rate % |
+| `config.currency` | string | `USD` | Reporting currency |
 
 ---
 
@@ -570,57 +405,39 @@ Runs a full 21-level audit on a URL.
 **Request Body:**
 ```json
 {
-  "url": "https://example.com"
+  "url": "https://example.com",
+  "config": {
+    "userAgent": "chrome-desktop",
+    "keywords": "seo audit tool, technical seo",
+    "monthlyTraffic": 50000,
+    "avgOrderValue": 75,
+    "conversionRate": 2.5,
+    "currency": "USD"
+  }
 }
 ```
 
-**Response:**
-```json
-{
-  "url": "https://example.com",
-  "overallScore": 72,
-  "levels": [
-    {
-      "level": 1,
-      "name": "Core Hygiene & Technical Baseline",
-      "score": 68,
-      "issues": [
-        {
-          "severity": "warning",
-          "impact": "medium",
-          "message": "Title may truncate in SERPs: 620px/72 bytes (safe limit: 580px / ~60 chars)",
-          "element": "title",
-          "evidence": "Pixel width 620px, safe limit 580px",
-          "recommendation": "Shorten to 50-55 chars. Front-load primary keyword."
-        }
-      ],
-      "data": {
-        "titleAnalysis": { ... },
-        "metaDescription": { ... },
-        "viewport": { ... }
-      }
-    }
-  ],
-  "summary": {
-    "criticalIssues": 2,
-    "warnings": 14,
-    "info": 8,
-    "topFixes": 10
-  },
-  "duration": "12.4"
-}
-```
+**Response:** Audit result with `url`, `overallScore`, `levels[]` (each with `level`, `name`, `score`, `issues[]`, `data{}`), `meta` (timestamp, competitors), `summary`, and `duration`.
+
+### `GET /api/audit-progress/:auditId`
+
+Server-Sent Events (SSE) stream of live progress during an audit.
+
+**Response:** `data: { "level": 3, "detail": "Analyzing DOM depth..." }`
+
+### `POST /api/analyze-url`
+
+Analyzes a URL to auto-fill config fields (page type, brand, keywords, sitemap, geo, currency, user-agent) before an audit.
+
+**Request Body:** `{ "url": "https://example.com" }`
+
+**Response:** `{ "brand": "...", "pageType": "...", "keywords": "...", "competitors": [...], "blocked": false, ... }`
 
 ### `POST /api/export-pdf`
 
 Generates a PDF from audit result HTML.
 
-**Request Body:**
-```json
-{
-  "html": "<html>...</html>"
-}
-```
+**Request Body:** `{ "html": "<html>...</html>" }`
 
 **Response:** Binary PDF file (`application/pdf`).
 
@@ -628,101 +445,7 @@ Generates a PDF from audit result HTML.
 
 Health check endpoint.
 
-**Response:**
-```json
-{
-  "status": "ok",
-  "timestamp": "2026-07-23T12:00:00.000Z"
-}
-```
-
----
-
-## Helper Functions Library
-
-Located in `helpers.js`, this module contains **60+ standalone analysis functions** used across all 21 levels. Key categories:
-
-### Scoring & Utility
-- `sc(penalty)` — Convert penalty to 0–100 score
-- `byteLen(string)`, `pxWidth(string)` — Length measurement
-- `sel($, element)`, `cssEscape(string)` — Selector generation
-- `syllables(word)`, `fleschKincaid(text)`, `countSyllables(word)` — Readability
-
-### Content Analysis
-- `countWords(text)`, `stripHtml(html)` — Text extraction
-- `getTextContent($)`, `extractEntities(text)` — Content parsing
-- `analyzeReadability(text)`, `analyzeReadabilityAdvanced(text)` — Readability
-- `analyzeKeywordDensity(text)`, `analyzeBigrams(text)` — Keyword analysis
-- `analyzeContentStructure(text)`, `analyzeTransitionWords(text)` — Structure
-- `detectContentQualityFlags(text)`, `analyzeNLP(text)` — Quality
-
-### Entity & Knowledge Graph
-- `extractKnowledgeGraphEntities(text)` — KG entity extraction
-- `extractAllMentions(text, terms)` — Term mention counting
-- `crossReferenceEntityConsensus(entityText, pageContent, externalContent)` — Entity consensus
-
-### Schema & HTML Analysis
-- `extractSchemas($)`, `analyzeSchema($)`, `validateSchemaComprehensive($)` — Schema validation
-- `analyzeTitlePrecision($, url)` — Title analysis
-- `analyzeHeadingHierarchy($)` — Heading structure
-- `analyzeCanonicalIntegrity($, url)` — Canonical tags
-- `analyzeMediaOptimization($)` — Images/video/media
-
-### SEO & Performance
-- `analyzeHttpHeaders(headers)` — HTTP security headers
-- `analyzeInternalLinks($, url)` — Internal link analysis
-- `ssrVsCsrDiff(rawHtml, renderedHtml)` — JS rendering diff
-- `analyzeDomDepth($)` — DOM complexity
-- `analyzeCoreWebVitals(metrics)` — CWV simulation
-
-### Advanced Analysis
-- `analyzeSerpVolatility(pageContent, pageFeatures)` — SERP volatility
-- `calculateQualityThresholds(content)` — Quality scoring
-- `calculateRevenueAtRisk(metrics)` — Revenue impact
-- `passageVectorSim(text, queries)` — Passage similarity
-- `ragChunkSimulator(text)` — RAG readiness
-- `simulateLLMCitation(text, query)` — LLM citation simulation
-- `directAnswerScorer(question, pageContent)` — Direct answer scoring
-
-### Agentic & Security
-- `analyzeSyntheticAgentBehavior(text)` — Agent simulation
-- `agenticCommerceAudit($)` — Commerce readiness
-- `redTeamTest(url)` — Prompt injection testing
-- `selfHealingEdgeScript(url)` — Edge config generation
-
-### Generation & Formatting
-- `generateSchemaCode(type, data)` — Schema code generation
-- `generateMetaOptions(title, desc, keywords)` — Meta tag generation
-- `generateAutonomousFix(issue, pageType)` — Auto-fix generation
-- `formatJiraTicket(findings)` — Jira ticket formatting
-- `generateEdgeWorkerCode(rule)` — Edge worker generation
-
----
-
-## Technologies Used
-
-| Technology | Purpose |
-|-----------|---------|
-| **Node.js** | Runtime environment (v18+) |
-| **Express 5** | Web server & REST API framework |
-| **Cheerio 1.x** | Server-side DOM parsing (jQuery-like API) |
-| **Puppeteer 25.x** | Headless Chrome for JS rendering & performance metrics |
-| **node-fetch 2.x** | Raw HTML fetching (pre-JS) |
-| **compromise** | NLP for entity extraction & text analysis |
-| **winston** | Logging |
-| **helmet** | Security headers |
-| **compression** | Response compression (gzip) |
-| **express-rate-limit** | API rate limiting |
-| **cors** | Cross-origin resource sharing |
-| **uuid** | Unique ID generation |
-| **terser** | JavaScript minification |
-| **schema-dts** | TypeScript types for schema.org |
-
-### Frontend (no build step, vanilla JS)
-- **CSS3** with custom properties, animations, glassmorphism design
-- **Vanilla JavaScript** (ES6+) for dynamic UI
-- **Canvas/SVG** for score visualization
-- **Responsive design** (mobile-first)
+**Response:** `{ "status": "ok", "timestamp": "..." }`
 
 ---
 
@@ -732,22 +455,47 @@ Located in `helpers.js`, this module contains **60+ standalone analysis function
 Complete-On-Page-SEO/
 ├── README.md                       # This file
 ├── .gitignore
-├── seo-audit-tool/                 # Main project directory
-│   ├── package.json                # Dependencies & scripts
-│   ├── package-lock.json
-│   ├── server.js                   # Express server, Puppeteer orchestration, API routes
-│   ├── helpers.js                  # 60+ analysis helper functions
-│   ├── levels.js                   # 21 level analysis functions
-│   ├── public/
-│   │   ├── index.html              # Single-page application UI
-│   │   ├── css/                    # Stylesheets
-│   │   ├── js/                     # Client-side JavaScript
-│   │   └── assets/                 # Images, icons
-│   └── src/
-│       ├── engines/                # (extensible) Analysis engine modules
-│       ├── routes/                 # (extensible) Additional API routes
-│       └── utils/                  # (extensible) Utility modules
-└── .gitignore
+├── render.yaml                     # Render.com deployment config (rootDir: src)
+└── src/                            # Main project directory
+    ├── package.json                # Dependencies & scripts
+    ├── package-lock.json
+    ├── server.js                   # Express server, Puppeteer orchestration, API routes
+    ├── helpers.js                  # 60+ analysis helper functions
+    ├── levels.js                   # 21 level analysis functions
+    └── public/
+        └── index.html              # Single-page application UI (vanilla JS + CSS)
+```
+
+---
+
+## Deployment
+
+### Render.com
+
+A `render.yaml` blueprint is included:
+
+- **rootDir**: `src`
+- **build**: `npm install && npx puppeteer browsers install chrome`
+- **start**: `npm start`
+- Chrome path is resolved dynamically at runtime.
+
+```yaml
+services:
+  - type: web
+    name: complete-on-page-seo
+    runtime: node
+    rootDir: src
+    buildCommand: npm install && npx puppeteer browsers install chrome
+    startCommand: npm start
+```
+
+### Manual / VPS
+
+```bash
+cd src
+npm install
+npx puppeteer browsers install chrome
+npm start
 ```
 
 ---
@@ -760,7 +508,7 @@ Complete-On-Page-SEO/
 ```bash
 npx puppeteer browsers install chrome
 ```
-Or set a custom `CHROME_PATH` in `server.js`.
+Or set a custom `CHROME_PATH` in `src/server.js`.
 
 **Chrome crashes on low-memory systems:**
 ```bash
@@ -786,14 +534,14 @@ rm -rf node_modules && npm install
 
 - The server logs which level(s) failed with error messages.
 - A failed level returns a score of 0 with a single critical issue describing the error.
-- Check `server_log.txt` for full error details.
+- Check `server.log` / `server_err.log` for full error details.
 
 ---
 
 ## FAQ
 
 **Q: Does this tool crawl my entire site?**  
-A: No. It analyzes a single URL per request. For site-wide analysis, run multiple audits and use Level 21 (Site-Wide Risk Aggregation) via the API.
+A: No. It analyzes a single URL per request. For site-wide analysis, run multiple audits and use Level 21 (Site-Wide Risk Aggregation).
 
 **Q: Does it work on SPAs (React, Angular, Vue)?**  
 A: Yes. Puppeteer renders JavaScript before analysis. Level 2 specifically compares SSR vs CSR to detect JS-dependent content.
@@ -802,27 +550,35 @@ A: Yes. Puppeteer renders JavaScript before analysis. Level 2 specifically compa
 A: Yes. Each level uses a consistent 0–100 scoring methodology. The overall score is the average of all 21 levels.
 
 **Q: Can I run this on localhost/staging URLs?**  
-A: Yes, as long as the server running SEO Audit 360 can reach the target URL. Local servers work if they're on the same network.
+A: Yes, as long as the server running the audit can reach the target URL.
 
 **Q: Does it store audit results?**  
 A: No. This is a real-time analysis tool. Results are returned in the API response and rendered in the browser. No database is used.
 
 **Q: How long does an audit take?**  
-A: Typically 5–20 seconds depending on page complexity, JS execution time, and network latency.
+A: Typically 60–120 seconds depending on page complexity, JS execution time, and network latency.
+
+**Q: Why are some deliverables showing "No Data Found"?**  
+A: Some outputs (e.g., schema validation, images, revenue) depend on page content and on your Business Intelligence inputs. Thin pages or missing GA4 numbers gracefully skip those cards and point you to the relevant module.
+
+**Q: How do I get the Revenue-at-Risk dashboard?**  
+A: Enter your monthly organic traffic, average order value and conversion rate on the Configure page (Business Intelligence section) before starting the audit.
 
 ---
 
 ## Roadmap
 
-- [ ] **Multi-page crawling** — Spider entire sites with configurable depth
-- [ ] **Historical tracking** — Store results and track score changes over time
-- [ ] **Competitor comparison** — Compare audit results across domains
-- [ ] **Scheduled audits** — Cron-based periodic analysis with email reports
+- [x] **Auto-fill from URL analysis**
+- [x] **Competitor auto-discovery** (live search + verification)
+- [x] **14 concrete executive deliverables**
+- [x] **5-phase executive deep-dive**
+- [x] **Google Pixel UI with help guide**
+- [ ] **Multi-page crawling** — spider entire sites with configurable depth
+- [ ] **Historical tracking** — store results and track score changes over time
+- [ ] **Scheduled audits** — cron-based periodic analysis with email reports
 - [ ] **API client libraries** — JavaScript, Python, and Go SDKs
 - [ ] **Integration plugins** — WordPress, Shopify, Webflow, Contentful
-- [ ] **Custom level creation** — DSL for authoring new analysis levels
-- [ ] **Real-time WebSocket streaming** — Live audit progress without polling
-- [ ] **Mobile app** — iOS/Android companion for on-the-go audits
+- [ ] **Real-time WebSocket streaming** — live audit progress
 - [ ] **AI-powered fix generation** — LLM integration for automated remediation
 
 ---
@@ -846,15 +602,6 @@ Contributions are welcome! Here's how:
 - **Handle errors gracefully** — use try/catch, return a structured error result, never crash the audit.
 - Add new helper functions to `helpers.js` and import them in `levels.js`.
 - Run `node -c helpers.js && node -c levels.js && node -c server.js` to verify syntax.
-
-### Code Style
-
-- 2-space indentation.
-- Single quotes for strings.
-- Semicolons required.
-- No JSDoc required but use descriptive variable names.
-- Favor `const` over `let`; avoid `var`.
-- Use early returns and guard clauses.
 
 ---
 
@@ -883,7 +630,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ---
 
 <div align="center">
-  <strong>SEO Deep Audit 360</strong> — Complete On-Page SEO Analysis Engine
+  <strong>Complete ON Page SEO 2026</strong> — 21-Level AI-Powered On-Page SEO Audit & Fix Generator
   <br>
   Built with ❤️ for the SEO community
 </div>

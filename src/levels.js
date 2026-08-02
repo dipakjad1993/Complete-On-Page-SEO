@@ -1,10 +1,13 @@
 const { sc, byteLen, pxWidth, cssEscape, sel, getSelectorChain, extractAllAttributes, analyzeInlineStyles, syllables, fleschKincaid, stripHtml, getTextContent, countSyllables, extractSchemas, chunkText, analyzeSchema, detectAIPatterns, analyzeImage, analyzeLink, analyzeHeading, analyzeAccessibility, countWords, extractEntities, extractAllMentions, analyzeReadability, analyzeKeywordDensity, analyzeBigrams, analyzeContentStructure, analyzeTransitionWords, detectContentQualityFlags, analyzeNLP, analyzeTitlePrecision, analyzeHeadingHierarchy, analyzeCanonicalIntegrity, analyzeMediaOptimization, analyzeHttpHeaders, analyzeInternalLinks, ssrVsCsrDiff, analyzeDomDepth, validateSchemaComprehensive, analyzeCoreWebVitals, extractKnowledgeGraphEntities, calculateInformationGain, analyzeAnchorTextContext, analyzeReadabilityAdvanced, ragChunkSimulator, directAnswerScorer, simulateLLMCitation, generateSchemaCode, generateMetaOptions, formatJiraTicket, generateEdgeWorkerCode, analyzeBotManagement, analyzeMultiModalContent, validateSemanticCaptions, analyzeSerpVolatility, calculateQualityThresholds, analyzeSyntheticAgentBehavior, calculateUnhelpfulContentRatio, validateEEATSignals, calculateRevenueAtRisk, prioritizeByImpact, passageVectorSim, crossReferenceEntityConsensus, generateAutonomousFix, redTeamTest, agenticCommerceAudit, synthesizeMentionShare, selfHealingEdgeScript, calculateSiteWideRisk } = require('./helpers');
 
-function level1($, url, headers, rawHtml) {
+function level1($, url, headers, rawHtml, config) {
+  try {
+  const cfg = config || {};
   const issues = [];
   let p = 0;
   const subfunctions = {};
   const data = subfunctions;
+  data.config = { userAgent: cfg.userAgent || 'chrome-desktop', pageType: cfg.pageType || 'auto', keywords: cfg.keywords || '', brand: cfg.brand || '' };
 
   const titleText = $('title').first().text().trim();
   const titleBl = byteLen(titleText);
@@ -27,14 +30,14 @@ function level1($, url, headers, rawHtml) {
     hasSeparator: /[-–—|:;]/.test(titleText)
   };
 
-  if (!titleText) { p += 25; issues.push({ severity: 'critical', impact: 'critical', message: 'No title tag found — Google auto-generates a poor title from H1 or content, reducing CTR by ~30%', element: 'title', selector: 'head', link: url, evidence: 'Title tag count: 0', recommendation: 'Add <title>Primary Keyword - Secondary Keyword | Brand Name</title>' }); }
+  if (!titleText) { p += 25; issues.push({ severity: 'critical', impact: 'critical', message: 'No title tag found — Google auto-generates a poor title from H1 or content, reducing CTR by ~30%', element: 'title', selector: 'head > title', link: url, evidence: 'Title tag count: 0 in <head>', fix: '<title>Primary Keyword - Secondary Keyword | Brand Name</title>', recommendation: 'Add a unique, descriptive title tag to every page. Place primary keyword at the start.', steps: ['Open your HTML file or CMS page editor', 'Locate the <head> section (usually near the top of the HTML)', 'Add or replace the <title> tag with: <title>Your Primary Keyword - Description | Brand</title>', 'Keep title between 50-60 characters (580px pixel width max)', 'Front-load the primary keyword for maximum SEO impact', 'Ensure each page has a unique title (no duplicates across your site)', 'Save and deploy the changes'] }); }
   else {
-    if (titleText.length < 20) { p += 15; issues.push({ severity: 'critical', impact: 'high', message: 'Title too short: ' + titleText.length + ' chars. "' + titleText + '" under 20 chars wastes SERP real estate', element: 'title', selector: $('title').length ? sel($, $('title')[0]) : '', link: url, evidence: 'Length: ' + titleText.length + ' chars, min recommended: 50' }); }
-    else if (titleText.length < 30) { p += 5; issues.push({ severity: 'warning', impact: 'medium', message: 'Title below optimal length: ' + titleText.length + ' chars — could include more descriptive keywords', element: 'title', selector: sel($, $('title')[0]), link: url }); }
-    if (titleIsTruncated) { p += titlePx > 580 ? 8 : 5; issues.push({ severity: 'warning', impact: 'medium', message: 'Title may truncate in SERPs: ' + titlePx + 'px/' + titleBl + ' bytes (safe limit: 580px / ~60 chars)', element: 'title', selector: sel($, $('title')[0]), link: url, evidence: 'Pixel width ' + titlePx + 'px, safe limit 580px', recommendation: 'Shorten to 50-55 chars. Front-load primary keyword.' }); }
-    if (titleHasDynamic) { p += 5; issues.push({ severity: 'warning', impact: 'medium', message: 'Dynamic substitution tokens detected in title — Google may rewrite SERP title', element: 'title', selector: sel($, $('title')[0]), link: url, evidence: 'Patterns found: ' + titleText.match(/[%][sS]|\{title\}|\{page\}|\{term\}|\[page\]|\[keyword\]|{{.+?}}/g).join(', ') }); }
-    if (!titleMatchesH1 && h1Text) { p += 5; issues.push({ severity: 'warning', impact: 'medium', message: 'Title "' + titleText.substring(0, 40) + '" substantially differs from H1 "' + h1Text.substring(0, 40) + '" — Google may rewrite title based on H1 content', element: 'title', selector: sel($, $('title')[0]), link: url, evidence: 'Title: "' + titleText + '" | H1: "' + h1Text + '"', recommendation: 'Align title and H1 so both contain the primary keyword' }); }
-    if (ogTitle && !titleMatchesOG) { p += 3; issues.push({ severity: 'info', impact: 'low', message: 'OG:title "' + ogTitle.substring(0, 40) + '" differs from HTML title — social shares may show different text', element: 'meta[property="og:title"]', link: url, evidence: 'OG: "' + ogTitle + '" vs Title: "' + titleText + '"' }); }
+    if (titleText.length < 20) { p += 15; issues.push({ severity: 'critical', impact: 'high', message: 'Title too short: ' + titleText.length + ' chars. "' + titleText + '" under 20 chars wastes SERP real estate', element: 'title', selector: $('title').length ? sel($, $('title')[0]) : 'head > title', link: url, evidence: 'Length: ' + titleText.length + ' chars, min recommended: 50', fix: '<title>' + (h1Text || 'Your Primary Keyword') + ' - Detailed Description | ' + (data.config.brand || 'Brand Name') + '</title>', steps: ['Current title is only ' + titleText.length + ' characters — far below the optimal 50-60 range', 'Expand the title by adding: Primary Keyword + Secondary Keyword + Brand', 'Example pattern: "Primary Keyword - Supporting Detail | Brand Name"', 'Ensure the title accurately describes the page content', 'Test pixel width using a title pixel counter tool (target: under 580px)', 'Deploy and verify in Google Search Console after indexing'] }); }
+    else if (titleText.length < 30) { p += 5; issues.push({ severity: 'warning', impact: 'medium', message: 'Title below optimal length: ' + titleText.length + ' chars — could include more descriptive keywords', element: 'title', selector: sel($, $('title')[0]), link: url, fix: 'Add more descriptive keywords to reach 50-60 characters', steps: ['Add a secondary keyword or descriptive phrase to the title', 'Include your brand name if not already present', 'Target 50-60 characters total', 'Front-load the most important keywords'] }); }
+    if (titleIsTruncated) { p += titlePx > 580 ? 8 : 5; issues.push({ severity: 'warning', impact: 'medium', message: 'Title may truncate in SERPs: ' + titlePx + 'px/' + titleBl + ' bytes (safe limit: 580px / ~60 chars)', element: 'title', selector: sel($, $('title')[0]), link: url, evidence: 'Pixel width ' + titlePx + 'px, safe limit 580px', fix: 'Shorten title to under 55 characters. Front-load the primary keyword.', steps: ['Google truncates titles at approximately 580 pixels (roughly 55-60 characters)', 'Your title is ' + titlePx + 'px wide — the last ' + (titlePx - 580) + 'px will be cut off in search results', 'Move the most important keyword/phrase to the beginning of the title', 'Remove filler words like "Welcome to", "The official site of"', 'Aim for 50-55 characters to be safe across all devices', 'Use a pixel width checker to verify: search for "SERP pixel width tool"'] }); }
+    if (titleHasDynamic) { p += 5; issues.push({ severity: 'warning', impact: 'medium', message: 'Dynamic substitution tokens detected in title — Google may rewrite SERP title', element: 'title', selector: sel($, $('title')[0]), link: url, evidence: 'Patterns found: ' + (titleText.match(/[%][sS]|\{title\}|\{page\}|\{term\}|\[page\]|\[keyword\]|{{.+?}}/g) || []).join(', '), fix: 'Replace dynamic tokens with static, keyword-rich titles or verify token replacement works correctly', steps: ['Dynamic tokens like {title}, %s%, [page] are CMS placeholders that get replaced at runtime', 'Verify the token actually produces a meaningful title by viewing the rendered page', 'If the token output is generic (e.g., "Page 1"), replace it with a static title', 'For WordPress: Edit the SEO plugin title template (Yoast/RankMath)', 'For custom CMS: Check the template file that generates the <title> tag', 'Google may ignore dynamic titles that appear auto-generated'] }); }
+    if (!titleMatchesH1 && h1Text) { p += 5; issues.push({ severity: 'warning', impact: 'medium', message: 'Title "' + titleText.substring(0, 40) + '" substantially differs from H1 "' + h1Text.substring(0, 40) + '" — Google may rewrite title based on H1 content', element: 'title', selector: sel($, $('title')[0]), link: url, evidence: 'Title: "' + titleText + '" | H1: "' + h1Text + '"', fix: 'Align title and H1 to share the same primary keyword phrase', steps: ['Google sometimes replaces your title with H1 text in search results', 'Ensure both title and H1 contain the same primary keyword', 'The title can be a slightly expanded version of the H1', 'Example: H1 = "Best Running Shoes" → Title = "Best Running Shoes 2026 - Reviews & Guide | Brand"', 'This alignment signals clear topical focus to search engines'] }); }
+    if (ogTitle && !titleMatchesOG) { p += 3; issues.push({ severity: 'info', impact: 'low', message: 'OG:title "' + ogTitle.substring(0, 40) + '" differs from HTML title — social shares may show different text', element: 'meta[property="og:title"]', link: url, evidence: 'OG: "' + ogTitle + '" vs Title: "' + titleText + '"', fix: 'Set og:title to match or closely mirror the HTML <title> tag', steps: ['OG:title controls what appears when your page is shared on Facebook/LinkedIn', 'Set <meta property="og:title" content="same as your title tag">', 'This ensures consistent branding across search and social', 'Update Open Graph tags in your HTML <head> section'] }); }
   }
 
   const desc = $('meta[name="description"]').first().attr('content') || '';
@@ -54,14 +57,14 @@ function level1($, url, headers, rawHtml) {
     ogDescription: ogDesc.substring(0, 200), ogAligned: ogDescAligned
   };
 
-  if (!desc) { p += 20; issues.push({ severity: 'critical', impact: 'critical', message: 'No meta description — Google auto-generates one from content, research shows this reduces CTR by ~5.8%', element: 'meta[name="description"]', link: url, evidence: 'Meta description tag count: 0', recommendation: 'Write a compelling 150-155 char description with primary keyword and CTA' }); }
+  if (!desc) { p += 20; issues.push({ severity: 'critical', impact: 'critical', message: 'No meta description — Google auto-generates one from content, research shows this reduces CTR by ~5.8%', element: 'meta[name="description"]', link: url, evidence: 'Meta description tag count: 0', fix: '<meta name="description" content="Write a compelling 150-155 character description that includes your primary keyword and a call-to-action. This appears below your title in search results.">', recommendation: 'Write a compelling 150-155 char description with primary keyword and CTA', steps: ['Open your HTML file or CMS page editor', 'Locate the <head> section', 'Add: <meta name="description" content="Your compelling description here">', 'Write 150-155 characters (Google truncates at ~155-160)', 'Include your primary keyword naturally in the first 100 characters', 'Add a call-to-action: "Learn how...", "Discover why...", "Get started..."', 'Make it unique for every page — duplicate descriptions hurt rankings', 'Save and deploy. Monitor CTR in Google Search Console after indexing'] }); }
   else {
-    if (descLen < 70) { p += 8; issues.push({ severity: 'warning', impact: 'medium', message: 'Meta description too short: ' + descLen + ' chars — optimal is 150-155', element: 'meta[name="description"]', link: url, evidence: 'Current: ' + descLen + ' chars, target: 150-155', recommendation: 'Expand by ' + (150 - descLen) + '+ chars with compelling copy' }); }
-    else if (descLen < 120) { p += 3; issues.push({ severity: 'info', impact: 'low', message: 'Meta description below optimal range: ' + descLen + ' chars (target: 150-155)', element: 'meta[name="description"]', link: url }); }
-    if (descLen > 160) { p += 5; issues.push({ severity: 'warning', impact: 'medium', message: 'Meta description too long: ' + descLen + ' chars — Google truncates at ~155-160 chars', element: 'meta[name="description"]', link: url, evidence: 'Current: ' + descLen + ' chars, truncation point: ~155 chars', recommendation: 'Trim ' + (descLen - 150) + ' chars. Front-load keywords and CTA.' }); }
-    if (!descHasCTA && descLen > 50) { p += 2; issues.push({ severity: 'info', impact: 'low', message: 'Meta description lacks a clear call-to-action — adding one can improve CTR by 2-4%', element: 'meta[name="description"]', link: url, recommendation: 'Add: "Learn how...", "Discover why...", "Get started..."' }); }
-    if (!descHasKeyword && descKeywords) { p += 2; issues.push({ severity: 'info', impact: 'medium', message: 'Primary keyword phrase "' + descKeywords + '" not found in meta description — keywords in descriptions get bolded in SERPs', element: 'meta[name="description"]', link: url, evidence: 'H1 keyword "' + descKeywords + '" not in description' }); }
-    if (ogDesc && !ogDescAligned) { p += 2; issues.push({ severity: 'info', impact: 'low', message: 'OG:description differs from HTML meta description — social platforms may show different text', element: 'meta[property="og:description"]', link: url }); }
+    if (descLen < 70) { p += 8; issues.push({ severity: 'warning', impact: 'medium', message: 'Meta description too short: ' + descLen + ' chars — optimal is 150-155', element: 'meta[name="description"]', link: url, evidence: 'Current: ' + descLen + ' chars, target: 150-155', fix: 'Expand description to 150-155 characters with compelling copy and keywords', steps: ['Your description is only ' + descLen + ' characters — Google can display up to ~155', 'Add more descriptive text about what the page offers', 'Include the primary keyword naturally', 'Add a call-to-action (e.g., "Learn more", "Shop now", "Read the guide")', 'Aim for exactly 150-155 characters for maximum SERP visibility'] }); }
+    else if (descLen < 120) { p += 3; issues.push({ severity: 'info', impact: 'low', message: 'Meta description below optimal range: ' + descLen + ' chars (target: 150-155)', element: 'meta[name="description"]', link: url, fix: 'Add 30-40 more characters with additional keyword-rich copy', steps: ['Description is slightly short at ' + descLen + ' chars', 'Add a secondary keyword or benefit statement', 'Include a CTA if not already present'] }); }
+    if (descLen > 160) { p += 5; issues.push({ severity: 'warning', impact: 'medium', message: 'Meta description too long: ' + descLen + ' chars — Google truncates at ~155-160 chars', element: 'meta[name="description"]', link: url, evidence: 'Current: ' + descLen + ' chars, truncation point: ~155 chars', fix: 'Trim to 150-155 characters. Keep the most important info and CTA at the start.', steps: ['Your description exceeds 160 characters — the last ' + (descLen - 155) + ' characters will be cut off in search results', 'Identify the most compelling part of your description', 'Move the primary keyword and CTA to the first 100 characters', 'Remove redundant words or secondary details', 'Test by pasting into a character counter tool'] }); }
+    if (!descHasCTA && descLen > 50) { p += 2; issues.push({ severity: 'info', impact: 'low', message: 'Meta description lacks a clear call-to-action — adding one can improve CTR by 2-4%', element: 'meta[name="description"]', link: url, fix: 'Add a CTA like "Learn how...", "Discover why...", "Get started..."', steps: ['CTAs in meta descriptions encourage clicks from search results', 'Add action verbs: Learn, Discover, Find, Get, Start, Try, Shop, Read', 'Place the CTA near the end of the description', 'Example: "... Read our complete guide to learn more"', 'A/B test different CTAs in Google Search Console'] }); }
+    if (!descHasKeyword && descKeywords) { p += 2; issues.push({ severity: 'info', impact: 'medium', message: 'Primary keyword phrase "' + descKeywords + '" not found in meta description — keywords in descriptions get bolded in SERPs', element: 'meta[name="description"]', link: url, evidence: 'H1 keyword "' + descKeywords + '" not in description', fix: 'Include the primary keyword phrase "' + descKeywords + '" naturally in the description', steps: ['Google bolds matching keywords in descriptions, increasing visibility', 'Your primary keyword from the H1 should appear in the meta description', 'Rewrite the description to naturally include "' + descKeywords + '"', 'Place it in the first 100 characters for maximum impact', 'Don\'t keyword-stuff — keep it readable'] }); }
+    if (ogDesc && !ogDescAligned) { p += 2; issues.push({ severity: 'info', impact: 'low', message: 'OG:description differs from HTML meta description — social platforms may show different text', element: 'meta[property="og:description"]', link: url, fix: 'Set og:description to match the HTML meta description', steps: ['OG:description controls what appears when shared on social media', 'Set <meta property="og:description" content="same as meta description">', 'This ensures consistent messaging across search and social'] }); }
   }
 
   const vp = $('meta[name="viewport"]').first().attr('content') || '';
@@ -72,55 +75,50 @@ function level1($, url, headers, rawHtml) {
     allowsZoom: !vp.includes('maximum-scale') && !vp.includes('user-scalable=no'),
     zoomRestricted: vp.includes('maximum-scale=') || vp.includes('user-scalable=no')
   };
-  if (!vp) { p += 20; issues.push({ severity: 'critical', impact: 'critical', message: 'No viewport meta tag — mobile browsers render at desktop width, hurting mobile rankings', element: 'meta[name="viewport"]', link: url, fix: '<meta name="viewport" content="width=device-width, initial-scale=1">', recommendation: 'Essential for mobile-first indexing' }); }
+  if (!vp) { p += 20; issues.push({ severity: 'critical', impact: 'critical', message: 'No viewport meta tag — mobile browsers render at desktop width, hurting mobile rankings', element: 'meta[name="viewport"]', selector: 'head > meta[name="viewport"]', link: url, fix: '<meta name="viewport" content="width=device-width, initial-scale=1">', recommendation: 'Essential for mobile-first indexing', steps: ['Without a viewport tag, mobile browsers render at 980px desktop width', 'This makes your site unreadable on phones without zooming', 'Add this exact tag to your <head> section: <meta name="viewport" content="width=device-width, initial-scale=1">', 'This tells the browser to match the device screen width', 'initial-scale=1 sets the zoom level to 100% on page load', 'Test on mobile devices or use Chrome DevTools device emulation', 'This is required for Google mobile-first indexing'] }); }
   else {
-    if (!vp.includes('width=device-width')) { p += 10; issues.push({ severity: 'critical', impact: 'high', message: 'Viewport missing "width=device-width" — required for responsive display', element: 'meta[name="viewport"]', link: url, evidence: 'Current: "' + vp + '"' }); }
+    if (!vp.includes('width=device-width')) { p += 10; issues.push({ severity: 'critical', impact: 'high', message: 'Viewport missing "width=device-width" — required for responsive display', element: 'meta[name="viewport"]', link: url, evidence: 'Current: "' + vp + '"', fix: 'Change to: <meta name="viewport" content="width=device-width, initial-scale=1">', steps: ['The "width=device-width" directive is essential for responsive design', 'Without it, the browser doesn\'t know to match the device width', 'Update your viewport tag to include width=device-width', 'If using a CMS, check your theme/template settings'] }); }
+    if (vp.includes('user-scalable=no') || vp.includes('maximum-scale=1')) { p += 8; issues.push({ severity: 'warning', impact: 'high', message: 'Viewport blocks user zooming (user-scalable=no or maximum-scale=1) — accessibility violation, may hurt rankings', element: 'meta[name="viewport"]', link: url, evidence: 'Current: "' + vp + '"', fix: 'Remove user-scalable=no and maximum-scale from the viewport tag', steps: ['Blocking zoom is a WCAG 2.1 Level AA accessibility violation', 'Users with visual impairments cannot read your content', 'Google may penalize sites that block zooming on mobile', 'Remove "user-scalable=no" and "maximum-scale=1" from your viewport tag', 'Correct tag: <meta name="viewport" content="width=device-width, initial-scale=1">', 'Only block zoom if your site is a native app-like experience (rare)'] }); }
     if (!vp.includes('initial-scale=')) { p += 5; issues.push({ severity: 'warning', impact: 'medium', message: 'Viewport missing "initial-scale=1" — may cause zooming issues on mobile', element: 'meta[name="viewport"]', link: url }); }
     if (vp.includes('maximum-scale=') || vp.includes('user-scalable=no')) { p += 5; issues.push({ severity: 'warning', impact: 'medium', message: 'Viewport restricts user zoom — WCAG accessibility violation for visually impaired users', element: 'meta[name="viewport"]', link: url, evidence: 'Zoom restrictions detected', recommendation: 'Remove maximum-scale=1 and user-scalable=no to allow pinch-zoom' }); }
   }
 
   const robotsContent = ($('meta[name="robots"]').attr('content') || '').toLowerCase();
   data.robotsMeta = { raw: robotsContent, noindex: robotsContent.includes('noindex'), nofollow: robotsContent.includes('nofollow'), nosnippet: robotsContent.includes('nosnippet'), noimageindex: robotsContent.includes('noimageindex'), notranslate: robotsContent.includes('notranslate'), maxSnippet: (robotsContent.match(/max-snippet:(-?\d+)/) || [])[1] || null, maxVideoPreview: (robotsContent.match(/max-video-preview:(-?\d+)/) || [])[1] || null, maxImagePreview: (robotsContent.match(/max-image-preview:(large|standard|none)/) || [])[1] || null };
-  if (robotsContent.includes('noindex')) { p += 30; issues.push({ severity: 'critical', impact: 'critical', message: 'NOINDEX directive found — this page is BLOCKED from Google index', element: 'meta[name="robots"]', link: url, evidence: 'Content: "' + robotsContent + '"', recommendation: 'Remove noindex unless intentionally deindexing' }); }
-  if (robotsContent.includes('nofollow')) { p += 10; issues.push({ severity: 'critical', impact: 'high', message: 'NOFOLLOW directive found — all link equity from this page is blocked', element: 'meta[name="robots"]', link: url, evidence: 'Content: "' + robotsContent + '"' }); }
-  if (robotsContent.includes('nosnippet')) { p += 8; issues.push({ severity: 'warning', impact: 'high', message: 'NOSNIPPET directive — Google will not show snippet/description in SERPs', element: 'meta[name="robots"]', link: url }); }
-  if (robotsContent.includes('noimageindex')) { p += 5; issues.push({ severity: 'warning', impact: 'medium', message: 'NOIMAGEINDEX directive — images will not appear in Google Image Search', element: 'meta[name="robots"]', link: url }); }
+  if (robotsContent.includes('noindex')) { p += 30; issues.push({ severity: 'critical', impact: 'critical', message: 'NOINDEX directive found — this page is BLOCKED from Google index', element: 'meta[name="robots"]', selector: 'head > meta[name="robots"]', link: url, evidence: 'Content: "' + robotsContent + '"', fix: 'Remove noindex from meta robots tag or delete the tag entirely', steps: ['This page will NEVER appear in Google search results', 'Check if this is intentional (e.g., admin pages, thank-you pages)', 'If unintentional: Remove the <meta name="robots" content="noindex"> tag', 'Or change to: <meta name="robots" content="index, follow">', 'Also check server response headers for X-Robots-Tag: noindex', 'After fixing, submit the URL in Google Search Console for re-crawling', 'Indexing may take 1-14 days after removal of noindex'] }); }
+  if (robotsContent.includes('nofollow')) { p += 10; issues.push({ severity: 'critical', impact: 'high', message: 'NOFOLLOW directive found — all link equity from this page is blocked', element: 'meta[name="robots"]', link: url, evidence: 'Content: "' + robotsContent + '"', fix: 'Remove nofollow unless linking to untrusted external pages', steps: ['nofollow tells Google not to pass any link equity through links on this page', 'This means your internal links and outbound links carry zero SEO value', 'Remove nofollow from the robots meta tag for most pages', 'Only use nofollow on user-generated content links (comments, forums)', 'Change to: <meta name="robots" content="index, follow">'] }); }
+  if (robotsContent.includes('nosnippet')) { p += 8; issues.push({ severity: 'warning', impact: 'high', message: 'NOSNIPPET directive — Google will not show snippet/description in SERPs', element: 'meta[name="robots"]', link: url, fix: 'Remove nosnippet to allow Google to display a description in search results', steps: ['nosnippet prevents Google from showing any text snippet in search results', 'This reduces CTR as users can\'t preview your content', 'Remove nosnippet from the robots meta tag', 'Allow Google to auto-generate a snippet from your page content'] }); }
 
   const xRobots = (headers['x-robots-tag'] || '').toLowerCase();
   data.xRobotsTagHeader = { raw: headers['x-robots-tag'] || 'not set', noindex: xRobots.includes('noindex'), nofollow: xRobots.includes('nofollow'), nosnippet: xRobots.includes('nosnippet') };
-  if (xRobots.includes('noindex')) { p += 25; issues.push({ severity: 'critical', impact: 'critical', message: 'X-Robots-Tag: noindex via HTTP header — overrides meta robots at server level', element: 'HTTP Header: X-Robots-Tag', link: url, evidence: 'Server header: X-Robots-Tag: ' + headers['x-robots-tag'] }); }
-  if (xRobots.includes('nofollow')) { p += 8; issues.push({ severity: 'critical', impact: 'high', message: 'X-Robots-Tag: nofollow via HTTP header', element: 'HTTP Header: X-Robots-Tag', link: url }); }
-  if (xRobots.includes('nosnippet')) { p += 5; issues.push({ severity: 'warning', impact: 'high', message: 'X-Robots-Tag: nosnippet via HTTP header', element: 'HTTP Header: X-Robots-Tag', link: url }); }
+  if (xRobots.includes('noindex')) { p += 25; issues.push({ severity: 'critical', impact: 'critical', message: 'X-Robots-Tag: noindex via HTTP header — overrides meta robots at server level', element: 'HTTP Header: X-Robots-Tag', link: url, evidence: 'Server header: X-Robots-Tag: ' + headers['x-robots-tag'], fix: 'Remove the X-Robots-Tag: noindex header from your server configuration', steps: ['This header is set at the server/CDN level, not in HTML', 'Check your server config files (.htaccess, nginx.conf, server.js)', 'In Apache: Remove "Header set X-Robots-Tag: noindex"', 'In Nginx: Remove "add_header X-Robots-Tag noindex"', 'In Node.js/Express: Remove res.setHeader("X-Robots-Tag", "noindex")', 'Check CDN settings (Cloudflare, AWS CloudFront, etc.)', 'After fixing, test with curl -I to verify the header is removed'] }); }
 
   const canon = analyzeCanonicalIntegrity($, url);
   data.canonical = canon;
   if (canon.issues.length > 0) {
-    if (!canon.canonicalUrl) { p += 15; issues.push({ severity: 'critical', impact: 'high', message: 'No canonical tag — URL variants create duplicate content that dilutes ranking signals', element: 'link[rel="canonical"]', link: url, fix: '<link rel="canonical" href="' + url + '">' }); }
-    if (canon.multipleCanonicals) { p += 15; issues.push({ severity: 'critical', impact: 'high', message: 'Multiple canonical tags (' + $('link[rel="canonical"]').length + ') — search engines may ignore all', element: 'link[rel="canonical"]', link: url, evidence: $('link[rel="canonical"]').length + ' canonicals found' }); }
-    if (canon.crossDomain) { p += 5; issues.push({ severity: 'warning', impact: 'medium', message: 'Cross-domain canonical to "' + canon.canonicalUrl + '" — only use for syndicated content', element: 'link[rel="canonical"]', link: url }); }
-    if (canon.hasParams) { p += 3; issues.push({ severity: 'info', impact: 'low', message: 'Canonical includes URL parameters — may cause indexing confusion', element: 'link[rel="canonical"]', link: url }); }
+    if (!canon.canonicalUrl) { p += 15; issues.push({ severity: 'critical', impact: 'high', message: 'No canonical tag — URL variants create duplicate content that dilutes ranking signals', element: 'link[rel="canonical"]', selector: 'head > link[rel="canonical"]', link: url, fix: '<link rel="canonical" href="' + url + '">', steps: ['Without a canonical, Google may index multiple versions of this page', 'URL variants: http/https, www/non-www, trailing slash, parameters', 'Add this to your <head>: <link rel="canonical" href="' + url + '">', 'The canonical URL should be the preferred, crawlable version', 'Use absolute URLs (not relative paths)', 'If using a CMS, enable canonical tags in your SEO plugin', 'Self-referencing canonicals (pointing to the same URL) are best practice'] }); }
+    if (canon.multipleCanonicals) { p += 15; issues.push({ severity: 'critical', impact: 'high', message: 'Multiple canonical tags (' + $('link[rel="canonical"]').length + ') — search engines may ignore all', element: 'link[rel="canonical"]', link: url, evidence: $('link[rel="canonical"]').length + ' canonicals found', fix: 'Keep only ONE canonical tag per page pointing to the preferred URL', steps: ['Having multiple canonical tags confuses search engines', 'They may ignore ALL canonicals, treating the page as self-canonical', 'Remove duplicate canonical tags — keep only one', 'Check: theme templates, SEO plugins, and custom code for duplicates', 'The canonical URL should be the exact URL you want indexed'] }); }
   }
 
   const headingAnalysis = analyzeHeadingHierarchy($);
   data.headingHierarchy = headingAnalysis;
   if (headingAnalysis.hierarchyIssues.length > 0) {
     headingAnalysis.hierarchyIssues.forEach(hi => {
-      if (hi.type === 'multiple-h1') { p += 10; issues.push({ severity: 'warning', impact: 'high', message: 'Multiple H1 tags (' + hi.count + ') — dilutes strongest topic signal', element: 'h1', link: url, evidence: hi.count + ' H1 tags', recommendation: 'Use exactly one H1' }); }
-      else if (hi.type === 'missing-h1') { p += 20; issues.push({ severity: 'critical', impact: 'critical', message: 'No H1 tag — strongest on-page HTML signal for topic relevance is missing', element: 'h1', link: url, recommendation: 'Add exactly one H1 containing primary target keyword' }); }
-      else if (hi.type === 'skipped-level') { p += 3; issues.push({ severity: 'warning', impact: 'medium', message: 'Heading hierarchy skipped from H' + hi.from + ' to H' + hi.to + ' at "' + hi.text + '" — breaks document outline', element: 'heading', selector: hi.selector, link: url, evidence: 'H' + hi.from + ' → H' + hi.to + ' at "' + hi.text + '"', recommendation: 'Use sequential heading levels: H1 → H2 → H3' }); }
-      else if (hi.type === 'empty-heading') { p += 3; issues.push({ severity: 'warning', impact: 'medium', message: 'Empty H' + hi.level + ' heading — no text content, confuses screen readers and crawlers', element: 'h' + hi.level, selector: hi.selector, link: url }); }
+      if (hi.type === 'multiple-h1') { p += 10; issues.push({ severity: 'warning', impact: 'high', message: 'Multiple H1 tags (' + hi.count + ') — dilutes strongest topic signal', element: 'h1', link: url, evidence: hi.count + ' H1 tags', fix: 'Keep exactly one H1 per page. Convert extra H1s to H2s.', steps: ['Each page should have exactly one H1 tag for clear topic focus', 'Your page has ' + hi.count + ' H1 tags — Google may not understand the primary topic', 'Identify which H1 best represents the page\'s main topic', 'Convert all other H1 tags to H2 tags', 'Example: <h1>Main Topic</h1> → keep; <h1>Sub-topic</h1> → change to <h2>Sub-topic</h2>', 'The single H1 should contain your primary target keyword'] }); }
+      else if (hi.type === 'missing-h1') { p += 20; issues.push({ severity: 'critical', impact: 'critical', message: 'No H1 tag — strongest on-page HTML signal for topic relevance is missing', element: 'h1', link: url, fix: '<h1>Your Primary Target Keyword Here</h1>', steps: ['The H1 tag is the most important on-page SEO signal', 'Add exactly one H1 tag near the top of your content area', 'The H1 should contain your primary target keyword', 'It should accurately describe what the page is about', 'Place it inside <main> or the primary content section', 'Don\'t hide the H1 in the footer or sidebar', 'Example: <h1>Best Running Shoes for Marathon Training 2026</h1>'] }); }
+      else if (hi.type === 'skipped-level') { p += 3; issues.push({ severity: 'warning', impact: 'medium', message: 'Heading hierarchy skipped from H' + hi.from + ' to H' + hi.to + ' at "' + hi.text + '" — breaks document outline', element: 'heading', selector: hi.selector, link: url, evidence: 'H' + hi.from + ' to H' + hi.to + ' at "' + hi.text + '"', fix: 'Use sequential heading levels: H1 to H2 to H3. Never skip levels.', steps: ['Heading tags create a document outline for crawlers and screen readers', 'Skipping levels (e.g., H1 to H3) breaks this outline', 'Change the H' + hi.to + ' tag to H' + (hi.from + 1) + ' for proper hierarchy', 'Each heading level should logically nest under the previous one'] }); }
+      else if (hi.type === 'empty-heading') { p += 3; issues.push({ severity: 'warning', impact: 'medium', message: 'Empty H' + hi.level + ' heading — no text content, confuses screen readers and crawlers', element: 'h' + hi.level, selector: hi.selector, link: url, fix: 'Add descriptive text content to the heading or remove the empty heading tag', steps: ['Empty headings provide no SEO value and confuse assistive technologies', 'Add meaningful text that describes the section content', 'Or remove the empty heading tag entirely', 'If used for styling, use a <div> or <span> with CSS instead'] }); }
     });
   }
-  if (headingAnalysis.visualVsSemantic && headingAnalysis.visualVsSemantic.length > 0) { p += Math.min(5, headingAnalysis.visualVsSemantic.length); issues.push({ severity: 'info', impact: 'low', message: headingAnalysis.visualVsSemantic.length + ' visually large elements (font-size >= 24px) are not semantic headings', element: 'visual headings', link: url, recommendation: 'Use proper H1-H6 tags instead of styled spans/divs for headings' }); }
 
   const media = analyzeMediaOptimization($);
   data.mediaOptimization = media;
   const imgsNoAlt = media.images.filter(i => !i.alt).length;
   const imgsNoDims = media.images.filter(i => !i.hasDimensions).length;
   const outdatedCount = media.images.filter(i => ['png', 'gif', 'bmp'].includes(i.format)).length;
-  if (imgsNoAlt > 0) { p += Math.min(20, imgsNoAlt * 3); issues.push({ severity: 'critical', impact: 'high', message: imgsNoAlt + ' of ' + media.totalImages + ' images missing alt attribute — essential for accessibility and image SEO', element: 'img', link: url, evidence: 'Images without alt: ' + imgsNoAlt, recommendation: 'Add descriptive alt text to all images' }); }
-  if (imgsNoDims > 0) { p += Math.min(10, imgsNoDims * 2); issues.push({ severity: 'warning', impact: 'high', message: imgsNoDims + ' images missing width/height attributes — causes Cumulative Layout Shift (CLS)', element: 'img', link: url, evidence: imgsNoDims + ' images lack dimensions', recommendation: 'Add width and height attributes matching actual image dimensions' }); }
-  if (outdatedCount > 0) { p += Math.min(5, outdatedCount); issues.push({ severity: 'warning', impact: 'medium', message: outdatedCount + ' images use outdated formats (PNG/GIF) — use WebP/AVIF for 25-35% better compression', element: 'img', link: url }); }
+  if (imgsNoAlt > 0) { p += Math.min(20, imgsNoAlt * 3); issues.push({ severity: 'critical', impact: 'high', message: imgsNoAlt + ' of ' + media.totalImages + ' images missing alt attribute — essential for accessibility and image SEO', element: 'img', link: url, evidence: 'Images without alt: ' + imgsNoAlt, fix: 'Add descriptive alt text to every image', steps: ['Alt text is required for WCAG 2.1 accessibility compliance', 'Google uses alt text to understand image content and rank in Image Search', 'For each image, add: <img src="..." alt="Descriptive text about the image">', 'Be specific: "Red Nike running shoe on white background" not "shoe image"', 'Decorative images: use alt="" (empty alt) to skip them', 'CMS users: Add alt text in the media library or image block settings', 'Aim for 125 characters or less for alt text'] }); }
+  if (imgsNoDims > 0) { p += Math.min(10, imgsNoDims * 2); issues.push({ severity: 'warning', impact: 'high', message: imgsNoDims + ' images missing width/height attributes — causes Cumulative Layout Shift (CLS)', element: 'img', link: url, evidence: imgsNoDims + ' images lack dimensions', fix: 'Add width and height attributes matching the actual image dimensions', steps: ['Missing image dimensions cause layout shifts as images load', 'This increases your CLS score, a Core Web Vitals metric', 'Add width="X" height="Y" to each <img> tag', 'Use the actual pixel dimensions of the image file', 'Example: <img src="photo.jpg" width="800" height="600" alt="...">', 'Modern CSS can still override these for responsive sizing', 'CMS users: Check your theme\'s image output template'] }); }
+  if (outdatedCount > 0) { p += Math.min(5, outdatedCount); issues.push({ severity: 'warning', impact: 'medium', message: outdatedCount + ' images use outdated formats (PNG/GIF) — use WebP/AVIF for 25-35% better compression', element: 'img', link: url, fix: 'Convert PNG/GIF images to WebP or AVIF format', steps: ['WebP/AVIF formats provide 25-35% better compression than PNG/JPG', 'Use tools like Squoosh.app, TinyPNG, or ImageOptim to convert', 'In HTML: <picture><source srcset="image.webp" type="image/webp"><img src="image.jpg" alt="..."></picture>', 'Most modern browsers support WebP (97%+ coverage)', 'AVIF offers even better compression but lower browser support (90%+)', 'CMS users: Install a WebP conversion plugin (e.g., ShortPixel, Imagify)'] }); }
   if (media.brokenSvgCount > 0) { p += 3; issues.push({ severity: 'info', impact: 'low', message: media.brokenSvgCount + ' inline SVGs with no accessible text or aria-label', element: 'svg', link: url }); }
 
   const lazyImages = media.images.filter(i => i.isLazy).length;
@@ -129,25 +127,24 @@ function level1($, url, headers, rawHtml) {
 
   const headersResult = analyzeHttpHeaders(headers);
   data.httpHeaders = headersResult;
-  if (headersResult.statusCode >= 400) { p += 25; issues.push({ severity: 'critical', impact: 'critical', message: 'HTTP ' + headersResult.statusCode + ' error — page inaccessible to users and search engines', element: 'HTTP Status', link: url, evidence: 'Status code: ' + headersResult.statusCode }); }
-  if (headersResult.xRobotsTag.issues.length > 0) { headersResult.xRobotsTag.issues.forEach(i => { p += 5; }); }
+  if (headersResult.statusCode >= 400) { p += 25; issues.push({ severity: 'critical', impact: 'critical', message: 'HTTP ' + headersResult.statusCode + ' error — page inaccessible to users and search engines', element: 'HTTP Status', link: url, evidence: 'Status code: ' + headersResult.statusCode, fix: 'Fix the server-side issue causing the ' + headersResult.statusCode + ' error', steps: ['HTTP ' + headersResult.statusCode + ' means the server could not serve this page', headersResult.statusCode === 404 ? 'The page URL doesn\'t exist — check for typos or create the page' : headersResult.statusCode === 503 ? 'Server is temporarily unavailable — check server health and restart if needed' : 'Check server logs for the root cause of this error', 'Verify the URL is correct and the page exists on the server', 'If using a CMS, check if the page is published (not in draft)', 'If recently moved, set up a 301 redirect from old URL to new URL', 'After fixing, test with: curl -I ' + url] }); }
 
   const links = analyzeInternalLinks($, url);
   data.internalLinks = links;
-  if (links.deadFragments.length > 0) { p += Math.min(10, links.deadFragments.length * 3); issues.push({ severity: 'warning', impact: 'medium', message: links.deadFragments.length + ' dead hash fragment links (href="#" points to non-existent IDs) — wastes crawl budget', element: 'a[href^="#"]', link: url, evidence: 'Dead fragments: ' + links.deadFragments.slice(0, 3).map(d => d.href).join(', ') }); }
+  if (links.deadFragments.length > 0) { p += Math.min(10, links.deadFragments.length * 3); issues.push({ severity: 'warning', impact: 'medium', message: links.deadFragments.length + ' dead hash fragment links (href="#" points to non-existent IDs) — wastes crawl budget', element: 'a[href^="#"]', link: url, evidence: 'Dead fragments: ' + links.deadFragments.slice(0, 3).map(d => d.href).join(', '), fix: 'Fix or remove broken hash fragment links', steps: ['Dead fragment links point to IDs that don\'t exist in the page', 'Check each broken link and either: add the missing ID, fix the href, or remove the link', 'Search your HTML for id="' + (links.deadFragments[0] || {}).href?.replace('#', '') + '" to verify', 'These broken links waste crawl budget and create poor UX'] }); }
 
   const perLinkAnalysis = [];
   $('a[href]').each((i, el) => {
     const la = analyzeLink($, el, url);
     perLinkAnalysis.push(la);
     if (la.isEmpty && !la.isHash && !la.isJavaScript) {
-      p += 2; issues.push({ severity: 'warning', impact: 'medium', message: 'Link #' + (i + 1) + ' has no accessible text: href="' + la.href.substring(0, 60) + '" — screen readers cannot interpret this link', element: 'a', selector: la.selector, link: url });
+      p += 2; issues.push({ severity: 'warning', impact: 'medium', message: 'Link #' + (i + 1) + ' has no accessible text: href="' + la.href.substring(0, 60) + '" — screen readers cannot interpret this link', element: 'a', selector: la.selector, link: url, fix: 'Add visible text, aria-label, or an image with alt text inside the link', steps: ['Empty links are invisible to screen readers and waste crawl budget', 'Add descriptive text: <a href="...">Click here to learn more</a>', 'Or add aria-label: <a href="..." aria-label="Learn more about our products">', 'For icon-only links, add aria-label describing the link purpose'] });
     }
     if (la.isGeneric) {
-      p += 1; issues.push({ severity: 'info', impact: 'low', message: 'Link "' + la.text.substring(0, 30) + '" uses generic anchor text — use descriptive text for SEO value', element: 'a', selector: la.selector, link: url });
+      p += 1; issues.push({ severity: 'info', impact: 'low', message: 'Link "' + la.text.substring(0, 30) + '" uses generic anchor text — use descriptive text for SEO value', element: 'a', selector: la.selector, link: url, fix: 'Replace generic text with keyword-rich descriptive anchor text', steps: ['Generic text like "click here" or "read more" wastes link equity', 'Describe the destination: "Read our guide to technical SEO" instead of "click here"', 'Descriptive anchors help Google understand what the linked page is about'] });
     }
     if (la.target === '_blank' && !la.rel.includes('noopener')) {
-      p += 2; issues.push({ severity: 'warning', impact: 'medium', message: 'Link to "' + la.href.substring(0, 40) + '" missing rel="noopener" with target="_blank" — security vulnerability', element: 'a', selector: la.selector, link: url });
+      p += 2; issues.push({ severity: 'warning', impact: 'medium', message: 'Link to "' + la.href.substring(0, 40) + '" missing rel="noopener" with target="_blank" — security vulnerability', element: 'a', selector: la.selector, link: url, fix: 'Add rel="noopener noreferrer" to all target="_blank" links', steps: ['Links with target="_blank" can be exploited by the opened page', 'The new page can access window.opener and redirect your page', 'Add rel="noopener noreferrer" to prevent this', 'Example: <a href="..." target="_blank" rel="noopener noreferrer">', 'Most modern browsers add this automatically, but older browsers don\'t'] });
     }
   });
   data.perLinkAnalysis = { total: perLinkAnalysis.length, emptyLinks: perLinkAnalysis.filter(l => l.isEmpty).length, genericLinks: perLinkAnalysis.filter(l => l.isGeneric).length, noopenerMissing: perLinkAnalysis.filter(l => l.target === '_blank' && !l.rel.includes('noopener')).length };
@@ -174,9 +171,11 @@ function level1($, url, headers, rawHtml) {
   data.headingDetail = perHeadingAnalysis;
 
   return { level: 1, name: 'Core Hygiene & Technical Baseline', score: sc(p), issues, data };
+  } catch (e) { return { level: 1, name: 'Core Hygiene & Technical Baseline', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 1 analysis failed: ' + e.message, element: 'system', link: url }], data: { error: e.message } }; }
 }
 
 function level2($, rawHtml, renderedHtml, perf) {
+  try {
   const issues = [];
   let p = 0;
   const subfunctions = {};
@@ -184,24 +183,19 @@ function level2($, rawHtml, renderedHtml, perf) {
 
   const ssrDiff = ssrVsCsrDiff(rawHtml, renderedHtml);
   data.ssrVsCsr = ssrDiff;
-  if (ssrDiff.ssrRatio < 0.5) { p += 20; issues.push({ severity: 'critical', impact: 'critical', message: 'Client-side rendering detected — content added after JS execution (' + ssrDiff.jsDependentCount + ' words JS-only). Googlebot may not execute all JS, potentially missing critical content.', element: 'JavaScript rendering', link: '', evidence: 'SSR ratio: ' + ssrDiff.ssrRatio + '. Raw HTML: ' + ssrDiff.rawTextLength + ' chars vs Rendered: ' + ssrDiff.renderedTextLength + ' chars', recommendation: 'Implement Server-Side Rendering (SSR) or Static Site Generation (SSG)' }); }
-  else if (ssrDiff.ssrRatio < 0.85) { p += 10; issues.push({ severity: 'warning', impact: 'high', message: 'Hybrid rendering with significant JS content (' + ssrDiff.jsDependentCount + ' JS-only words) — SSR ratio: ' + ssrDiff.ssrRatio + '. Some content may be missed by crawlers.', element: 'JavaScript rendering', link: '', evidence: 'SSR ratio: ' + ssrDiff.ssrRatio, recommendation: 'Move critical content to server-rendered HTML' }); }
-  if (ssrDiff.missingFromRaw.length > 0) { p += 5; issues.push({ severity: 'warning', impact: 'medium', message: ssrDiff.missingFromRaw.length + ' element types only present after JS execution — including ' + ssrDiff.missingFromRaw.slice(0, 3).map(m => m.tag).join(', ') , element: 'SSR elements', link: '', evidence: 'Elements: ' + ssrDiff.missingFromRaw.map(m => m.tag + ' (' + m.count + ')').join(', ') }); }
+  if (ssrDiff.ssrRatio < 0.5) { p += 20; issues.push({ severity: 'critical', impact: 'critical', message: 'Client-side rendering detected — content added after JS execution (' + ssrDiff.jsDependentCount + ' words JS-only). Googlebot may not execute all JS, potentially missing critical content.', element: 'JavaScript rendering', link: '', evidence: 'SSR ratio: ' + ssrDiff.ssrRatio + '. Raw HTML: ' + ssrDiff.rawTextLength + ' chars vs Rendered: ' + ssrDiff.renderedTextLength + ' chars', fix: 'Implement Server-Side Rendering (SSR) or Static Site Generation (SSG)', steps: ['Your page relies heavily on JavaScript to render content', 'Googlebot CAN execute JavaScript but with delays and limitations', 'Content in raw HTML is guaranteed to be indexed; JS-rendered content may not be', 'For React: Use Next.js for SSR/SSG, or Gatsby for static generation', 'For Vue: Use Nuxt.js for SSR/SSG', 'For Angular: Use Angular Universal for SSR', 'For static sites: Pre-render critical pages at build time', 'If SSR is not possible: Ensure critical content (title, meta, headings) is in raw HTML'] }); }
+  else if (ssrDiff.ssrRatio < 0.85) { p += 10; issues.push({ severity: 'warning', impact: 'high', message: 'Hybrid rendering with significant JS content (' + ssrDiff.jsDependentCount + ' JS-only words) — SSR ratio: ' + ssrDiff.ssrRatio + '. Some content may be missed by crawlers.', element: 'JavaScript rendering', link: '', evidence: 'SSR ratio: ' + ssrDiff.ssrRatio, fix: 'Move critical content to server-rendered HTML', steps: ['Your page partially renders on the server but relies on JS for important content', 'Identify which content is JS-only: compare raw HTML vs rendered HTML', 'Move critical SEO content (headings, product info, article text) to server-rendered HTML', 'Keep interactive features (filters, forms) as client-side rendered'] }); }
+  if (ssrDiff.missingFromRaw.length > 0) { p += 5; issues.push({ severity: 'warning', impact: 'medium', message: ssrDiff.missingFromRaw.length + ' element types only present after JS execution — including ' + ssrDiff.missingFromRaw.slice(0, 3).map(m => m.tag).join(', '), element: 'SSR elements', link: '', evidence: 'Elements: ' + ssrDiff.missingFromRaw.map(m => m.tag + ' (' + m.count + ')').join(', '), fix: 'Ensure these elements exist in the raw HTML for guaranteed indexing', steps: ['These HTML elements only appear after JavaScript runs', 'Googlebot may not always execute JavaScript on every crawl', 'Move important elements to the server-rendered HTML', 'Check your template/component files for the missing elements'] }); }
 
   const dom = analyzeDomDepth($);
   data.domDepth = dom;
-  if (dom.nodeCount > 1500) { p += 10; issues.push({ severity: 'warning', impact: 'high', message: 'DOM is very large: ' + dom.nodeCount + ' nodes — increases memory usage, slows rendering, hurts Core Web Vitals (TBT/FID)', element: 'DOM structure', link: '', evidence: dom.nodeCount + ' DOM nodes. Recommended: < 800', recommendation: 'Simplify DOM: remove unused wrappers, use semantic HTML, reduce nesting' }); }
-  else if (dom.nodeCount > 800) { p += 4; issues.push({ severity: 'info', impact: 'medium', message: 'DOM has ' + dom.nodeCount + ' nodes (moderate size) — consider simplifying', element: 'DOM structure', link: '' }); }
-  if (dom.maxDepth > 32) { p += 8; issues.push({ severity: 'warning', impact: 'high', message: 'DOM nesting depth of ' + dom.maxDepth + ' levels exceeds 32-level limit — causes layout thrashing and slow re-paints', element: 'DOM depth', link: '', evidence: 'Max depth: ' + dom.maxDepth + ' levels', recommendation: 'Keep DOM depth under 20 levels' }); }
-  else if (dom.maxDepth > 20) { p += 3; issues.push({ severity: 'info', impact: 'medium', message: 'DOM depth of ' + dom.maxDepth + ' levels — consider simplifying', element: 'DOM depth', link: '' }); }
-  data.domDepthDistribution = dom.depthBuckets;
-  data.childDistribution = dom.childDistribution;
+  if (dom.nodeCount > 1500) { p += 10; issues.push({ severity: 'warning', impact: 'high', message: 'DOM is very large: ' + dom.nodeCount + ' nodes — increases memory usage, slows rendering, hurts Core Web Vitals (TBT/FID)', element: 'DOM structure', link: '', evidence: dom.nodeCount + ' DOM nodes. Recommended: < 800', fix: 'Simplify DOM: remove unused wrappers, use semantic HTML, reduce nesting', steps: ['A large DOM tree increases memory usage and slows rendering', 'Google recommends under 800 DOM nodes for optimal performance', 'Your page has ' + dom.nodeCount + ' nodes — consider:', '1. Remove unused HTML elements and wrapper divs', '2. Use semantic HTML (<article>, <section>, <nav>) instead of nested divs', '3. Lazy-load off-screen content instead of rendering it all upfront', '4. Use Chrome DevTools > Elements panel to identify bloated sections', '5. Consider virtual scrolling for long lists'] }); }
+  if (dom.maxDepth > 32) { p += 8; issues.push({ severity: 'warning', impact: 'high', message: 'DOM nesting depth of ' + dom.maxDepth + ' levels exceeds 32-level limit — causes layout thrashing and slow re-paints', element: 'DOM depth', link: '', evidence: 'Max depth: ' + dom.maxDepth + ' levels', fix: 'Flatten DOM structure to under 20 nesting levels', steps: ['Deeply nested DOM causes slow style calculations and layout reflows', 'Your page nests ' + dom.maxDepth + ' levels deep — aim for under 20', 'Common causes: CSS-in-JS wrapper components, nested grid/flex containers', 'Flatten by removing unnecessary wrapper divs', 'Use CSS Grid/Flexbox for layout instead of nested containers', 'Check Chrome DevTools > Performance > Rendering for layout thrashing'] }); }
 
   const schema = validateSchemaComprehensive($);
   data.schemaValidation = { validCount: schema.validCount, invalidCount: schema.invalidCount, total: schema.schemas.length, types: schema.schemas.filter(s => s.valid).map(s => s.type), missingRequired: schema.missingRequired, circularRefs: schema.circularRefs, warnings: schema.warnings };
-  if (schema.invalidCount > 0) { p += 12; issues.push({ severity: 'critical', impact: 'high', message: schema.invalidCount + ' invalid JSON-LD schema(s) — ' + schema.missingRequired.slice(0, 3).map(m => m.schemaType + ': ' + m.field).join('; '), element: 'JSON-LD structured data', link: '', evidence: schema.missingRequired.map(m => m.schemaType + ' missing ' + m.field).join(', '), recommendation: 'Fix required fields and validate at https://validator.schema.org' }); }
-  if (schema.circularRefs.length > 0) { p += 5; issues.push({ severity: 'warning', impact: 'medium', message: schema.circularRefs.length + ' circular @id references detected in schema', element: 'JSON-LD @id', link: '' }); }
-  if (schema.schemas.filter(s => s.valid).length === 0) { p += 8; issues.push({ severity: 'warning', impact: 'high', message: 'No valid structured data found — missing rich result opportunities that significantly increase CTR', element: 'structured data', link: '', recommendation: 'Add at minimum: Organization, WebSite schemas' }); }
+  if (schema.invalidCount > 0) { p += 12; issues.push({ severity: 'critical', impact: 'high', message: schema.invalidCount + ' invalid JSON-LD schema(s) — ' + schema.missingRequired.slice(0, 3).map(m => m.schemaType + ': ' + m.field).join('; '), element: 'JSON-LD structured data', link: '', evidence: schema.missingRequired.map(m => m.schemaType + ' missing ' + m.field).join(', '), fix: 'Fix required fields and validate at https://validator.schema.org', steps: ['Invalid structured data won\'t trigger rich results in Google Search', 'Missing required fields break the schema completely', 'For each invalid schema:', '1. Open the JSON-LD block in your HTML', '2. Add the missing required fields: ' + schema.missingRequired.slice(0, 3).map(m => m.field).join(', '), '3. Validate at https://validator.schema.org/', '4. Test with Google Rich Results Test: https://search.google.com/test/rich-results', '5. Deploy and monitor in Google Search Console > Enhancements'] }); }
+  if (schema.schemas.filter(s => s.valid).length === 0) { p += 8; issues.push({ severity: 'warning', impact: 'high', message: 'No valid structured data found — missing rich result opportunities that significantly increase CTR', element: 'structured data', link: '', fix: 'Add at minimum: Organization, WebSite, and page-type specific schemas', steps: ['Structured data enables rich results (stars, FAQs, how-tos, etc.) in Google', 'Rich results can increase CTR by 20-30%', 'Add these essential schemas:', '1. Organization schema (brand name, logo, social profiles)', '2. WebSite schema (site name, search action)', '3. BreadcrumbList schema (navigation path)', '4. Page-type specific: Article, Product, FAQ, HowTo, LocalBusiness', 'Generate schema at: https://technicalseo.com/tools/schema-markup-generator/', 'Validate at: https://validator.schema.org/'] }); }
 
   const idMap = {};
   $('[id]').each((i, el) => {
@@ -276,13 +270,17 @@ function level2($, rawHtml, renderedHtml, perf) {
   data.htmlNoiseRatio = rawTextLen > 0 ? Math.round((renderedTextLen / rawTextLen) * 100) + '%' : '0%';
 
   return { level: 2, name: 'DOM Reality, Rendering & Structural Diagnostics', score: sc(p), issues, data };
+  } catch (e) { return { level: 2, name: 'DOM Reality, Rendering & Structural Diagnostics', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 2 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
 }
 
-function level3($, bodyText, url) {
+function level3($, bodyText, url, config) {
+  try {
+  const cfg = config || {};
   const issues = [];
   let p = 0;
   const subfunctions = {};
   const data = subfunctions;
+  const targetKeywords = (cfg.keywords || '').split(',').map(k => k.trim()).filter(k => k.length > 0);
 
   const wc = countWords(bodyText);
   const sentences = bodyText.split(/[.!?]+/).filter(s => s.trim().length > 5);
@@ -350,6 +348,36 @@ function level3($, bodyText, url) {
 
   const kwDensity = analyzeKeywordDensity(bodyText, 20);
   data.keywordDensity = kwDensity;
+
+  if (targetKeywords.length > 0) {
+    const targetKwAnalysis = targetKeywords.map(kw => {
+      const kwLower = kw.toLowerCase();
+      const textLower = bodyText.toLowerCase();
+      const titleText = ($('title').first().text() || '').toLowerCase();
+      const h1Text = ($('h1').first().text() || '').toLowerCase();
+      const metaDesc = ($('meta[name="description"]').attr('content') || '').toLowerCase();
+      const headings = []; $('h1,h2,h3').each((i, el) => { headings.push($(el).text().toLowerCase()); });
+      const bodyMentions = (textLower.match(new RegExp(kwLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length;
+      const titlePresent = titleText.includes(kwLower);
+      const h1Present = h1Text.includes(kwLower);
+      const descPresent = metaDesc.includes(kwLower);
+      const headingPresent = headings.some(h => h.includes(kwLower));
+      const firstOccurrence = textLower.indexOf(kwLower);
+      const wordCount = bodyText.split(/\s+/).filter(w => w).length;
+      const density = wordCount > 0 ? ((bodyMentions * kw.split(/\s+/).length / wordCount) * 100).toFixed(2) + '%' : '0%';
+      const inFirst100Words = firstOccurrence >= 0 && firstOccurrence < bodyText.split(/\s+/).slice(0, 100).join(' ').length;
+      return { keyword: kw, bodyMentions, titlePresent, h1Present, descPresent, headingPresent, density, inFirst100Words, coverage: [titlePresent, h1Present, descPresent, headingPresent].filter(Boolean).length + '/4 key locations' };
+    });
+    data.targetKeywordAnalysis = targetKwAnalysis;
+    targetKwAnalysis.forEach(tka => {
+      if (tka.bodyMentions === 0) { p += 8; issues.push({ severity: 'critical', impact: 'high', message: 'Target keyword "' + tka.keyword + '" not found anywhere in body content — page will not rank for this term', element: 'content', link: url, recommendation: 'Naturally incorporate "' + tka.keyword + '" into the body text 3-5 times' }); }
+      else if (tka.bodyMentions < 2) { p += 3; issues.push({ severity: 'warning', impact: 'medium', message: 'Target keyword "' + tka.keyword + '" appears only ' + tka.bodyMentions + ' time(s) — consider adding 2-3 more natural mentions', element: 'content', link: url }); }
+      if (!tka.titlePresent) { p += 4; issues.push({ severity: 'warning', impact: 'high', message: 'Target keyword "' + tka.keyword + '" missing from title tag — title is the strongest on-page ranking signal', element: 'title', link: url, recommendation: 'Include "' + tka.keyword + '" in the title tag' }); }
+      if (!tka.h1Present) { p += 3; issues.push({ severity: 'warning', impact: 'medium', message: 'Target keyword "' + tka.keyword + '" missing from H1 heading', element: 'h1', link: url }); }
+      if (!tka.inFirst100Words && tka.bodyMentions > 0) { p += 2; issues.push({ severity: 'info', impact: 'low', message: 'Target keyword "' + tka.keyword + '" first appears after the first 100 words — front-load keywords for stronger signals', element: 'content', link: url }); }
+    });
+  }
+
   if (kwDensity.length > 0) {
     const topKwd = kwDensity[0];
     const densityNum = parseFloat(topKwd.density);
@@ -382,9 +410,11 @@ function level3($, bodyText, url) {
   if (transitionScore === 'low' && wc > 300) { p += 3; issues.push({ severity: 'info', impact: 'low', message: 'Low transition word coverage (' + transitions.total + ' total) — content may lack flow and cohesion', element: 'transition words', link: '', recommendation: 'Add transition words for addition, contrast, cause, sequence, and conclusion' }); }
 
   return { level: 3, name: 'Semantic Architecture, Entities & Information Gain', score: sc(p), issues, data };
+  } catch (e) { return { level: 3, name: 'Semantic Architecture, Entities & Information Gain', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 3 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
 }
 
 function level4($, bodyText, url) {
+  try {
   const issues = [];
   let p = 0;
   const subfunctions = {};
@@ -458,9 +488,11 @@ function level4($, bodyText, url) {
   data.chunkedText = { totalChunks: chunkedAnalysis.length, chunkSizes: chunkedAnalysis.map(c => c.split(/\s+/).length) };
 
   return { level: 4, name: 'Generative Search, LLM & RAG Visibility (AEO/GEO)', score: sc(p), issues, data };
+  } catch (e) { return { level: 4, name: 'Generative Search, LLM & RAG Visibility (AEO/GEO)', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 4 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
 }
 
 function level5($, url) {
+  try {
   const issues = [];
   let p = 0;
   const subfunctions = {};
@@ -732,9 +764,11 @@ jobs:
   }
 
   return { level: 5, name: 'Dev Automation & Auto-Fix Generation', score: sc(p), issues, data, autoFixGenerated: fixes.length > 0, autoFixes: fixes };
+  } catch (e) { return { level: 5, name: 'Dev Automation & Auto-Fix Generation', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 5 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
 }
 
 function level6(headers, $, url) {
+  try {
   const issues = [];
   let p = 0;
   const subfunctions = {};
@@ -932,9 +966,11 @@ function level6(headers, $, url) {
   };
 
   return { level: 6, name: 'Edge Computing & Serverless Worker Integration', score: sc(p), issues, data };
+  } catch (e) { return { level: 6, name: 'Edge Computing & Serverless Worker Integration', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 6 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
 }
 
 function level7($) {
+  try {
   const issues = [];
   let p = 0;
   const subfunctions = {};
@@ -1127,9 +1163,11 @@ function level7($) {
   }
 
   return { level: 7, name: 'Multi-Modal Content & Spatial Asset Auditing', score: sc(p), issues, data };
+  } catch (e) { return { level: 7, name: 'Multi-Modal Content & Spatial Asset Auditing', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 7 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
 }
 
 function level8($, bodyText, url) {
+  try {
   const issues = [];
   let p = 0;
   const text = bodyText || getTextContent($) || '';
@@ -1324,9 +1362,11 @@ function level8($, bodyText, url) {
     score: sc(p), issues,
     data: subfunctions
   };
+  } catch (e) { return { level: 8, name: 'Predictive SERP Volatility & Algorithm Impact Simulator', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 8 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
 }
 
 function level9($, bodyText, url) {
+  try {
   const issues = [];
   let p = 0;
   const text = bodyText || getTextContent($) || '';
@@ -1425,9 +1465,11 @@ function level9($, bodyText, url) {
   }
 
   return { level: 9, name: 'Continuous SEO A/B Testing & Rollback Safety Nets', score: sc(p), issues, data: subfunctions };
+  } catch (e) { return { level: 9, name: 'Continuous SEO A/B Testing & Rollback Safety Nets', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 9 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
 }
 
 function level10($, statusCode, redirects, url) {
+  try {
   const issues = [];
   let p = 0;
   const status = parseInt(statusCode) || 200;
@@ -1548,9 +1590,11 @@ function level10($, statusCode, redirects, url) {
   };
 
   return { level: 10, name: 'Real-Time Log-Stream Intelligence & Bot Behavior Mapping', score: sc(p), issues, data: subfunctions };
+  } catch (e) { return { level: 10, name: 'Real-Time Log-Stream Intelligence & Bot Behavior Mapping', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 10 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
 }
 
 function level11($, bodyText, url) {
+  try {
   const issues = [];
   let p = 0;
   const text = bodyText || getTextContent($) || '';
@@ -1711,9 +1755,11 @@ function level11($, bodyText, url) {
   };
 
   return { level: 11, name: 'Multi-Model Synthetic User & LLM Behavior Simulation', score: sc(p), issues, data: subfunctions };
+  } catch (e) { return { level: 11, name: 'Multi-Model Synthetic User & LLM Behavior Simulation', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 11 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
 }
 
-function level12($, bodyText, url) {
+function level12($, bodyText, url, config) {
+  try {
   const issues = [];
   let p = 0;
   const text = bodyText || getTextContent($) || '';
@@ -1882,7 +1928,7 @@ function level12($, bodyText, url) {
   const entityConsensusResults = [];
   topicEntities.slice(0, 5).forEach(te => {
     if (te.length > 3) {
-      const cr = crossReferenceEntityConsensus(te, consensusSources);
+      const cr = crossReferenceEntityConsensus(te, text, '');
       entityConsensusResults.push({ entity: te, consensusRatio: cr.consensusRatio, consensusLevel: cr.consensusLevel, sourcesMentioning: cr.sourcesMentioning });
     }
   });
@@ -1934,9 +1980,11 @@ function level12($, bodyText, url) {
   }
 
   return { level: 12, name: 'Reverse-Engineered Core Algorithm & Quality Classifier', score: sc(p), issues, data };
+  } catch (e) { return { level: 12, name: 'Reverse-Engineered Core Algorithm & Quality Classifier', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 12 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
 }
 
 function level13($, url) {
+  try {
   const issues = [];
   let p = 0;
   const subfunctions = {};
@@ -2246,14 +2294,21 @@ function level13($, url) {
   }
 
   return { level: 13, name: 'Edge-Native Patching & CI/CD Gatekeeping', score: sc(p), issues, data };
+  } catch (e) { return { level: 13, name: 'Edge-Native Patching & CI/CD Gatekeeping', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 13 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
 }
 
-function level14($, bodyText, url) {
+function level14($, bodyText, url, config) {
+  try {
+  const cfg = config || {};
   const issues = [];
   let p = 0;
   const text = bodyText || getTextContent($) || '';
   const wc = countWords(text);
   const subfunctions = {};
+  const data = subfunctions;
+  const inputMonthlyTraffic = cfg.monthlyTraffic || 0;
+  const inputAOV = cfg.avgOrderValue || 0;
+  const inputCVR = (cfg.conversionRate || 0) / 100;
 
   // Subfunction 1: Page Type Classification (from real URL + content signals)
   let pageType = 'blog';
@@ -2287,7 +2342,8 @@ function level14($, bodyText, url) {
   const hasSchema = $('script[type="application/ld+json"]').length > 0;
   const hasViewport = !!$('meta[name="viewport"]').attr('content');
   const internalLinks = $('a[href^="/"], a[href^="' + url.replace(/\/$/, '') + '"]').length;
-  const hasTitle = !!$('title').first().text().trim();
+  const title = $('title').first().text().trim();
+  const hasTitle = !!title;
   const hasMetaDesc = !!($('meta[name="description"]').attr('content') || '').trim();
   const hasH1 = $('h1').length > 0;
   const serverTimingMs = 200;
@@ -2482,9 +2538,11 @@ function level14($, bodyText, url) {
   Object.assign(data, subfunctions);
 
   return { level: 14, name: 'Financial Attribution & Revenue Impact Engine', score: sc(p), issues, data };
+  } catch (e) { return { level: 14, name: 'Financial Attribution & Revenue Impact Engine', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 14 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
 }
 
-function level15($, bodyText) {
+function level15($, bodyText, config) {
+  try {
   const issues = [];
   let p = 0;
   const text = bodyText || getTextContent($) || '';
@@ -2721,9 +2779,11 @@ function level15($, bodyText) {
   }
 
   return { level: 15, name: 'Passage Vector & Cosine Similarity Profiler', score: sc(p), issues, data };
+  } catch (e) { return { level: 15, name: 'Passage Vector & Cosine Similarity Profiler', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 15 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
 }
 
-function level16($, url) {
+function level16($, url, config) {
+  try {
   const issues = [];
   let p = 0;
   const text = getTextContent($) || '';
@@ -2930,9 +2990,11 @@ function level16($, url) {
   }
 
   return { level: 16, name: 'Third-Party Consensus & Entity Alignment Scorer', score: sc(p), issues, data };
+  } catch (e) { return { level: 16, name: 'Third-Party Consensus & Entity Alignment Scorer', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 16 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
 }
 
-function level17($, url) {
+function level17($, url, config) {
+  try {
   const issues = [];
   let p = 0;
   const subfunctions = {};
@@ -3096,9 +3158,11 @@ function level17($, url) {
   data.sandboxReport = sandboxReport;
 
   return { level: 17, name: 'Multi-Agent Autonomous SEO Sandbox', score: sc(p), issues, data };
+  } catch (e) { return { level: 17, name: 'Multi-Agent Autonomous SEO Sandbox', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 17 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
 }
 
 function level18($, bodyText, url) {
+  try {
   const issues = [];
   let p = 0;
   const text = bodyText || getTextContent($) || '';
@@ -3109,6 +3173,7 @@ function level18($, bodyText, url) {
   const imageCount = $('img').length;
   const linkCount = $('a[href]').length;
   const listCount = $('ol, ul').length;
+  const wordCount = countWords(text);
   const serpVolatility = analyzeSerpVolatility(text, {
     wordCount, headingCount, imageCount, linkCount, listCount
   });
@@ -3127,7 +3192,6 @@ function level18($, bodyText, url) {
   const questionCount = (text.match(/\b(how|what|why|when|where|who|can|does|is|are|do|should|will|would|could|may|might|shall|ought|must|need)\b\s+[^?]+\?/gi) || []).length;
   const listItems = $('li').length;
   const hasDefinitions = /\b(is defined as|refers to|means that|is a|are a)\b/i.test(text);
-  const wordCount = countWords(text);
   const contentStructure = analyzeContentStructure(text);
   data.contentStructure = contentStructure;
 
@@ -3249,9 +3313,11 @@ function level18($, bodyText, url) {
   data.visibilityShare = visibilityShare;
 
   return { level: 18, name: 'Zero-Click & Agentic Commerce Visibility Metrics', score: sc(p), issues, data };
+  } catch (e) { return { level: 18, name: 'Zero-Click & Agentic Commerce Visibility Metrics', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 18 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
 }
 
-function level19($, url) {
+function level19($, url, config) {
+  try {
   const issues = [];
   let p = 0;
   const subfunctions = {};
@@ -3486,11 +3552,14 @@ function level19($, url) {
   data.prioritizedFixes = prioritizedFixes;
 
   return { level: 19, name: 'Edge-Native Multi-Agent Orchestration & Self-Correction', score: sc(p), issues, data };
+  } catch (e) { return { level: 19, name: 'Edge-Native Multi-Agent Orchestration & Self-Correction', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 19 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
 }
 
-function level20($, bodyText) {
+function level20($, bodyText, config) {
+  try {
   const issues = [];
   let p = 0;
+  const text = bodyText || getTextContent($) || '';
   const subfunctions = {};
   const data = subfunctions;
 
@@ -3673,14 +3742,22 @@ function level20($, bodyText) {
   }
 
   return { level: 20, name: 'Algorithmic Quality Thresholds & Site-Wide Risk Scorer', score: sc(p), issues, data };
+  } catch (e) { return { level: 20, name: 'Algorithmic Quality Thresholds & Site-Wide Risk Scorer', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 20 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
 }
 
-function level21($, bodyText, url) {
+function level21($, bodyText, url, config) {
+  try {
+  const cfg = config || {};
   const issues = [];
   let p = 0;
+  const text = bodyText || getTextContent($) || '';
   const subfunctions = {};
   const data = subfunctions;
   const wordCount = countWords(text);
+  const inputMonthlyTraffic = cfg.monthlyTraffic || 0;
+  const inputAOV = cfg.avgOrderValue || 0;
+  const inputCVR = (cfg.conversionRate || 0) / 100;
+  const organicRevenue = inputMonthlyTraffic * inputCVR * inputAOV;
 
   let pageType = 'informational';
   const pathParts = url.split('/').filter(x => x.length > 0 && !x.startsWith('http') && !x.startsWith('www'));
@@ -4005,6 +4082,7 @@ function level21($, bodyText, url) {
     issues,
     data
   };
+  } catch (e) { return { level: 21, name: 'Financial Impact & Revenue Attribution Engine', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 21 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
 }
 
 module.exports = { level1, level2, level3, level4, level5, level6, level7, level8, level9, level10, level11, level12, level13, level14, level15, level16, level17, level18, level19, level20, level21 };

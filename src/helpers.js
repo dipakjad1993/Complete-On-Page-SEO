@@ -33,14 +33,16 @@ function cssEscape(s) {
 }
 
 function sel($, el) {
-  if (!el || !el.tagName) return '';
-  const id = $(el).attr('id');
-  if (id) return '#' + cssEscape(id);
-  const tag = (el.tagName || '').toLowerCase();
-  const cls = ($(el).attr('class') || '').trim().split(/\s+/).filter(c => c)[0];
-  const parent = el.parent;
-  const idx = parent ? $(parent).children(tag).toArray().indexOf(el) + 1 : 1;
-  return tag + (cls ? '.' + cssEscape(cls) : '') + ':nth-of-type(' + idx + ')';
+  try {
+    if (!el || !el.tagName) return '';
+    const id = $(el).attr('id');
+    if (id) return '#' + cssEscape(String(id));
+    const tag = String(el.tagName || '').toLowerCase();
+    const cls = String($(el).attr('class') || '').trim().split(/\s+/).filter(c => c)[0];
+    const parent = el.parent;
+    const idx = parent ? $(parent).children(tag).toArray().indexOf(el) + 1 : 1;
+    return tag + (cls ? '.' + cssEscape(cls) : '') + ':nth-of-type(' + idx + ')';
+  } catch (e) { return ''; }
 }
 
 function stripHtml(s) {
@@ -49,19 +51,25 @@ function stripHtml(s) {
 }
 
 function getTextContent($) {
-  return $('body').text().replace(/\s+/g, ' ').trim();
+  try {
+    const body = $('body');
+    if (!body.length) return '';
+    return body.text().replace(/\s+/g, ' ').trim();
+  } catch (e) { return ''; }
 }
 
 function getSelectorChain($, el) {
-  if (!el || !el.tagName) return '';
-  const parts = [];
-  let current = el;
-  while (current && current.tagName) {
-    parts.unshift(sel($, current));
-    current = current.parent;
-    if (parts.length > 5) break;
-  }
-  return parts.join(' > ');
+  try {
+    if (!el || !el.tagName) return '';
+    const parts = [];
+    let current = el;
+    while (current && current.tagName) {
+      parts.unshift(sel($, current));
+      current = current.parent;
+      if (parts.length > 5) break;
+    }
+    return parts.join(' > ');
+  } catch (e) { return ''; }
 }
 
 function extractAllAttributes($, el) {
@@ -163,6 +171,8 @@ function analyzeSchema($) {
 }
 
 function detectAIPatterns(text) {
+  const safeText = String(text || '');
+  if (!safeText.trim()) return { score: 0, matches: [] };
   const patterns = [
     { r: /in this (article|post|guide|blog)/gi, n: 'generic-intro' },
     { r: /let'?s (dive|explore|discuss|delve)/gi, n: 'cliche-opener' },
@@ -306,24 +316,30 @@ function analyzeAccessibility($) {
   return { linksWithoutText: linksNoText, buttonsWithoutText: buttonsNoText, inputsWithoutLabel: inputsNoLabel, imagesWithoutAlt: imagesNoAlt, videosWithoutCaptions: videosNoCaptions, iframesWithoutTitle: iframesNoTitle, hasSkipLink, hasLang, hasRoleMain, score };
 }
 
-function countWords(text) { return text.split(/\s+/).filter(w => w.length > 0).length; }
+function countWords(text) { return String(text || '').split(/\s+/).filter(w => w.length > 0).length; }
 
 function extractEntities(text) {
-  const properNouns = text.match(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b/g) || [];
+  const safeText = String(text || '');
+  if (!safeText.trim()) return [];
+  const properNouns = safeText.match(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b/g) || [];
   const freq = {};
   properNouns.forEach(n => { freq[n] = (freq[n] || 0) + 1; });
   return Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 30);
 }
 
 function extractAllMentions(text, terms) {
-  const lower = text.toLowerCase(); const results = {};
+  const safeText = String(text || '');
+  if (!safeText.trim() || !Array.isArray(terms) || terms.length === 0) return {};
+  const lower = safeText.toLowerCase(); const results = {};
   terms.forEach(term => { const regex = new RegExp('\\b' + term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'gi'); const matches = lower.match(regex); if (matches) results[term] = matches.length; });
   return results;
 }
 
 function analyzeReadability(text) {
-  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 5);
-  const words = text.split(/\s+/).filter(w => w.length > 0);
+  const safeText = String(text || '');
+  if (!safeText.trim()) return { fleschKincaid: 0, avgSentenceLength: 0, avgWordLength: 0, readingLevel: 'unknown', wordCount: 0, sentenceCount: 0 };
+  const sentences = safeText.split(/[.!?]+/).filter(s => s.trim().length > 5);
+  const words = safeText.split(/\s+/).filter(w => w.length > 0);
   if (words.length === 0 || sentences.length === 0) return { fleschKincaid: 0, avgSentenceLength: 0, avgWordLength: 0, readingLevel: 'unknown', wordCount: 0, sentenceCount: 0 };
   const fk = fleschKincaid(text);
   const avgSentLen = words.length / sentences.length;
@@ -336,8 +352,10 @@ function analyzeReadability(text) {
 
 function analyzeKeywordDensity(text, topN) {
   if (topN === undefined) topN = 15;
+  const safeText = String(text || '');
+  if (!safeText.trim()) return [];
   const stopWords = new Set(['the','be','to','of','and','a','in','that','have','i','it','for','not','on','with','he','as','you','do','at','this','but','his','by','from','they','we','say','her','she','or','an','will','my','one','all','would','there','their','what','so','up','out','if','about','who','get','which','go','me','when','make','can','like','time','no','just','him','know','take','people','into','year','your','good','some','could','them','see','other','than','then','now','look','only','come','its','over','think','also','back','after','use','two','how','our','work','first','well','way','even','new','want','because','any','these','give','day','most','us']);
-  const words = text.toLowerCase().replace(/[^a-z0-9\s'-]/g, ' ').split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w));
+  const words = safeText.toLowerCase().replace(/[^a-z0-9\s'-]/g, ' ').split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w));
   const freq = {}; const pos = {};
   words.forEach((w, idx) => { freq[w] = (freq[w] || 0) + 1; if (!pos[w]) pos[w] = []; if (pos[w].length < 3) pos[w].push(idx); });
   const total = words.length || 1;
@@ -346,8 +364,10 @@ function analyzeKeywordDensity(text, topN) {
 
 function analyzeBigrams(text, topN) {
   if (topN === undefined) topN = 10;
+  const safeText = String(text || '');
+  if (!safeText.trim()) return [];
   const stopWords = new Set(['the','be','to','of','and','a','in','that','have','i','it','for','not','on','with','he','as','you','do','at','this','but','his','by','from','they','we','say','her','she','or','an','will','my','one','all','would','there','their','what','so','up','out','if','about','who','get','which','go','me','when','make','can','like','time','no','just','him','know','take','people','into','year','your','good','some','could','them','see','other','than','then','now','look','only','come','its','over','think','also','back','after','use','two','how','our','work','first','well','way','even','new','want','because','any','these','give','day','most','us']);
-  const words = text.toLowerCase().replace(/[^a-z0-9\s'-]/g, ' ').split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w));
+  const words = safeText.toLowerCase().replace(/[^a-z0-9\s'-]/g, ' ').split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w));
   const freq = {};
   for (let i = 0; i < words.length - 1; i++) { const bg = words[i] + ' ' + words[i + 1]; freq[bg] = (freq[bg] || 0) + 1; }
   const total = words.length || 1;
@@ -355,8 +375,10 @@ function analyzeBigrams(text, topN) {
 }
 
 function analyzeContentStructure(t) {
-  const p = t.split(/\n\s*\n/).filter(x => x.trim().length > 0);
-  const s = t.split(/[.!?]+/).filter(x => x.trim().length > 5);
+  const safeT = String(t || '');
+  if (!safeT.trim()) return { paragraphs: 0, sentences: 0, avgParagraphLength: 0, questions: 0, numbers: 0, percentages: 0, monetary: 0, quotedTexts: 0, parentheticals: 0, exclamations: 0, colons: 0, semicolons: 0 };
+  const p = safeT.split(/\n\s*\n/).filter(x => x.trim().length > 0);
+  const s = safeT.split(/[.!?]+/).filter(x => x.trim().length > 5);
   const q = (t.match(/\b(how|what|why|when|where|who|can|does|is|are|do|should|will|would|could|may|might|shall|ought|must|need)\b\s+[^?]+\?/gi) || []).length;
   const n = (t.match(/\d+/g) || []).length;
   const pc = (t.match(/\d+\.?\d*%/g) || []).length;
@@ -370,6 +392,8 @@ function analyzeContentStructure(t) {
 }
 
 function analyzeTransitionWords(text) {
+  const safeText = String(text || '');
+  if (!safeText.trim()) return { transitions: {}, total: 0 };
   const tr = {
     addition: ['furthermore','moreover','additionally','also','and','besides','in addition','not only','as well as','plus'],
     contrast: ['however','but','yet','although','though','nevertheless','nonetheless','on the other hand','conversely','whereas','while','despite','in contrast','alternatively','otherwise'],
@@ -388,9 +412,11 @@ function analyzeTransitionWords(text) {
 }
 
 function detectContentQualityFlags(text) {
+  const safeText = String(text || '');
+  if (!safeText.trim()) return [];
   const flags = [];
-  if (/\bI (think|believe|feel|guess|suppose)\b/i.test(text)) flags.push({ type: 'subjectivity', severity: 'warning', message: 'Subjective language (I think/believe/feel) weakens authority' });
-  const hc = (text.match(/\b(maybe|perhaps|possibly|probably|might|potentially)\b/gi) || []).length;
+  if (/\bI (think|believe|feel|guess|suppose)\b/i.test(safeText)) flags.push({ type: 'subjectivity', severity: 'warning', message: 'Subjective language (I think/believe/feel) weakens authority' });
+  const hc = (safeText.match(/\b(maybe|perhaps|possibly|probably|might|potentially)\b/gi) || []).length;
   if (hc > 3) flags.push({ type: 'uncertainty', severity: 'warning', message: 'Overuse of hedging language (' + hc + ' instances)' });
   const fc = (text.match(/\b(very|really|quite|extremely|incredibly|absolutely|totally|completely|literally|actually|basically|essentially|simply|just)\b/gi) || []).length;
   if (fc > 5) flags.push({ type: 'filler', severity: 'info', message: 'Overuse of intensifiers/filler words (' + fc + ' instances)' });
@@ -400,7 +426,9 @@ function detectContentQualityFlags(text) {
 }
 
 function analyzeNLP(t) {
-  const w = t.split(/\s+/).filter(x => x); const s = t.split(/[.!?]+/).filter(x => x.trim().length > 2);
+  const safeT = String(t || '');
+  if (!safeT.trim()) return { wordCount: 0, characterCount: 0, uniqueWords: 0, lexicalDiversity: '0%', avgWordLength: '0', longWordsCount: 0, longWordPercentage: '0%', sentenceCount: 0, avgWordsPerSentence: '0' };
+  const w = safeT.split(/\s+/).filter(x => x); const s = safeT.split(/[.!?]+/).filter(x => x.trim().length > 2);
   const u = new Set(w.map(x => x.toLowerCase())).size; const ld = w.length > 0 ? (u / w.length) * 100 : 0;
   const lw = w.filter(x => x.length > 6).length; const lwp = w.length > 0 ? (lw / w.length) * 100 : 0;
   const awl = w.length > 0 ? w.reduce((x, y) => x + y.length, 0) / w.length : 0;
@@ -408,7 +436,7 @@ function analyzeNLP(t) {
 }
 
 function analyzeTitlePrecision($, url) {
-  const t = $('title').first(); const title = t.length ? t.text().trim() : '';
+  const t = $('title').first(); const title = t.length ? String(t.text().trim()) : '';
   const bl = byteLen(title); const px = pxWidth(title);
   const truncationRisk = px > 580 || bl > 70; const bytesOverflow = Math.max(0, bl - 70);
   const hasDynamic = /[%][sS]|\{title\}|\{term\}|\{keyword\}|\[keyword\]|<%|<\?=|{{/i.test(title);
@@ -449,7 +477,7 @@ function analyzeCanonicalIntegrity($, url) {
   const multi = els.length > 1;
   if (els.length === 0) issues.push('No canonical tag found');
   else {
-    canon = $(els[0]).attr('href') || '';
+    canon = String($(els[0]).attr('href') || '');
     try { const cu = new URL(canon); const pu = new URL(url);
       selfRef = canon.replace(/\/$/, '') === url.replace(/\/$/, ''); crossDom = cu.hostname !== pu.hostname; hasParams = cu.search.length > 0;
       if (multi) issues.push('Multiple canonical tags found on page');
@@ -481,7 +509,7 @@ function analyzeMediaOptimization($) {
 }
 
 function analyzeHttpHeaders(headers) {
-  const h = headers || {}; const statusCode = parseInt(h[':status'] || h['status'] || '200');
+  const h = headers || {}; const statusCode = parseInt(String(h[':status'] || h['status'] || '200'));
   const xRobotsTag = h['x-robots-tag'] || ''; const cacheControl = h['cache-control'] || '';
   const contentType = h['content-type'] || ''; const cors = h['access-control-allow-origin'] || '';
   const server = h['server'] || ''; const serverTiming = h['server-timing'] || '';
@@ -502,7 +530,7 @@ function analyzeHttpHeaders(headers) {
 
 function analyzeInternalLinks($, url) {
   const internal = []; const external = []; const deadFragments = []; let nofollowCount = 0; let total = 0;
-  let hostname = ''; try { hostname = new URL(url).hostname; } catch (_) {}
+  let hostname = ''; try { hostname = new URL(String(url || '')).hostname; } catch (_) {}
   $('a[href]').each((i, el) => {
     const href = $(el).attr('href') || ''; const text = $(el).text().trim();
     const rel = ($(el).attr('rel') || '').toLowerCase(); const isNofollow = rel.includes('nofollow');
@@ -520,7 +548,7 @@ function analyzeInternalLinks($, url) {
 }
 
 function ssrVsCsrDiff(rawHtml, renderedHtml) {
-  const raw$ = cheerio.load(rawHtml); const rend$ = cheerio.load(renderedHtml);
+  const raw$ = cheerio.load(String(rawHtml || '')); const rend$ = cheerio.load(String(renderedHtml || ''));
   const addedElements = []; const missingFromRaw = []; const jsDependentText = [];
   const rawText = raw$('body').text().replace(/\s+/g, ' ').trim(); const rendText = rend$('body').text().replace(/\s+/g, ' ').trim();
   const rawWords = new Set(rawText.toLowerCase().split(/\s+/).filter(w => w.length > 3));
@@ -600,6 +628,8 @@ function analyzeCoreWebVitals(metrics) {
 }
 
 function extractKnowledgeGraphEntities(text) {
+  const safeText = String(text || '');
+  if (!safeText.trim()) return [];
   const entities = [];
   const patterns = [
     { type: 'ORGANIZATION', pattern: /\b([A-Z][a-z]+ (Inc|Corp|LLC|Ltd|Limited|LLP|Co|Group|Technologies|Technologies|Systems|Solutions|Services|Global|Ventures|Partners|Associates))\b/g },
@@ -636,8 +666,10 @@ function countSyllables(word) {
 }
 
 function calculateInformationGain(text, baselineCorpus) {
-  const bc = baselineCorpus || '';
-  const tw = text.toLowerCase().replace(/[^a-z0-9\s'-]/g, ' ').split(/\s+/).filter(w => w.length > 2);
+  const safeText = String(text || '');
+  const bc = String(baselineCorpus || '');
+  if (!safeText.trim()) return { klDivergence: 0, novelTerms: [], overusedTerms: [], noveltyRatio: '0%', baselineCoverage: 'N/A' };
+  const tw = safeText.toLowerCase().replace(/[^a-z0-9\s'-]/g, ' ').split(/\s+/).filter(w => w.length > 2);
   const bw = new Set(bc.toLowerCase().replace(/[^a-z0-9\s'-]/g, ' ').split(/\s+/).filter(w => w.length > 2));
   const ttf = {}; const bf = {}; const stopWords = new Set(['the','be','to','of','and','a','in','that','have','i','it','for','not','on','with','he','as','you','do','at','this','but','his','by','from','they','we','say','her','she','or','an','will','my','one','all','would','there','their','what','so','up','out','if','about','who','get','which','go','me','when','make','can','like','time','no','just','him','know','take','people','into','year','your','good','some','could','them','see','other','than','then','now','look','only','come','its','over','think','also','back','after','use','two','how','our','work','first','well','way','even','new','want','because','any','these','give','day','most','us']);
   tw.forEach(w => { if (!stopWords.has(w)) ttf[w] = (ttf[w] || 0) + 1; });
@@ -656,6 +688,7 @@ function calculateInformationGain(text, baselineCorpus) {
 
 function analyzeAnchorTextContext($) {
   const probes = [];
+  try {
   $('a[href]').each((i, el) => {
     const text = $(el).text().trim(); const href = $(el).attr('href') || '';
     const p = $(el).parent(); const parentTag = p.length ? (p[0].tagName || '').toLowerCase() : '';
@@ -666,12 +699,15 @@ function analyzeAnchorTextContext($) {
     const contextScore = text.length > 3 && !/^(click here|here|read more|learn more|more|link|this|go|details|view|download|visit|start|get started)$/i.test(text) ? 1 : 0;
     probes.push({ href: href.substring(0, 200), text: text.substring(0, 100), parentTag, grandparentTag: gpTag, surroundingText: surrounding.substring(0, 200), contextBefore: before, contextAfter: after, hasContext: contextScore === 1, isInsideList: gpTag === 'li' || parentTag === 'li', isInsideParagraph: parentTag === 'p' });
   });
+  } catch (e) { /* ignore */ }
   const withContext = probes.filter(p => p.hasContext).length; const genericLinks = probes.filter(p => !p.hasContext).length;
   return { totalAnchors: probes.length, anchorsWithContext: withContext, genericAnchors: genericLinks, contextRatio: probes.length > 0 ? Math.round((withContext / probes.length) * 100) + '%' : 'N/A', probes };
 }
 
 function analyzeReadabilityAdvanced(text) {
-  const sents = text.split(/[.!?]+/).filter(x => x.trim().length > 2); const words = text.split(/\s+/).filter(x => x.length > 0);
+  const safeText = String(text || '');
+  if (!safeText.trim()) return { fleschKincaidGrade: 0, fleschReadingEase: 0, colemanLiau: 0, ari: 0, smog: 0, avgGradeLevel: 0, readabilityLevel: 'unknown', syllables: 0, polysyllables: 0, avgSyllablesPerWord: 0, avgWordsPerSentence: 0, complexityMetrics: { avgCharsPerWord: 0, polysyllableRatio: '0%' }, readingTime: { minutes: 0, speakingMinutes: 0 } };
+  const sents = safeText.split(/[.!?]+/).filter(x => x.trim().length > 2); const words = safeText.split(/\s+/).filter(x => x.length > 0);
   const syllables = words.reduce((a, w) => a + countSyllables(w), 0);
   const polysyllables = words.filter(w => countSyllables(w) >= 3).length;
   const chars = words.reduce((a, w) => a + w.length, 0);
@@ -700,13 +736,22 @@ function analyzeReadabilityAdvanced(text) {
 }
 
 function ragChunkSimulator(text) {
-  const chunks = []; const lines = text.split(/\n+/).filter(x => x.trim().length > 40);
+  const safeText = String(text || '');
+  if (!safeText.trim()) return { totalChunks: 0, retrievabilityScores: [], avgRetrievabilityScore: 0, avgChunkLength: 0 };
+  const chunks = []; const lines = safeText.split(/\n+/).filter(x => x.trim().length > 40);
   let current = ''; let idx = 0;
   lines.forEach(line => {
     if ((current + ' ' + line).length > 280) { chunks.push({ index: idx, text: current.substring(0, 500), charLen: current.length, wordCount: current.split(/\s+/).length }); idx++; current = line; }
     else current = current ? current + ' ' + line : line;
   });
   if (current.trim().length > 0) chunks.push({ index: idx, text: current.substring(0, 500), charLen: current.length, wordCount: current.split(/\s+/).length });
+  if (chunks.length === 0) {
+    const words = safeText.split(/\s+/);
+    for (let i = 0; i < words.length; i += 100) {
+      const w = words.slice(i, i + 100).join(' ');
+      chunks.push({ index: idx++, text: w.substring(0, 500), charLen: w.length, wordCount: Math.min(100, words.length - i) });
+    }
+  }
   const retrievabilityScores = chunks.map(c => {
     let score = 100;
     if (c.charLen < 50) score -= 20; if (c.wordCount < 10) score -= 15;
@@ -720,8 +765,11 @@ function ragChunkSimulator(text) {
 }
 
 function directAnswerScorer(question, pageContent) {
-  const qWords = question.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(w => w.length > 2);
-  const pc = pageContent.toLowerCase(); const answerCandidates = [];
+  const safeQuestion = String(question || '');
+  const safeContent = String(pageContent || '');
+  if (!safeQuestion.trim() || !safeContent.trim()) return { bestAnswerCandidate: null, listCandidates: [], tableCandidates: [], directAnswerScore: 0, hasDirectAnswer: false };
+  const qWords = safeQuestion.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(w => w.length > 2);
+  const pc = safeContent.toLowerCase(); const answerCandidates = [];
   const pSents = pc.split(/[.!?]+/).filter(x => x.trim().length > 10);
   pSents.forEach(sent => {
     const sw = sent.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(w => w.length > 2);
@@ -747,8 +795,11 @@ function directAnswerScorer(question, pageContent) {
 }
 
 function simulateLLMCitation(text, query) {
-  const qw = query.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(w => w.length > 2);
-  const sents = text.split(/[.!?]+\s+/).filter(x => x.trim().length > 20); const citationScores = [];
+  const safeText = String(text || '');
+  const safeQuery = String(query || '');
+  if (!safeText.trim() || !safeQuery.trim()) return { topCitations: [], allScores: [], avgCitationScore: 0, totalExtractableFacts: 0, llmConfidence: 'low' };
+  const qw = safeQuery.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(w => w.length > 2);
+  const sents = safeText.split(/[.!?]+\s+/).filter(x => x.trim().length > 20); const citationScores = [];
   sents.forEach((sent, i) => {
     const sw = sent.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(w => w.length > 2);
     const matches = qw.filter(w => sw.includes(w)).length; const matchRatio = qw.length > 0 ? matches / qw.length : 0;
@@ -859,6 +910,7 @@ function generateEdgeWorkerCode(rule) {
 
 function analyzeBotManagement($) {
   const signals = []; let robotDetected = false;
+  try {
   const hasMetaRobots = $('meta[name="robots"], meta[name="googlebot"], meta[name="bingbot"]').length > 0;
   const hasRobotsLink = $('link[rel="robots"]').length > 0;
   const xRobotsFromMeta = $('meta[name="robots"]').attr('content') || $('meta[name="googlebot"]').attr('content') || '';
@@ -873,10 +925,12 @@ function analyzeBotManagement($) {
   if (hasAkamai) signals.push({ type: 'bot-detection', source: 'akamai', detail: 'Akamai bot management detected' });
   if (hasCloudflare) signals.push({ type: 'bot-detection', source: 'cloudflare', detail: 'Cloudflare bot management detected' });
   return { robotDetection: robotDetected, signals, hasMetaRobots, hasBotSpecificMeta: hasStructuredBotMeta, metaRobotsContent: xRobotsFromMeta, hasJsChallenge: hasJsChallenges, botManagementScore: robotDetected ? 30 : hasMetaRobots ? 70 : 50 };
+  } catch (e) { return { robotDetection: false, signals: [], hasMetaRobots: false, hasBotSpecificMeta: false, metaRobotsContent: '', hasJsChallenge: false, botManagementScore: 50 }; }
 }
 
 function analyzeMultiModalContent($) {
   const images = []; const videos = []; const audios = []; let transcriptPresent = false;
+  try {
   $('img').each((i, el) => { const alt = $(el).attr('alt') || ''; images.push({ src: ($(el).attr('src') || '').substring(0, 200), alt, hasAlt: $(el).is('[alt]'), altQuality: 'good', isDecorative: alt.length === 0 }); });
   $('video, [data-video], [data-media-type="video"]').each((i, el) => {
     const src = $(el).attr('src') || $(el).attr('data-src') || '';
@@ -889,11 +943,13 @@ function analyzeMultiModalContent($) {
     videos.push({ src: src.substring(0, 200), isEmbedded: true, platform: src.includes('youtube') ? 'youtube' : src.includes('vimeo') ? 'vimeo' : 'wistia', hasTitle: !!title, title });
   });
   transcriptPresent = videos.some(v => v.hasCaptions) || audios.length > 0;
+  } catch (e) { /* ignore */ }
   return { images, videos, audios, hasTranscripts: transcriptPresent, totalImages: images.length, totalVideos: videos.length, totalAudio: audios.length };
 }
 
 function validateSemanticCaptions($) {
   const findings = [];
+  try {
   $('figure').each((i, el) => {
     const img = $(el).find('img').first(); const figcap = $(el).find('figcaption');
     const imgAlt = img.attr('alt') || $(el).attr('aria-label') || '';
@@ -908,12 +964,14 @@ function validateSemanticCaptions($) {
     if (!caption.length) findings.push({ element: 'table', selector: sel($, el), issue: 'Table missing caption', recommendation: 'Add <caption> describing table content' });
     if (thCount > 0 && scopeCount === 0) findings.push({ element: 'table', selector: sel($, el), issue: 'Header cells missing scope attribute', recommendation: 'Add scope="col" or scope="row" to th elements' });
   });
+  } catch (e) { /* ignore */ }
   return { findings, totalFigures: $('figure').length, totalTables: $('table').length, issues: findings.length };
 }
 
 function analyzeSerpVolatility(pageContent, pageFeatures) {
-  const text = pageContent || '';
+  const text = String(pageContent || '');
   const features = pageFeatures || {};
+  if (!text.trim()) return { volatilityScore: 0, volatilityLevel: 'stable', signals: [], totalSignals: 0, contentMetrics: { wordCount: 0, headingCount: 0, imageCount: 0, linkCount: 0, listCount: 0, sentenceCount: 0, paragraphCount: 0 }, recommendation: 'No content to analyze', rankingVolatilityRisk: 'unknown' };
   const wc = features.wordCount || text.split(/\s+/).filter(x => x.length > 0).length;
   const hCount = features.headingCount || (text.match(/^#{1,6}\s/gm) || []).length;
   const imgCount = features.imageCount || (text.match(/!\[([^\]]*)\]\(([^)]+)\)/g) || []).length;
@@ -955,7 +1013,8 @@ function analyzeSerpVolatility(pageContent, pageFeatures) {
 }
 
 function calculateQualityThresholds(content) {
-  const thresholds = {}; const text = content || '';
+  const thresholds = {}; const text = String(content || '');
+  if (!text.trim()) return { wordCount: { value: 0, min: 300, max: 5000, meetsMin: false, meetsMax: true, score: 0 }, sentenceCount: { value: 0, min: 10, score: 0 }, headingDensity: { value: 0, min: 2, score: 0 }, linkDensity: { value: 0, min: 3, max: 20, score: 0 }, imageDensity: { value: 0, min: 1, max: 20, score: 0 }, structuralElements: { value: 0, min: 5, score: 0 }, overallQuality: 0 };
   const wordCount = text.split(/\s+/).filter(x => x.length > 0).length;
   const sentenceCount = text.split(/[.!?]+/).filter(x => x.trim().length > 2).length;
   const headingCount = (text.match(/^#{1,6}\s/gm) || []).length;
@@ -975,6 +1034,8 @@ function calculateQualityThresholds(content) {
 }
 
 function analyzeSyntheticAgentBehavior(text) {
+  const safeText = String(text || '');
+  if (!safeText.trim()) return { results: {}, totalFlags: 0, syntheticScore: 100, verdict: 'likely human-written' };
   const patterns = {
     hedgeWords: /\b(maybe|perhaps|possibly|probably|might|potentially|arguably|seems|appears|allegedly|reportedly|supposedly|ostensibly|purportedly)\b/gi,
     fillerWords: /\b(very|really|quite|extremely|incredibly|absolutely|totally|completely|literally|actually|basically|essentially|simply|just|pretty|rather|fairly|somewhat)\b/gi,
@@ -994,7 +1055,9 @@ function analyzeSyntheticAgentBehavior(text) {
 }
 
 function calculateUnhelpfulContentRatio(text) {
-  const sents = text.split(/[.!?]+\s*/).filter(x => x.trim().length > 10);
+  const safeText = String(text || '');
+  if (!safeText.trim()) return { totalSentences: 0, helpfulSentences: 0, genericSentences: 0, unhelpfulShortSentences: 0, helpfulRatio: 0, genericRatio: 0, verdict: 'empty content' };
+  const sents = safeText.split(/[.!?]+\s*/).filter(x => x.trim().length > 10);
   const total = sents.length; let generic = 0; let unhelpful = 0;
   const genericPatterns = [
     /\bas previously mentioned\b/i, /\bas stated above\b/i, /\bas we discussed\b/i, /\bwe will explore\b/i,
@@ -1017,6 +1080,7 @@ function calculateUnhelpfulContentRatio(text) {
 
 function validateEEATSignals($, content) {
   const signals = {};
+  const safeContent = String(content || '');
   const hasAuthor = $('[itemprop="author"], [itemprop*="author"], meta[name="author"], [rel="author"]').length > 0;
   const authorName = $('meta[name="author"]').attr('content') || $('[itemprop="author"]').first().text() || $('[rel="author"]').first().text() || '';
   const hasPublisher = $('[itemprop="publisher"], meta[property*="publisher"]').length > 0;
@@ -1025,12 +1089,12 @@ function validateEEATSignals($, content) {
   const datePublished = $('meta[property="article:published_time"]').attr('content') || $('time').first().attr('datetime') || '';
   const hasDateModified = $('meta[property="article:modified_time"], [itemprop="dateModified"]').length > 0;
   const hasAboutPage = $('link[rel="about"], [typeof="AboutPage"]').length > 0;
-  const citations = (content.match(/\(([^)]+(?:19|20)\d{2}[^)]*)\)/g) || []).length;
-  const hasReferences = /\b(references|sources|citations|bibliography|works cited|further reading)\b/i.test(content);
-  const factualClaims = (content.match(/\b\d+%|\$\d+|\d+ (million|billion|trillion)|according to|studies show|research indicates\b/gi) || []).length;
-  const hasDisclaimer = /\b(disclaimer|disclosures|conflict of interest|sponsored|advertising disclosure)\b/i.test(content);
-  const hasBio = /\b(about the author|biography|bio)\b/i.test(content);
-  const hasCommentPolicy = /\b(comments|discussion|engagement)\b/i.test(content);
+  const citations = (safeContent.match(/\(([^)]+(?:19|20)\d{2}[^)]*)\)/g) || []).length;
+  const hasReferences = /\b(references|sources|citations|bibliography|works cited|further reading)\b/i.test(safeContent);
+  const factualClaims = (safeContent.match(/\b\d+%|\$\d+|\d+ (million|billion|trillion)|according to|studies show|research indicates\b/gi) || []).length;
+  const hasDisclaimer = /\b(disclaimer|disclosures|conflict of interest|sponsored|advertising disclosure)\b/i.test(safeContent);
+  const hasBio = /\b(about the author|biography|bio)\b/i.test(safeContent);
+  const hasCommentPolicy = /\b(comments|discussion|engagement)\b/i.test(safeContent);
   signals.author = { present: hasAuthor, name: authorName || 'Not found' };
   signals.publisher = { present: hasPublisher, name: publisherName || 'Not found' };
   signals.datePublished = { present: hasDatePublished, value: datePublished || 'Not found' };
@@ -1131,8 +1195,10 @@ function prioritizeByImpact(findings) {
 }
 
 function passageVectorSim(text, queries) {
+  const safeText = String(text || '');
   const qs = Array.isArray(queries) ? queries : [queries];
-  const passages = text.split(/\n\s*\n/).filter(x => x.trim().length > 50).map(p => p.trim().substring(0, 500));
+  if (!safeText.trim() || qs.length === 0) return { results: [], topPassages: [], totalPassages: 0, uniqueQueries: qs.length };
+  const passages = safeText.split(/\n\s*\n/).filter(x => x.trim().length > 50).map(p => p.trim().substring(0, 500));
   const results = [];
   const stopWords = new Set(['the','be','to','of','and','a','in','that','have','i','it','for','not','on','with','he','as','you','do','at','this','but','his','by','from','they','we','say','her','she','or','an','will','my','one','all','would','there','their','what','so','up','out','if','about','who','get','which','go','me','when','make','can','like','time','no','just','him','know','take','people','into','year','your','good','some','could','them','see','other','than','then','now','look','only','come','its','over','think','also','back','after','use','two','how','our','work','first','well','way','even','new','want','because','any','these','give','day','most','us']);
   const tokenize = s => s.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w));
@@ -1149,9 +1215,9 @@ function passageVectorSim(text, queries) {
 }
 
 function crossReferenceEntityConsensus(entityText, pageContent, externalContent) {
-  const entity = entityText.toLowerCase().trim();
-  const content = (pageContent || '').toLowerCase();
-  const extContent = (externalContent || '').toLowerCase();
+  const entity = String(entityText || '').toLowerCase().trim();
+  const content = String(pageContent || '').toLowerCase();
+  const extContent = String(externalContent || '').toLowerCase();
   const findings = [];
 
   const pageMentions = content.split(entity).length - 1;
@@ -1296,7 +1362,9 @@ function agenticCommerceAudit($) {
 }
 
 function synthesizeMentionShare(text, brandTerms) {
+  const safeText = String(text || '');
   const terms = Array.isArray(brandTerms) ? brandTerms : [brandTerms || ''];
+  if (!safeText.trim() || terms.every(t => !t)) return { mentions: {}, totalMentions: 0, shareOfVoice: '0%', contexts: {}, sentimentByTerm: {}, totalWords: 0 };
   const mentions = {}; const contexts = {};
   terms.forEach(term => {
     if (!term || term.length === 0) return;
