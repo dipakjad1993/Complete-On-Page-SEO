@@ -213,7 +213,7 @@ Each auto-filled field shows a green **AUTO** badge so you can review and adjust
 ```bash
 # 1. Clone the repository
 git clone https://github.com/dipakjad1993/Complete-On-Page-SEO.git
-cd Complete-On-Page-SEO/src
+cd Complete-On-Page-SEO
 
 # 2. Install dependencies
 npm install
@@ -228,7 +228,7 @@ npm start
 # http://localhost:3000
 ```
 
-> **Note**: Puppeteer downloads Chromium (~300 MB) on first install. To use an existing Chrome install instead, set the `CHROME_PATH` variable in `src/server.js`.
+> **Note**: Puppeteer downloads Chromium (~300 MB) on first install. To use an existing Chrome install instead, set the `CHROME_PATH` variable in `server.js`.
 
 ### Environment Variables (Optional)
 
@@ -455,15 +455,14 @@ Health check endpoint.
 Complete-On-Page-SEO/
 ├── README.md                       # This file
 ├── .gitignore
-├── render.yaml                     # Render.com deployment config (rootDir: src)
-└── src/                            # Main project directory
-    ├── package.json                # Dependencies & scripts
-    ├── package-lock.json
-    ├── server.js                   # Express server, Puppeteer orchestration, API routes
-    ├── helpers.js                  # 60+ analysis helper functions
-    ├── levels.js                   # 21 level analysis functions
-    └── public/
-        └── index.html              # Single-page application UI (vanilla JS + CSS)
+├── render.yaml                     # Render.com deployment config (app at repo root)
+├── package.json                    # Dependencies & scripts
+├── package-lock.json
+├── server.js                       # Express server, Puppeteer orchestration, API routes
+├── helpers.js                      # 60+ analysis helper functions
+├── levels.js                       # 21 level analysis functions
+└── public/
+    └── index.html                  # Single-page application UI (vanilla JS + CSS)
 ```
 
 ---
@@ -474,7 +473,7 @@ Complete-On-Page-SEO/
 
 A `render.yaml` blueprint is included:
 
-- **rootDir**: `src`
+- **root directory**: repo root (leave Root Directory empty if creating via the Render dashboard)
 - **build**: `npm install && npx puppeteer browsers install chrome`
 - **start**: `npm start`
 - Chrome path is resolved dynamically at runtime.
@@ -484,7 +483,6 @@ services:
   - type: web
     name: complete-on-page-seo
     runtime: node
-    rootDir: src
     buildCommand: npm install && npx puppeteer browsers install chrome
     startCommand: npm start
 ```
@@ -492,7 +490,6 @@ services:
 ### Manual / VPS
 
 ```bash
-cd src
 npm install
 npx puppeteer browsers install chrome
 npm start
@@ -508,7 +505,7 @@ npm start
 ```bash
 npx puppeteer browsers install chrome
 ```
-Or set a custom `CHROME_PATH` in `src/server.js`.
+Or set a custom `CHROME_PATH` in `server.js`.
 
 **Chrome crashes on low-memory systems:**
 ```bash
