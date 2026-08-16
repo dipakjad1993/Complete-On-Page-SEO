@@ -193,47 +193,68 @@ The report page renders the overall score, **14 concrete deliverables**, the **5
 
 Each module below is shown expanded with its **0–100 score**, its **findings** (critical / warning / info) and its **full measured data sections** — all from the same live Wikipedia audit.
 
-**Levels 1–7 (Technical, Rendering & Content Baseline)**
+#### Level 1 — Core Hygiene & Technical Baseline
+![Level 1 — Core Hygiene & Technical Baseline](screenshots/modules/01-core-hygiene.png)
 
-| Level 1 — Core Hygiene | Level 2 — DOM / Rendering | Level 3 — Semantics & Entities |
-|------------------------|--------------------------|--------------------------------|
-| ![Level 1](screenshots/modules/01-core-hygiene.png) | ![Level 2](screenshots/modules/02-dom-rendering.png) | ![Level 3](screenshots/modules/03-semantic-entities.png) |
+#### Level 2 — DOM Reality, Rendering & Structural Diagnostics
+![Level 2 — DOM Reality, Rendering & Structural Diagnostics](screenshots/modules/02-dom-rendering.png)
 
-| Level 4 — LLM & RAG Visibility | Level 5 — Dev Automation & Auto-Fix | Level 6 — Edge Computing |
-|--------------------------------|-------------------------------------|--------------------------|
-| ![Level 4](screenshots/modules/04-llm-rag.png) | ![Level 5](screenshots/modules/05-dev-automation.png) | ![Level 6](screenshots/modules/06-edge-computing.png) |
+#### Level 3 — Semantic Architecture, Entities & Information Gain
+![Level 3 — Semantic Architecture, Entities & Information Gain](screenshots/modules/03-semantic-entities.png)
 
-| Level 7 — Multi-Modal Assets |
-|------------------------------|
-| ![Level 7](screenshots/modules/07-multimodal.png) |
+#### Level 4 — Generative Search, LLM & RAG Visibility
+![Level 4 — Generative Search, LLM & RAG Visibility](screenshots/modules/04-llm-rag.png)
 
-**Levels 8–14 (SERP, Testing, Bots, Quality & Finance)**
+#### Level 5 — Dev Automation & Auto-Fix Generation
+![Level 5 — Dev Automation & Auto-Fix Generation](screenshots/modules/05-dev-automation.png)
 
-| Level 8 — SERP Volatility | Level 9 — A/B Testing | Level 10 — Bot Behavior |
-|---------------------------|-----------------------|-------------------------|
-| ![Level 8](screenshots/modules/08-serp-volatility.png) | ![Level 9](screenshots/modules/09-ab-testing.png) | ![Level 10](screenshots/modules/10-bot-behavior.png) |
+#### Level 6 — Edge Computing & Serverless Integration
+![Level 6 — Edge Computing & Serverless Integration](screenshots/modules/06-edge-computing.png)
 
-| Level 11 — Synthetic Content & LLM | Level 12 — Quality Classifier | Level 13 — Edge Patching & CI/CD |
-|-------------------------------------|-------------------------------|-----------------------------------|
-| ![Level 11](screenshots/modules/11-synthetic-content.png) | ![Level 12](screenshots/modules/12-quality-classifier.png) | ![Level 13](screenshots/modules/13-edge-patching.png) |
+#### Level 7 — Multi-Modal Content & Spatial Asset Auditing
+![Level 7 — Multi-Modal Content & Spatial Asset Auditing](screenshots/modules/07-multimodal.png)
 
-| Level 14 — Financial Attribution |
-|----------------------------------|
-| ![Level 14](screenshots/modules/14-financial.png) |
+#### Level 8 — Predictive SERP Volatility & Algorithm Impact
+![Level 8 — Predictive SERP Volatility & Algorithm Impact](screenshots/modules/08-serp-volatility.png)
 
-**Levels 15–21 (Vectors, Consensus, Fixes, Commerce, Orchestration & Revenue)**
+#### Level 9 — SEO A/B Testing & Rollback Safety Guidance
+![Level 9 — SEO A/B Testing & Rollback Safety Guidance](screenshots/modules/09-ab-testing.png)
 
-| Level 15 — Passage Vectors | Level 16 — Entity Consensus | Level 17 — Auto-Fix & Red-Team |
-|----------------------------|-----------------------------|--------------------------------|
-| ![Level 15](screenshots/modules/15-passage-vector.png) | ![Level 16](screenshots/modules/16-entity-consensus.png) | ![Level 17](screenshots/modules/17-autofix-redteam.png) |
+#### Level 10 — Bot Behavior Mapping & Log Config Templates
+![Level 10 — Bot Behavior Mapping & Log Config Templates](screenshots/modules/10-bot-behavior.png)
 
-| Level 18 — Zero-Click & Commerce | Level 19 — Edge Orchestration | Level 20 — Adversarial Checks |
-|----------------------------------|-------------------------------|-------------------------------|
-| ![Level 18](screenshots/modules/18-zero-click.png) | ![Level 19](screenshots/modules/19-edge-orchestration.png) | ![Level 20](screenshots/modules/20-adversarial.png) |
+#### Level 11 — Synthetic Content & LLM Visibility Heuristics
+![Level 11 — Synthetic Content & LLM Visibility Heuristics](screenshots/modules/11-synthetic-content.png)
 
-| Level 21 — Financial Impact & Revenue Engine |
-|----------------------------------------------|
-| ![Level 21](screenshots/modules/21-financial-impact.png) |
+#### Level 12 — Algorithmic Quality & Helpful-Content Classifier
+![Level 12 — Algorithmic Quality & Helpful-Content Classifier](screenshots/modules/12-quality-classifier.png)
+
+#### Level 13 — Edge-Native Patching & CI/CD Gatekeeping
+![Level 13 — Edge-Native Patching & CI/CD Gatekeeping](screenshots/modules/13-edge-patching.png)
+
+#### Level 14 — Financial Attribution & Revenue Impact Engine
+![Level 14 — Financial Attribution & Revenue Impact Engine](screenshots/modules/14-financial.png)
+
+#### Level 15 — Passage Vector & Cosine Similarity Profiler
+![Level 15 — Passage Vector & Cosine Similarity Profiler](screenshots/modules/15-passage-vector.png)
+
+#### Level 16 — Third-Party Consensus & Entity Alignment Scorer
+![Level 16 — Third-Party Consensus & Entity Alignment Scorer](screenshots/modules/16-entity-consensus.png)
+
+#### Level 17 — Autonomous Fix Generator & Red-Team Checks
+![Level 17 — Autonomous Fix Generator & Red-Team Checks](screenshots/modules/17-autofix-redteam.png)
+
+#### Level 18 — Zero-Click & Agentic Commerce Visibility
+![Level 18 — Zero-Click & Agentic Commerce Visibility](screenshots/modules/18-zero-click.png)
+
+#### Level 19 — Edge Orchestration & Self-Correction Rules
+![Level 19 — Edge Orchestration & Self-Correction Rules](screenshots/modules/19-edge-orchestration.png)
+
+#### Level 20 — Adversarial Checks & Security Header Audit
+![Level 20 — Adversarial Checks & Security Header Audit](screenshots/modules/20-adversarial.png)
+
+#### Level 21 — Financial Impact & Revenue Attribution Engine
+![Level 21 — Financial Impact & Revenue Attribution Engine](screenshots/modules/21-financial-impact.png)
 
 ---
 
