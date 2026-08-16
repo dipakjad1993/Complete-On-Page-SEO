@@ -609,22 +609,58 @@ function validateSchemaComprehensive($) {
 }
 
 function analyzeCoreWebVitals(metrics) {
-  const m = metrics || {}; const defaults = { lcp: 2500, fid: 100, cls: 0.1, inp: 200, ttfv: 800, fcp: 1800, si: 3400, tbt: 300 };
-  const lcp = m.lcp || defaults.lcp; const fid = m.fid || defaults.fid; const cls = m.cls || defaults.cls;
-  const inp = m.inp || defaults.inp; const ttfv = m.ttfv || defaults.ttfv; const fcp = m.fcp || defaults.fcp;
-  const si = m.si || defaults.si; const tbt = m.tbt || defaults.tbt; const passedTests = [];
+  const m = metrics || {};
+  const measured = {};
+  ['lcp', 'fid', 'cls', 'inp', 'ttfv', 'fcp', 'si', 'tbt'].forEach(k => {
+    if (m[k] !== undefined && m[k] !== null && !isNaN(m[k])) measured[k] = m[k];
+  });
+  const rate = (v, g, p) => { if (v <= g) return 'good'; if (v <= p) return 'needs-improvement'; return 'poor'; };
+  const thresholds = {
+    lcp: { label: 'LCP', good: 2500, poor: 4000 },
+    fid: { label: 'FID', good: 100, poor: 300 },
+    cls: { label: 'CLS', good: 0.1, poor: 0.25 },
+    inp: { label: 'INP', good: 200, poor: 500 },
+    ttfv: { label: 'TTFB', good: 800, poor: 1600 },
+    fcp: { label: 'FCP', good: 1800, poor: 3000 },
+    si: { label: 'SI', good: 3400, poor: 5800 },
+    tbt: { label: 'TBT', good: 300, poor: 600 }
+  };
+  const assessments = {};
+  const passedTests = [];
+  const failedTests = [];
+  const unmeasured = [];
   let score = 100;
-  const rate = (v, g, p, n) => { if (v <= g) return { value: v, rating: 'good', points: 0 }; if (v <= p) return { value: v, rating: 'needs-improvement', points: 10 }; return { value: v, rating: 'poor', points: 25 }; };
-  const rlcp = rate(lcp, 2500, 4000, 'LCP'); const rfid = rate(fid, 100, 300, 'FID'); const rcls = rate(cls, 0.1, 0.25, 'CLS');
-  const rinp = rate(inp, 200, 500, 'INP'); const rttfv = rate(ttfv, 800, 1600, 'TTFB');
-  const rfcp = rate(fcp, 1800, 3000, 'FCP'); if (rlcp.rating === 'good') passedTests.push('LCP'); if (rfid.rating === 'good') passedTests.push('FID');
-  if (rcls.rating === 'good') passedTests.push('CLS'); if (rinp.rating === 'good') passedTests.push('INP');
-  score -= rlcp.points + rfid.points + rcls.points + rinp.points + rttfv.points + rfcp.points; if (score < 0) score = 0;
-  const assessments = { LCP: rlcp, FID: rfid, CLS: rcls, INP: rinp, TTFB: rttfv, FCP: rfcp };
-  let finalLabel = 'pass'; if (Object.values(assessments).some(a => a.rating === 'poor')) finalLabel = 'fail';
-  else if (Object.values(assessments).some(a => a.rating === 'needs-improvement')) finalLabel = 'needs-improvement';
-  return { assessments, score, passedTests, failedTests: Object.entries(assessments).filter(([, v]) => v.rating !== 'good').map(([k]) => k),
-    totalScore: score, verdict: finalLabel, si, tbt, thresholdBreakdown: { thresholds: { good: { LCP: 2500, FID: 100, CLS: 0.1, INP: 200, TTFB: 800 }, poor: { LCP: 4000, FID: 300, CLS: 0.25, INP: 500, TTFB: 1600 } } } };
+  Object.keys(thresholds).forEach(k => {
+    const t = thresholds[k];
+    if (measured[k] === undefined) { unmeasured.push(t.label); return; }
+    const rating = rate(measured[k], t.good, t.poor);
+    assessments[t.label] = { value: measured[k], rating, measured: true, good: t.good, poor: t.poor };
+    if (rating === 'good') passedTests.push(t.label);
+    else if (rating === 'poor') { failedTests.push(t.label); score -= 25; }
+    else { failedTests.push(t.label); score -= 10; }
+  });
+  if (score < 0) score = 0;
+  const rated = Object.keys(assessments).map(k => assessments[k]);
+  let finalLabel = 'not-measured';
+  if (rated.length > 0) {
+    if (rated.some(a => a.rating === 'poor')) finalLabel = 'fail';
+    else if (rated.some(a => a.rating === 'needs-improvement')) finalLabel = 'needs-improvement';
+    else finalLabel = 'pass';
+  }
+  return {
+    assessments,
+    score,
+    passedTests,
+    failedTests,
+    unmeasured,
+    measuredCount: Object.keys(measured).length,
+    totalScore: score,
+    verdict: finalLabel,
+    si: measured.si,
+    tbt: measured.tbt,
+    dataSource: 'measured via headless Chrome Navigation Timing / PerformanceObserver. Metrics without a measured value are listed in unmeasured and were NOT fabricated.',
+    thresholdBreakdown: { thresholds: { good: { LCP: 2500, FID: 100, CLS: 0.1, INP: 200, TTFB: 800, FCP: 1800, SI: 3400, TBT: 300 }, poor: { LCP: 4000, FID: 300, CLS: 0.25, INP: 500, TTFB: 1600, FCP: 3000, SI: 5800, TBT: 600 } } }
+  };
 }
 
 function extractKnowledgeGraphEntities(text) {
@@ -669,6 +705,9 @@ function calculateInformationGain(text, baselineCorpus) {
   const safeText = String(text || '');
   const bc = String(baselineCorpus || '');
   if (!safeText.trim()) return { klDivergence: 0, novelTerms: [], overusedTerms: [], noveltyRatio: '0%', baselineCoverage: 'N/A' };
+  if (!bc.trim()) {
+    return { klDivergence: null, novelTerms: [], overusedTerms: [], noveltyRatio: null, baselineCoverage: 'N/A', note: 'No baseline corpus supplied — information gain vs. an external corpus was NOT computed. Re-run with a baselineCorpus (e.g., competitor SERP text) to measure true novelty.' };
+  }
   const tw = safeText.toLowerCase().replace(/[^a-z0-9\s'-]/g, ' ').split(/\s+/).filter(w => w.length > 2);
   const bw = new Set(bc.toLowerCase().replace(/[^a-z0-9\s'-]/g, ' ').split(/\s+/).filter(w => w.length > 2));
   const ttf = {}; const bf = {}; const stopWords = new Set(['the','be','to','of','and','a','in','that','have','i','it','for','not','on','with','he','as','you','do','at','this','but','his','by','from','they','we','say','her','she','or','an','will','my','one','all','would','there','their','what','so','up','out','if','about','who','get','which','go','me','when','make','can','like','time','no','just','him','know','take','people','into','year','your','good','some','could','them','see','other','than','then','now','look','only','come','its','over','think','also','back','after','use','two','how','our','work','first','well','way','even','new','want','because','any','these','give','day','most','us']);
@@ -767,7 +806,28 @@ function ragChunkSimulator(text) {
 function directAnswerScorer(question, pageContent) {
   const safeQuestion = String(question || '');
   const safeContent = String(pageContent || '');
-  if (!safeQuestion.trim() || !safeContent.trim()) return { bestAnswerCandidate: null, listCandidates: [], tableCandidates: [], directAnswerScore: 0, hasDirectAnswer: false };
+  if (!safeContent.trim()) return { bestAnswerCandidate: null, listCandidates: [], tableCandidates: [], directAnswerScore: 0, hasDirectAnswer: false, method: 'none' };
+  if (!safeQuestion.trim()) {
+    const hasDefinition = /\b(is|are|refers to|defined as|means)\b/i.test(safeContent) && /^[A-Z].{0,200}?\b(is|are|refers to|defined as|means)\b/.test(safeContent.replace(/\n+/g, ' '));
+    const hasQA = /\b(how|what|why|when|where|who)\b[^?]*\?/i.test(safeContent);
+    const listMatches = (safeContent.match(/^[\*\-\u2022]\s+/gm) || []).length;
+    const numListMatches = (safeContent.match(/^\d+[\.\)]\s+/gm) || []).length;
+    const hasTables = (safeContent.match(/\|/g) || []).length >= 6;
+    let score = 0;
+    if (hasDefinition) score += 40;
+    if (hasQA) score += 25;
+    if (listMatches >= 3 || numListMatches >= 3) score += 25;
+    if (hasTables) score += 10;
+    return {
+      method: 'structural-only (no real user query supplied)',
+      bestAnswerCandidate: null,
+      listCandidates: [],
+      tableCandidates: [],
+      directAnswerScore: Math.min(100, score),
+      hasDirectAnswer: score >= 60,
+      signals: { hasDefinition, hasQA, bulletListItems: listMatches, numberedListItems: numListMatches, hasTables }
+    };
+  }
   const qWords = safeQuestion.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(w => w.length > 2);
   const pc = safeContent.toLowerCase(); const answerCandidates = [];
   const pSents = pc.split(/[.!?]+/).filter(x => x.trim().length > 10);
@@ -791,13 +851,26 @@ function directAnswerScorer(question, pageContent) {
         if (ratio >= 0.6) tables.push({ cell: c.substring(0, 100), matchedTerms: matches, matchRatio: ratio }); }); }
   });
   const daScore = bestMatch ? Math.round(bestMatch.matchRatio * 10) * 10 : 0;
-  return { bestAnswerCandidate: bestMatch, listCandidates: lists.slice(0, 5), tableCandidates: tables.slice(0, 10), directAnswerScore: daScore, hasDirectAnswer: daScore >= 60 };
+  return { method: 'query-match', bestAnswerCandidate: bestMatch, listCandidates: lists.slice(0, 5), tableCandidates: tables.slice(0, 10), directAnswerScore: daScore, hasDirectAnswer: daScore >= 60 };
 }
 
 function simulateLLMCitation(text, query) {
   const safeText = String(text || '');
   const safeQuery = String(query || '');
-  if (!safeText.trim() || !safeQuery.trim()) return { topCitations: [], allScores: [], avgCitationScore: 0, totalExtractableFacts: 0, llmConfidence: 'low' };
+  if (!safeText.trim()) return { topCitations: [], allScores: [], avgCitationScore: 0, totalExtractableFacts: 0, llmConfidence: 'low', method: 'none' };
+  if (!safeQuery.trim()) {
+    const sents = safeText.split(/[.!?]+\s+/).filter(x => x.trim().length > 20); const factScores = [];
+    sents.forEach((sent, i) => {
+      const hasNumbers = /\d+/.test(sent); const hasQuotes = /["']/.test(sent);
+      const hasStats = /\d+\.?\d*%/.test(sent) || /[\$\€\£\¥]\d+/.test(sent);
+      const score = (hasStats ? 60 : hasNumbers ? 30 : 0) + (hasQuotes ? 20 : 0);
+      factScores.push({ index: i, sentence: sent.trim().substring(0, 200), containsData: hasNumbers || hasStats, containsQuote: hasQuotes, citationScore: score });
+    });
+    factScores.sort((a, b) => b.citationScore - a.citationScore);
+    const topFacts = factScores.slice(0, 5);
+    const avgScore = factScores.length > 0 ? Math.round(factScores.reduce((a, c) => a + c.citationScore, 0) / factScores.length) : 0;
+    return { method: 'extractable-fact density (no real LLM inference performed)', topCitations: topFacts, allScores: factScores.slice(0, 20), avgCitationScore: avgScore, totalExtractableFacts: factScores.filter(c => c.containsData).length, llmConfidence: avgScore >= 50 ? 'high' : avgScore >= 25 ? 'medium' : 'low' };
+  }
   const qw = safeQuery.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(w => w.length > 2);
   const sents = safeText.split(/[.!?]+\s+/).filter(x => x.trim().length > 20); const citationScores = [];
   sents.forEach((sent, i) => {
@@ -811,19 +884,19 @@ function simulateLLMCitation(text, query) {
   citationScores.sort((a, b) => b.citationScore - a.citationScore);
   const topCitations = citationScores.slice(0, 5);
   const avgScore = citationScores.length > 0 ? Math.round(citationScores.reduce((a, c) => a + c.citationScore, 0) / citationScores.length) : 0;
-  return { topCitations, allScores: citationScores.slice(0, 20), avgCitationScore: avgScore, totalExtractableFacts: citationScores.filter(c => c.containsData).length, llmConfidence: avgScore >= 50 ? 'high' : avgScore >= 25 ? 'medium' : 'low' };
+  return { method: 'query-match', topCitations, allScores: citationScores.slice(0, 20), avgCitationScore: avgScore, totalExtractableFacts: citationScores.filter(c => c.containsData).length, llmConfidence: avgScore >= 50 ? 'high' : avgScore >= 25 ? 'medium' : 'low' };
 }
 
 function generateSchemaCode(type, data) {
   const t = type || 'Article'; const d = data || {};
   const schemas = {
-    Article: { '@context': 'https://schema.org', '@type': 'Article', headline: d.headline || '', description: d.description || '', author: { '@type': 'Person', name: d.authorName || '' }, datePublished: d.datePublished || new Date().toISOString().split('T')[0], image: d.image || '', publisher: { '@type': 'Organization', name: d.publisherName || '' } },
-    Product: { '@context': 'https://schema.org', '@type': 'Product', name: d.name || '', description: d.description || '', image: d.image || '', offers: { '@type': 'Offer', price: d.price || '0', priceCurrency: d.currency || 'USD', availability: 'https://schema.org/InStock' } },
+    Article: { '@context': 'https://schema.org', '@type': 'Article', headline: d.headline || '', description: d.description || '', author: { '@type': 'Person', name: d.authorName || '' }, datePublished: d.datePublished || '', image: d.image || '', publisher: { '@type': 'Organization', name: d.publisherName || '' } },
+    Product: { '@context': 'https://schema.org', '@type': 'Product', name: d.name || '', description: d.description || '', image: d.image || '', offers: { '@type': 'Offer', price: d.price || '', priceCurrency: d.currency || 'USD', availability: d.availability || '' } },
     FAQPage: { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: (d.questions || []).map(q => ({ '@type': 'Question', name: q.question || '', acceptedAnswer: { '@type': 'Answer', text: q.answer || '' } })) },
     LocalBusiness: { '@context': 'https://schema.org', '@type': d.subtype || 'LocalBusiness', name: d.name || '', address: { '@type': 'PostalAddress', streetAddress: d.streetAddress || '', addressLocality: d.locality || '', addressRegion: d.region || '', postalCode: d.postalCode || '' }, telephone: d.phone || '', openingHoursSpecification: (d.hours || ['Mo-Fr 09:00-17:00']).map(h => ({ '@type': 'OpeningHoursSpecification', dayOfWeek: h.split(' ')[0] || 'Mo-Fr', opens: h.split(' ')[1] || '09:00', closes: h.split(' ')[2] || '17:00' })) },
-    BreadcrumbList: { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: (d.items || ['Home','Category','Page']).map((name, i) => ({ '@type': 'ListItem', position: i + 1, name, item: d.baseUrl ? d.baseUrl + '/' + name.toLowerCase().replace(/\s+/g, '-') : '' })) },
+    BreadcrumbList: { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: (d.items || []).map((name, i) => ({ '@type': 'ListItem', position: i + 1, name, item: d.baseUrl ? d.baseUrl + '/' + name.toLowerCase().replace(/\s+/g, '-') : '' })) },
     HowTo: { '@context': 'https://schema.org', '@type': 'HowTo', name: d.name || '', description: d.description || '', step: (d.steps || []).map((step, i) => ({ '@type': 'HowToStep', position: i + 1, name: step.name || 'Step ' + (i + 1), text: step.text || '', url: step.url || '' })) },
-    Review: { '@context': 'https://schema.org', '@type': 'Review', itemReviewed: { '@type': d.reviewType || 'Product', name: d.itemName || '' }, reviewRating: { '@type': 'Rating', ratingValue: d.rating || '4.5', bestRating: '5' }, author: { '@type': 'Person', name: d.authorName || '' }, reviewBody: d.body || '' }
+    Review: { '@context': 'https://schema.org', '@type': 'Review', itemReviewed: { '@type': d.reviewType || 'Product', name: d.itemName || '' }, reviewRating: { '@type': 'Rating', ratingValue: d.rating || '', bestRating: '5' }, author: { '@type': 'Person', name: d.authorName || '' }, reviewBody: d.body || '' }
   };
   const schema = schemas[t] || schemas.Article;
   return JSON.stringify(schema, null, 2);
@@ -1111,10 +1184,11 @@ function validateEEATSignals($, content) {
 
 function calculateRevenueAtRisk(metrics) {
   const m = metrics || {};
-  const organicTraffic = m.organicTraffic || 10000;
-  const conversionRate = m.conversionRate || 0.02;
-  const avgOrderValue = m.avgOrderValue || 50;
-  const visibilityDrop = m.visibilityDrop || 0.1;
+  const organicTraffic = Number(m.organicTraffic) || 0;
+  const conversionRate = Number(m.conversionRate) || 0;
+  const avgOrderValue = Number(m.avgOrderValue) || 0;
+  const visibilityDrop = Number(m.visibilityDrop) || 0;
+  const hasRealInputs = organicTraffic > 0 && conversionRate > 0 && avgOrderValue > 0;
   const organicRevenue = organicTraffic * conversionRate * avgOrderValue;
   const affectedTraffic = organicTraffic * visibilityDrop;
   const lostRevenue = affectedTraffic * conversionRate * avgOrderValue;
@@ -1127,25 +1201,25 @@ function calculateRevenueAtRisk(metrics) {
   const hasSchema = signals.hasSchema !== false;
   const hasViewport = signals.hasViewport !== false;
   const wordCount = signals.wordCount || 0;
-  const hasImages = signals.imageCount > 0;
-  const hasInternalLinks = signals.internalLinkCount > 0;
-  const hasDimensions = signals.imagesWithDimensions / Math.max(1, signals.imageCount) > 0.5;
-  const hasFastServer = signals.serverTimingMs < 500;
-  const hasSecurityHeaders = signals.securityHeadersCount >= 3;
+  const hasImages = (signals.imageCount || 0) > 0;
+  const hasInternalLinks = (signals.internalLinkCount || 0) > 0;
+  const hasDimensions = (signals.imageCount || 0) > 0 && (signals.imagesWithDimensions || 0) / signals.imageCount > 0.5;
+  const hasFastServer = (signals.serverTimingMs !== undefined) ? signals.serverTimingMs < 500 : false;
+  const hasSecurityHeaders = (signals.securityHeadersCount || 0) >= 3;
 
   const detectedRisks = [];
-  if (!hasTitle) detectedRisks.push({ issue: 'Missing title tag', baseProb: 0.25, revenueFraction: 0.15, description: 'No title — Google auto-generates poor title, CTR drops ~30%' });
-  if (!hasMetaDesc) detectedRisks.push({ issue: 'Missing meta description', baseProb: 0.15, revenueFraction: 0.08, description: 'No description — lower CTR, Google pulls random snippet' });
+  if (!hasTitle) detectedRisks.push({ issue: 'Missing title tag', baseProb: 0.25, revenueFraction: 0.15, description: 'No title tag — search engines must derive a title from page content, losing control over the snippet shown' });
+  if (!hasMetaDesc) detectedRisks.push({ issue: 'Missing meta description', baseProb: 0.15, revenueFraction: 0.08, description: 'No description — Google auto-generates the snippet, which may not include your keyword' });
   if (!hasCanonical) detectedRisks.push({ issue: 'Missing canonical tag', baseProb: 0.12, revenueFraction: 0.10, description: 'Duplicate content risk — ranking signals diluted across URL variants' });
-  if (!hasH1) detectedRisks.push({ issue: 'Missing H1 heading', baseProb: 0.10, revenueFraction: 0.05, description: 'Weakest topic signal — Google may not understand page relevance' });
-  if (!hasSchema) detectedRisks.push({ issue: 'No structured data', baseProb: 0.08, revenueFraction: 0.08, description: 'Lost rich result eligibility — lower SERP visibility' });
-  if (!hasViewport) detectedRisks.push({ issue: 'Missing viewport meta', baseProb: 0.15, revenueFraction: 0.12, description: 'Not mobile-friendly — mobile-first indexing penalty' });
+  if (!hasH1) detectedRisks.push({ issue: 'Missing H1 heading', baseProb: 0.10, revenueFraction: 0.05, description: 'Weakest topic signal — search engines may not clearly understand page relevance' });
+  if (!hasSchema) detectedRisks.push({ issue: 'No structured data', baseProb: 0.08, revenueFraction: 0.08, description: 'No rich-result eligibility — lower SERP visibility in eligible query types' });
+  if (!hasViewport) detectedRisks.push({ issue: 'Missing viewport meta', baseProb: 0.15, revenueFraction: 0.12, description: 'Not mobile-friendly — poor mobile UX under mobile-first indexing' });
   if (wordCount < 300) detectedRisks.push({ issue: 'Thin content (' + wordCount + ' words)', baseProb: 0.12, revenueFraction: 0.10, description: 'Content under 300 words — Helpful Content System targets thin pages' });
-  if (!hasImages && wordCount > 200) detectedRisks.push({ issue: 'No images in content', baseProb: 0.05, revenueFraction: 0.03, description: 'Visual content improves engagement and time-on-page' });
+  if (!hasImages && wordCount > 200) detectedRisks.push({ issue: 'No images in content', baseProb: 0.05, revenueFraction: 0.03, description: 'Visual content can improve engagement and time-on-page' });
   if (!hasInternalLinks) detectedRisks.push({ issue: 'No internal links', baseProb: 0.06, revenueFraction: 0.04, description: 'Poor site architecture — crawl efficiency reduced' });
-  if (!hasDimensions && m.imageCount > 0) detectedRisks.push({ issue: 'Missing image dimensions', baseProb: 0.08, revenueFraction: 0.05, description: 'Cumulative Layout Shift (CLS) harms Core Web Vitals' });
-  if (!hasFastServer) detectedRisks.push({ issue: 'Slow server response', baseProb: 0.10, revenueFraction: 0.08, description: 'High TTFB affects Core Web Vitals and user experience' });
-  if (!hasSecurityHeaders) detectedRisks.push({ issue: 'Missing security headers', baseProb: 0.04, revenueFraction: 0.02, description: 'Browser trust signals missing — may affect user confidence' });
+  if (!hasDimensions && (m.imageCount || 0) > 0) detectedRisks.push({ issue: 'Missing image dimensions', baseProb: 0.08, revenueFraction: 0.05, description: 'Missing width/height can cause Cumulative Layout Shift (CLS)' });
+  if (signals.serverTimingMs !== undefined && !hasFastServer) detectedRisks.push({ issue: 'Slow server response', baseProb: 0.10, revenueFraction: 0.08, description: 'High TTFB affects Core Web Vitals and user experience' });
+  if (signals.securityHeadersCount !== undefined && !hasSecurityHeaders) detectedRisks.push({ issue: 'Missing security headers', baseProb: 0.04, revenueFraction: 0.02, description: 'Browser trust signals missing — may affect user confidence' });
 
   const riskEntries = detectedRisks.map(r => {
     const probability = Math.min(0.4, r.baseProb * (1 + visibilityDrop));
@@ -1157,13 +1231,15 @@ function calculateRevenueAtRisk(metrics) {
       impact: Math.round(impact * 100) / 100,
       expectedLoss,
       description: r.description,
-      priority: expectedLoss > organicRevenue * 0.03 ? 'high' : expectedLoss > organicRevenue * 0.01 ? 'medium' : 'low'
+      priority: hasRealInputs ? (expectedLoss > organicRevenue * 0.03 ? 'high' : expectedLoss > organicRevenue * 0.01 ? 'medium' : 'low') : 'n/a (no traffic data)'
     };
   });
 
   riskEntries.sort((a, b) => b.expectedLoss - a.expectedLoss);
   const totalAtRisk = Math.round(riskEntries.reduce((a, r) => a + r.expectedLoss, 0) * 100) / 100;
   return {
+    hasRealInputs,
+    inputStatus: hasRealInputs ? 'monetary figures derived from user-supplied GA4/analytics inputs' : 'NO monetary inputs supplied — all dollar figures are 0 and revenue-at-risk cannot be quantified. Provide organicTraffic, conversionRate and avgOrderValue to enable financial modeling.',
     organicRevenue: Math.round(organicRevenue),
     visibilityDrop,
     lostRevenue: Math.round(lostRevenue),
@@ -1172,7 +1248,8 @@ function calculateRevenueAtRisk(metrics) {
     detectedRiskCount: detectedRisks.length,
     atRiskPercentage: organicRevenue > 0 ? Math.round((totalAtRisk / organicRevenue) * 100) : 0,
     currency: m.currency || 'USD',
-    revenueGrade: totalAtRisk === 0 ? 'A (no risk)' : totalAtRisk < organicRevenue * 0.05 ? 'B (low risk)' : totalAtRisk < organicRevenue * 0.15 ? 'C (moderate risk)' : 'D (high risk)'
+    revenueGrade: !hasRealInputs ? 'not-rated (no traffic data)' : totalAtRisk === 0 ? 'A (no risk)' : totalAtRisk < organicRevenue * 0.05 ? 'B (low risk)' : totalAtRisk < organicRevenue * 0.15 ? 'C (moderate risk)' : 'D (high risk)',
+    methodology: 'Risk probabilities and revenue fractions are heuristic modeling assumptions based on common SEO impact patterns. They are NOT measured from real analytics and may not match your specific market. Use the quantified figures only as directional planning inputs, not as audited financial estimates.'
   };
 }
 
@@ -1275,18 +1352,18 @@ function generateAutonomousFix(issue, pageType) {
   if (issueType.includes('missing title') || issueType.includes('title tag')) {
     fix.title = 'Generate optimized title tag';
     const keywords = issue?.keywords || 'primary keyword';
-    fix.code = '<title>' + (keywords.split(',')[0] || 'Your Page Title') + ' | ' + (page === 'homepage' ? 'Brand Name' : page === 'product' ? 'Product Name - Brand' : 'Category | Brand') + '</title>';
-    fix.description = 'Add a unique, keyword-optimized title tag between 50-60 characters';
+    fix.code = '<title>' + (keywords.split(',')[0] || 'primary keyword') + ' | ' + (page === 'homepage' ? 'Brand Name' : page === 'product' ? 'Product Name - Brand' : 'Category | Brand') + '</title>';
+    fix.description = 'Add a unique, keyword-optimized title tag between 50-60 characters (replace placeholder brand/product tokens with actual names)';
     fix.risk = 'low';
   } else if (issueType.includes('missing meta') || issueType.includes('meta description')) {
     fix.title = 'Generate SEO meta description';
     fix.code = '<meta name="description" content="' + (issue?.description || 'Discover comprehensive information about ' + (issue?.keywords || 'this topic') + ' including expert insights and practical advice.') + '" />';
-    fix.description = 'Add a compelling meta description between 120-158 characters';
+    fix.description = 'Add a compelling meta description between 120-158 characters (review generated copy before publishing)';
     fix.risk = 'low';
   } else if (issueType.includes('canonical')) {
     fix.title = 'Add self-referencing canonical URL';
-    fix.code = '<link rel="canonical" href="' + (issue?.url || 'https://example.com/page') + '" />';
-    fix.description = 'Prevent duplicate content issues by specifying the preferred URL';
+    fix.code = '<link rel="canonical" href="' + (issue?.url || '') + '" />';
+    fix.description = 'Prevent duplicate content issues by specifying the preferred URL (uses the audited page URL)';
     fix.risk = 'low';
   } else if (issueType.includes('h1') || issueType.includes('heading')) {
     fix.title = 'Add primary H1 heading';
@@ -1297,7 +1374,7 @@ function generateAutonomousFix(issue, pageType) {
     fix.title = 'Add JSON-LD structured data';
     const schemaType = page === 'product' ? 'Product' : page === 'article' ? 'Article' : page === 'faq' ? 'FAQPage' : 'WebPage';
     fix.code = '<script type="application/ld+json">\n{\n  "@context": "https://schema.org",\n  "@type": "' + schemaType + '",\n  "name": "' + (issue?.title || 'Page Title') + '",\n  "description": "' + (issue?.description || '') + '"\n}\n</script>';
-    fix.description = 'Add structured data to enable rich results in SERPs';
+    fix.description = 'Add structured data to enable rich results in SERPs (populate fields with actual page data)';
     fix.risk = 'medium';
   } else if (issueType.includes('image') || issueType.includes('alt')) {
     fix.title = 'Add alt text to image';
@@ -1306,8 +1383,8 @@ function generateAutonomousFix(issue, pageType) {
     fix.risk = 'low';
   } else if (issueType.includes('open graph') || issueType.includes('og:')) {
     fix.title = 'Add Open Graph tags';
-    fix.code = '<meta property="og:title" content="' + (issue?.title || 'Page Title') + '" />\n<meta property="og:description" content="' + (issue?.description || 'Description') + '" />\n<meta property="og:image" content="' + (issue?.image || 'https://example.com/image.jpg') + '" />\n<meta property="og:url" content="' + (issue?.url || 'https://example.com') + '" />';
-    fix.description = 'Improve social sharing appearance with Open Graph tags';
+    fix.code = '<meta property="og:title" content="' + (issue?.title || 'Page Title') + '" />\n<meta property="og:description" content="' + (issue?.description || 'Description') + '" />\n<meta property="og:image" content="' + (issue?.image || '/path/to/og-image.jpg') + '" />\n<meta property="og:url" content="' + (issue?.url || '') + '" />';
+    fix.description = 'Improve social sharing appearance with Open Graph tags (add real og:image path and URL)';
     fix.risk = 'low';
   } else {
     fix.title = 'Manual review required';
@@ -1315,24 +1392,110 @@ function generateAutonomousFix(issue, pageType) {
     fix.risk = 'unknown';
   }
   fix.rollbackPlan = 'Use version control to revert changes if issues arise. Monitor traffic and rankings for 2 weeks after deployment.';
+  fix.placeholderNote = 'Generated code contains placeholders where real values were unavailable — replace them with verified page data before deploying.';
   return fix;
 }
 
-function redTeamTest(url) {
-  const issues = [];
-  const crawlDelays = [200, 500, 1000, 2000];
-  issues.push({ test: 'Rate Limiting', endpoint: url, status: 'simulated', finding: crawlDelays.some(d => d > 1000) ? 'Server tolerates slow crawl rates' : 'Server may rate-limit fast crawlers', severity: 'info' });
-  const userAgents = ['Googlebot', 'Bingbot', 'Slurp', 'DuckDuckBot', 'Baiduspider', 'YandexBot', 'facebookexternalhit', 'Twitterbot', 'LinkedInBot', 'Pinterestbot'];
-  issues.push({ test: 'User-Agent Cloaking', endpoint: url, userAgentsTested: userAgents.length, finding: 'Check if different user agents receive different content', severity: 'info' });
-  issues.push({ test: 'JavaScript Rendering', endpoint: url, finding: 'Verify critical content is accessible without JavaScript', severity: 'high', recommendation: 'Use SSR or dynamic rendering for SEO-critical content' });
-  issues.push({ test: 'Form Submission CSRF', endpoint: url, finding: 'Check if forms have CSRF tokens', severity: 'medium' });
-  issues.push({ test: 'Open Redirect', endpoint: url + '/?url=https://evil.com', finding: 'Test if URL parameters allow open redirects', severity: 'high' });
-  issues.push({ test: 'Information Disclosure', endpoint: url, finding: 'Check for exposed API keys, comments, or internal paths in HTML source', severity: 'high' });
-  issues.push({ test: 'Clickjacking Protection', endpoint: url, finding: 'Verify X-Frame-Options or CSP frame-ancestors header is set', severity: 'medium' });
-  issues.push({ test: 'Subresource Integrity', endpoint: url, finding: 'Check if external scripts use integrity attributes', severity: 'low' });
-  issues.push({ test: 'Canonical Bypass', endpoint: url, finding: 'Verify canonical URL cannot be bypassed via query parameters', severity: 'medium' });
-  issues.push({ test: 'Parameter Pollution', endpoint: url, finding: 'Check if URL parameters cause duplicate content or unexpected behavior', severity: 'low' });
-  return { url, tests: issues, totalTests: issues.length, criticalFindings: issues.filter(i => i.severity === 'high').length, overallRisk: issues.filter(i => i.severity === 'high').length > 2 ? 'high' : issues.filter(i => i.severity === 'high').length > 0 ? 'medium' : 'low' };
+function redTeamTest(url, $, headers) {
+  const tests = [];
+  const page = $ || null;
+  const hdrs = headers || {};
+  const headerVal = (n) => { const v = hdrs[n] || hdrs[n.toLowerCase()] || ''; return String(v); };
+
+  // 1. Clickjacking Protection — REAL: inspect actual response headers
+  const xfo = headerVal('x-frame-options');
+  const csp = headerVal('content-security-policy');
+  const hasFrameAncestors = /\bframe-ancestors\b/i.test(csp);
+  if (xfo || hasFrameAncestors) {
+    tests.push({ test: 'Clickjacking Protection', endpoint: url, status: 'checked', finding: 'X-Frame-Options' + (xfo ? ': ' + xfo : '') + (hasFrameAncestors ? ' / CSP frame-ancestors present' : '') + ' set — clickjacking mitigated.', severity: 'info', verified: true });
+  } else {
+    tests.push({ test: 'Clickjacking Protection', endpoint: url, status: 'checked', finding: 'Neither X-Frame-Options nor CSP frame-ancestors header detected — page may be embeddable in third-party frames (clickjacking risk).', severity: 'medium', verified: true, recommendation: 'Set X-Frame-Options: DENY or CSP frame-ancestors.' });
+  }
+
+  // 2. Information Disclosure — REAL: scan actual page HTML
+  if (page) {
+    const html = page.html() || '';
+    const exposed = [];
+    if (/AKIA[0-9A-Z]{16}/.test(html)) exposed.push('AWS access key pattern');
+    if (/-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----/.test(html)) exposed.push('private key block');
+    if (/sk_live_|pk_live_|sk_test_|pk_test_/i.test(html)) exposed.push('Stripe API key pattern');
+    if (/AIza[0-9A-Za-z_-]{35}/.test(html)) exposed.push('Google API key pattern');
+    if (/(password|passwd|secret|api[_-]?key|access[_-]?token)\s*[:=]\s*["'][^"']{8,}["']/i.test(html)) exposed.push('hardcoded credential assignment');
+    const comments = (html.match(/<!--[\s\S]*?-->/g) || []).filter(c => /(password|secret|token|key|todo|fixme|hack|internal|localhost|127\.0\.0\.1)/i.test(c));
+    if (comments.length) exposed.push(comments.length + ' source comment(s) referencing credentials/internal paths');
+    if (exposed.length > 0) {
+      tests.push({ test: 'Information Disclosure', endpoint: url, status: 'checked', finding: 'Potential sensitive data exposed in HTML: ' + exposed.join('; ') + '.', severity: 'high', verified: true, recommendation: 'Remove secrets/keys from page source and server-side renders.' });
+    } else {
+      tests.push({ test: 'Information Disclosure', endpoint: url, status: 'checked', finding: 'No obvious API keys, private-key blocks, or credential assignments found in HTML source.', severity: 'info', verified: true });
+    }
+  } else {
+    tests.push({ test: 'Information Disclosure', endpoint: url, status: 'skipped', finding: 'No rendered HTML available to inspect.', severity: 'info', verified: true });
+  }
+
+  // 3. Subresource Integrity — REAL: inspect actual external script tags
+  if (page) {
+    const extScripts = [];
+    page('script[src]').each((i, el) => { extScripts.push(page(el).attr('src')); });
+    const withoutIntegrity = extScripts.filter(src => !page('script[src="' + src.replace(/"/g, '\\"') + '"][integrity]').length && !page('script[src^="' + src.replace(/["\\]/g, '') + '"][integrity]').length);
+    if (extScripts.length > 0) {
+      const missingSRI = withoutIntegrity.length;
+      tests.push({ test: 'Subresource Integrity', endpoint: url, status: 'checked', finding: missingSRI + '/' + extScripts.length + ' external script(s) lack integrity attributes.' + (missingSRI === 0 ? ' All external scripts have SRI.' : ''), severity: missingSRI > 0 ? 'low' : 'info', verified: true, recommendation: missingSRI > 0 ? 'Add integrity="sha384-..." attributes to third-party scripts.' : '' });
+    }
+  }
+
+  // 4. Form CSRF Protection — REAL: inspect actual forms
+  if (page) {
+    let forms = 0; let tokenized = 0;
+    page('form').each((i, el) => {
+      forms++;
+      const hasToken = page(el).find('input[name*="token"], input[name*="csrf"], input[name*="_token"], input[name="authenticity_token"]').length > 0 ||
+        /csrf|token|xsrf/i.test(page(el).html() || '');
+      if (hasToken) tokenized++;
+    });
+    if (forms > 0) {
+      tests.push({ test: 'Form CSRF Protection', endpoint: url, status: 'checked', finding: tokenized + '/' + forms + ' form(s) contain CSRF tokens or anti-CSRF markers.', severity: tokenized < forms ? 'medium' : 'info', verified: true, recommendation: tokenized < forms ? 'Add CSRF tokens to forms lacking anti-CSRF protection.' : '' });
+    }
+  }
+
+  // 5. JS Rendering dependency — REAL: check raw script tags that inject critical markup
+  if (page) {
+    const jsScripts = page('script:not([src])').filter((i, el) => /innerHTML|insertAdjacentHTML|document\.write|\.append\(|\.prepend\(/.test(page(el).html() || '')).length;
+    const renderJs = page('script[src]').filter((i, el) => /(react|vue|angular|next|nuxt|hydration|polyfill)/i.test(page(el).attr('src') || '')).length;
+    if (jsScripts > 0 || renderJs > 0) {
+      tests.push({ test: 'JavaScript Rendering', endpoint: url, status: 'checked', finding: jsScripts + ' inline script(s) mutate the DOM and ' + renderJs + ' framework script(s) detected. Critical content may depend on JS execution.', severity: 'medium', verified: true, recommendation: 'Ensure critical content (title, headings, text) exists in raw HTML for reliable crawling.' });
+    }
+  }
+
+  // 6. Canonical self-reference — REAL: inspect actual canonical tag
+  if (page) {
+    const canon = page('link[rel="canonical"]').first().attr('href') || '';
+    if (!canon) {
+      tests.push({ test: 'Canonical Integrity', endpoint: url, status: 'checked', finding: 'No canonical tag present — duplicate content risk across URL variants.', severity: 'medium', verified: true, recommendation: 'Add a self-referencing canonical URL.' });
+    } else {
+      let sameHost = false;
+      try { sameHost = new URL(canon).hostname === new URL(url).hostname; } catch {}
+      tests.push({ test: 'Canonical Integrity', endpoint: url, status: 'checked', finding: 'Canonical ' + canon + (sameHost ? ' on same host' : ' on a different host (verify intent)') + '.', severity: sameHost ? 'info' : 'medium', verified: true });
+    }
+  }
+
+  // 7-9. Network-dependent tests — NOT run (no live probing), reported honestly as skipped
+  ['Rate Limiting', 'User-Agent Cloaking', 'Open Redirect', 'Parameter Pollution'].forEach(name => {
+    tests.push({ test: name, endpoint: url, status: 'skipped', finding: 'Requires live request probing (not performed by this audit). No claims made.', severity: 'info', verified: false });
+  });
+
+  const highFindings = tests.filter(t => t.severity === 'high');
+  const mediumFindings = tests.filter(t => t.severity === 'medium');
+  return {
+    url,
+    tests,
+    totalTests: tests.length,
+    checkedTests: tests.filter(t => t.status === 'checked').length,
+    skippedTests: tests.filter(t => t.status === 'skipped').length,
+    criticalFindings: highFindings.length,
+    mediumFindings: mediumFindings.length,
+    overallRisk: highFindings.length > 2 ? 'high' : highFindings.length > 0 ? 'medium' : mediumFindings.length > 2 ? 'medium' : 'low',
+    methodology: 'Checks are performed against the actual fetched HTML and real response headers only. Tests requiring live request probing are reported as skipped rather than simulated.'
+  };
 }
 
 function agenticCommerceAudit($) {
@@ -1374,18 +1537,19 @@ function synthesizeMentionShare(text, brandTerms) {
     contexts[term] = sents.slice(0, 5).map(s => s.trim().substring(0, 150));
   });
   const totalMentions = Object.values(mentions).reduce((a, b) => a + b, 0);
-  const shareOfVoice = text.split(/\s+/).length > 0 ? Math.round((totalMentions / text.split(/\s+/).length) * 10000) / 100 : 0;
+  const totalWordsCount = text.split(/\s+/).length;
+  const shareOfVoice = totalWordsCount > 0 ? Math.round((totalMentions / totalWordsCount) * 10000) / 100 : 0;
   const sentimentByTerm = {};
   Object.keys(contexts).forEach(term => {
     const posSentences = contexts[term].filter(s => /\b(great|excellent|amazing|good|best|outstanding|fantastic|love|recommend|perfect|impressive)\b/i.test(s));
     const negSentences = contexts[term].filter(s => /\b(bad|terrible|awful|worst|poor|hate|disappointing|horrible|terrible|broken|useless)\b/i.test(s));
     sentimentByTerm[term] = { positive: posSentences.length, negative: negSentences.length, neutral: contexts[term].length - posSentences.length - negSentences.length, netScore: posSentences.length - negSentences.length };
   });
-  return { mentions, totalMentions, shareOfVoice: shareOfVoice + '%', contexts, sentimentByTerm, totalWords: text.split(/\s+/).length };
+  return { mentions, totalMentions, shareOfVoice: shareOfVoice + '% (on-page mention frequency, not external SOV)', contexts, sentimentByTerm, totalWords: totalWordsCount, note: 'Counts real mentions of the brand/page terms within this single page text only. NOT a share-of-voice measure across the web.' };
 }
 
 function selfHealingEdgeScript(url) {
-  const rules = []; const _u = url || 'https://example.com';
+  const rules = []; const _u = url;
   const parsed = new URL(_u);
   rules.push({ trigger: '404 detected', action: 'Check canonical or closest matching URL and issue 301 redirect', code: "if (response.status === 404) { const canonical = await getCanonical(request.url); if (canonical) return Response.redirect(canonical, 301); }", priority: 1 });
   rules.push({ trigger: '5xx server error', action: 'Serve stale cache or fallback content', code: "if (response.status >= 500) { const cached = await cache.match(request); if (cached) return cached; }", priority: 1 });
@@ -1397,11 +1561,12 @@ function selfHealingEdgeScript(url) {
   return { url: _u, hostname: parsed.hostname, selfHealingRules: rules, totalRules: rules.length, enabled: true };
 }
 
-function calculateSiteWideRisk(allPages) {
+function calculateSiteWideRisk(allPages, itemLabel) {
   const pages = Array.isArray(allPages) ? allPages : [];
+  const label = itemLabel || 'pages';
   const scores = pages.map(p => p.score || p.overallScore || p.qualityScore || 0);
   const pageCount = pages.length;
-  if (pageCount === 0) return { siteRiskScore: 0, pageCount: 0, riskLevel: 'unknown', distribution: {}, message: 'No page data provided' };
+  if (pageCount === 0) return { siteRiskScore: 0, pageCount: 0, riskLevel: 'unknown', distribution: {}, message: 'No ' + label + ' data provided' };
   const avgScore = scores.reduce((a, s) => a + s, 0) / pageCount;
   const minScore = Math.min(...scores); const maxScore = Math.max(...scores);
   const criticalPages = pages.filter((p, i) => scores[i] < 30).length;
@@ -1413,7 +1578,7 @@ function calculateSiteWideRisk(allPages) {
   const hasCriticalIssues = criticalPages > 0;
   const hasWidespreadIssues = poorPages + criticalPages > pageCount * 0.3;
   const riskLevel = hasCriticalIssues ? 'high' : hasWidespreadIssues ? 'medium-high' : poorPages + fairPages > pageCount * 0.3 ? 'medium' : 'low';
-  return { siteRiskScore, avgScore: Math.round(avgScore * 10) / 10, minScore, maxScore, pageCount, distribution: { critical: criticalPages, poor: poorPages, fair: fairPages, good: goodPages, excellent: excellentPages }, riskLevel, hasCriticalIssues, hasWidespreadIssues, recommendation: riskLevel === 'high' ? 'Immediate action required on ' + criticalPages + ' critical pages' : riskLevel === 'medium-high' ? 'Schedule sprint to address widespread issues' : riskLevel === 'medium' ? 'Plan improvements for underperforming pages' : 'Site health is good — maintain monitoring' };
+  return { siteRiskScore, avgScore: Math.round(avgScore * 10) / 10, minScore, maxScore, pageCount, itemLabel: label, distribution: { critical: criticalPages, poor: poorPages, fair: fairPages, good: goodPages, excellent: excellentPages }, riskLevel, hasCriticalIssues, hasWidespreadIssues, recommendation: riskLevel === 'high' ? 'Immediate action required on ' + criticalPages + ' critical ' + label : riskLevel === 'medium-high' ? 'Schedule sprint to address widespread issues across ' + label : riskLevel === 'medium' ? 'Plan improvements for underperforming ' + label : 'All ' + label + ' scored well — maintain monitoring' };
 }
 
 module.exports = {

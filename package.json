@@ -1,7 +1,7 @@
 {
   "name": "complete-on-page-seo-2026",
   "version": "1.1.0",
-  "description": "Complete ON Page SEO 2026 - 21-Level AI-Powered On-Page SEO Audit & Fix Generator with 14 concrete deliverables",
+  "description": "Complete ON Page SEO 2026 - 21-Level On-Page SEO Audit & Fix Generator with 14 concrete deliverables",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

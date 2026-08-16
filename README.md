@@ -1,15 +1,17 @@
 # Complete ON Page SEO 2026
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![Version](https://img.shields.io/badge/version-1.1.0-blue)
 ![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)
 ![License](https://img.shields.io/badge/license-ISC-blue)
 ![Puppeteer](https://img.shields.io/badge/puppeteer-25.x-yellow)
 
-A production-grade, **AI-era on-page SEO auditing engine** that runs a **21-level deep audit** on any public URL in ~60–120 seconds, then hands you **14 concrete, ready-to-use deliverables** — from technical health scoring to auto-generated GitHub pull requests, edge-worker patches, CI/CD gatekeeper configs and a dollar-valued revenue-at-risk dashboard.
+A production-grade **on-page SEO auditing engine** that runs a **21-level deep audit** on any public URL in ~60–120 seconds, then hands you **14 concrete, ready-to-use deliverables** — from technical health scoring to auto-generated GitHub pull requests, edge-worker patches, CI/CD gatekeeper configs and a dollar-valued revenue-at-risk dashboard.
 
 Built with **Node.js + Express + Cheerio + Puppeteer**, featuring a Google Pixel–style UI (Google Sans / Roboto), dark & light themes, real-time progress streaming, and zero plugins required.
 
 **🔗 Live Tool:** [https://complete-on-page-seo.onrender.com/](https://complete-on-page-seo.onrender.com/)
+
+> **Data integrity guarantee:** every metric is computed from the real fetched/rendered page. No demo results, no hardcoded scores, and no synthetic values presented as measured facts. Where a number genuinely cannot be measured (e.g., Google's real crawl frequency, real CTR uplift, live LLM inference), the tool says so explicitly instead of inventing a value.
 
 ---
 
@@ -23,6 +25,7 @@ Built with **Node.js + Express + Cheerio + Puppeteer**, featuring a Google Pixel
   - [Smart Auto-Configuration](#-smart-auto-configuration)
   - [Modern Google Pixel UI](#-modern-google-pixel-ui)
   - [Production-Ready](#-production-ready)
+- [Screenshots](#screenshots)
 - [Architecture](#architecture)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
@@ -69,19 +72,19 @@ The system uses **Puppeteer** to render JavaScript-heavy pages (SPAs, React, Ang
 | 6 | Edge Computing & Serverless Integration | Edge worker configs, security headers, CORS, caching |
 | 7 | Multi-Modal Content & Spatial Asset Auditing | Image alt text, video captions, SVG accessibility |
 | 8 | Predictive SERP Volatility & Algorithm Impact | SERP volatility scoring, ranking stability prediction |
-| 9 | Continuous SEO A/B Testing & Rollback Safety | Test variants, statistical significance, rollback safety |
-| 10 | Log-Stream Intelligence & Bot Behavior Mapping | Bot detection, crawl patterns, security headers |
-| 11 | Multi-Model Synthetic User & LLM Behavior Simulation | LLM citation scoring, passage retrievability |
-| 12 | Reverse-Engineered Core Algorithm & Quality Classifier | Content freshness, E-E-A-T signals, quality thresholds |
+| 9 | SEO A/B Testing & Rollback Safety Guidance | Variant suggestions, statistical significance, rollback safety |
+| 10 | Bot Behavior Mapping & Log Config Templates | Bot detection, freshness signals, example log configs |
+| 11 | Synthetic Content & LLM Visibility Heuristics | LLM citation heuristics, passage retrievability, content flags |
+| 12 | Algorithmic Quality & Helpful-Content Classifier | Content freshness, E-E-A-T signals, quality thresholds |
 | 13 | Edge-Native Patching & CI/CD Gatekeeping | Pre-commit hooks, CI/CD rules, edge deployment |
 | 14 | Financial Attribution & Revenue Impact Engine | Revenue-at-risk per issue, ROI matrix, business impact |
 | 15 | Passage Vector & Cosine Similarity Profiler | Passage-level retrieval scoring, topic cluster detection |
 | 16 | Third-Party Consensus & Entity Alignment Scorer | Entity cross-referencing, brand mention analysis |
-| 17 | Multi-Agent Autonomous Sandbox & Fix Validator | Autonomous fix generation, red-team testing |
+| 17 | Autonomous Fix Generator & Red-Team Checks | Autonomous fix generation, red-team header/HTML checks |
 | 18 | Zero-Click & Agentic Commerce Visibility | Featured snippet readiness, product schema, commerce signals |
-| 19 | Edge Orchestration & Canary Deployment Safety | Edge worker deployment, canary testing, self-healing scripts |
-| 20 | Adversarial Red Team & Prompt Injection Audit | Security testing, information disclosure, cloaking detection |
-| 21 | Site-Wide Risk Aggregation & Executive Dashboard | Cross-level risk scoring, executive summary, revenue impact |
+| 19 | Edge Orchestration & Self-Correction Rules | Edge worker deployment, canary testing, self-healing scripts |
+| 20 | Adversarial Checks & Security Header Audit | Security testing, information disclosure, cloaking detection |
+| 21 | Financial Impact & Revenue Attribution Engine | Revenue-at-risk per issue, ROI matrix, executive summary |
 
 ### 📦 14 Concrete Executive Deliverables
 
@@ -91,7 +94,7 @@ The **Report page** (step 3) generates 14 ready-to-consume engineering artifacts
 2. **DOM Tree Health Score** — Node count, max/avg depth, bucket histograms, reference thresholds.
 3. **Schema Validation Audit** — Valid/invalid breakdown, missing required props, circular refs.
 4. **RAG Chunking Simulator** — Sliding-window retrievability analysis for AI answer engines.
-5. **Information Gain Delta** — KL-divergence and novel-term profile vs. background corpus.
+5. **Information Gain Delta** — KL-divergence and novel-term profile vs. a supplied baseline corpus (shows `N/A` without one).
 6. **Entity Mapping Grid** — Knowledge-graph + NLP entity extraction with type/count chips.
 7. **Automated Engineering Pull Requests** — Branch + commit + file-diff + regression tests.
 8. **Self-Healing Edge Workers** — Deploy-ready Cloudflare Worker / Vercel Edge / Edgio code.
@@ -104,14 +107,19 @@ The **Report page** (step 3) generates 14 ready-to-consume engineering artifacts
 
 ### 🧠 Real Data, No Fabrication
 
-Every metric across all 21 levels is derived from **actual page content**, not hardcoded defaults or synthesized values:
+Every metric across all 21 levels is derived from **actual page content**, not hardcoded defaults or synthesized values. This guarantee is enforced by design — where a measurement genuinely isn't possible, the tool returns `null`/`N/A` with an explanatory note instead of inventing a number:
 
+- **Core Web Vitals** — only genuinely measured metrics (from Puppeteer's real browser timings) are rated; unmeasured ones report `unmeasured` with a `dataSource` note. No wall-clock estimation fallback.
 - **SERP volatility** is computed from real page structure (word count, headings, images, links, lists, sentence/paragraph statistics).
-- **Revenue at risk** is calculated from real page signals (title presence, meta description, canonical, H1, schema, viewport, word count, image dimensions, server timing, security headers) **combined with optional GA4 business inputs** you supply (traffic, AOV, conversion rate, currency).
-- **Entity consensus** uses actual page text for self-mentions and optional external content — no fake "trusted sources."
-- **Passage similarity** uses real Jaccard/TF-IDF overlap on actual content passages.
-- **Brand mention share** counts real occurrences in page text.
-- **Readability scores** use real Flesch-Kincaid calculations on actual content.
+- **Revenue at risk** is calculated from real page signals combined with **optional GA4 business inputs** you supply (traffic, AOV, conversion rate, currency). Without them, all monetary figures are `0` and every message says so. Modeled fractions are explicitly labeled as assumptions.
+- **Information Gain (KL-divergence)** requires a baseline corpus; without one it returns `N/A` with a note — it is **not** computed against an empty reference.
+- **Direct-answer & LLM-citation scores** are labeled as structural heuristics ("no real user query supplied", "no real LLM inference performed") — they never claim an LLM was actually run.
+- **Crawl frequency** is reported as "not measured — depends on Google's internal signals", never a fake "daily to weekly" mapping.
+- **Redirect latency** is reported as "not measured", never an invented 50ms-per-hop figure.
+- **A/B CTR uplift** is reported as "not measured (no A/B test run)", never a fabricated "+5-15%".
+- **Log configs (Cloudflare/CloudWatch/Datadog)** are clearly labeled templates — the tool does not connect to your infrastructure.
+- **Entity consensus** uses actual page text for self-mentions — no fake "trusted sources."
+- **Brand mention share** counts real occurrences in page text; **readability** uses real Flesch-Kincaid math on actual content.
 
 ### ✨ Smart Auto-Configuration
 
@@ -146,6 +154,40 @@ Each auto-filled field shows a green **AUTO** badge so you can review and adjust
 - Graceful error handling at every level — a failure in one level never crashes the full audit.
 - Unified logging with rotation support.
 - **Render.com** deployment ready (dynamic Chrome path, `render.yaml`).
+
+---
+
+## Screenshots
+
+Real captures from a live audit run against a public page (`https://en.wikipedia.org/wiki/SEO`). The tool fetches the page, renders it in headless Chrome, runs all 21 levels, and renders the reports below — no mockups, no demo data.
+
+### Step 1 — Configure
+
+![Configure page with auto-filled URL analysis](screenshots/01-configure.png)
+
+Type any public URL and the tool auto-analyzes it (page type, brand, keywords, sitemap, competitors, viewport, currency) — each auto-filled field gets a green **AUTO** badge.
+
+### Step 2 — Analyze
+
+![Live audit progress stream](screenshots/02-analyzing.png)
+
+![Module results grid — 21 scored levels](screenshots/03-module-results.png)
+
+All 21 levels execute with a live progress stream (Server-Sent Events). When complete, every module shows a **0–100 score** with critical / warning / info counts. Click any module card to expand its data and fixes.
+
+### Step 3 — Report
+
+![Report overview with overall score ring](screenshots/04-report-top.png)
+
+![Executive overview](screenshots/05-report-overview.png)
+
+![14 executive deliverables](screenshots/06-deliverables.png)
+
+![5-phase executive deep-dive](screenshots/07-deep-dive.png)
+
+![Findings and issue log](screenshots/08-findings.png)
+
+The report page renders the overall score, **14 concrete deliverables**, the **5-phase executive deep-dive**, and a searchable issue log — with JSON / CSV / PDF export.
 
 ---
 
@@ -312,16 +354,16 @@ Image analysis (alt text, dimensions, lazy loading, srcset, modern formats), vid
 ### Level 8: Predictive SERP Volatility & Algorithm Impact
 SERP volatility from real page structure, quality thresholds, SERP feature readiness (AI Overview, featured snippet, PAA, local, shopping, knowledge panel), thin content, E-E-A-T signals, algorithm resilience.
 
-### Level 9: Continuous SEO A/B Testing & Rollback Safety
-Baseline extraction, testability assessment, title/meta variants, rollback safety, statistical significance, sample size estimation.
+### Level 9: SEO A/B Testing & Rollback Safety Guidance
+Baseline extraction, testability assessment, title/meta variant suggestions, rollback safety, statistical significance guidance, sample size estimation. CTR uplift percentages are **not** claimed — no A/B test is run, so variants are labeled "not measured (no A/B test run)".
 
-### Level 10: Log-Stream Intelligence & Bot Behavior Mapping
-Status code & redirect chain, crawl budget estimation, bot behavior / freshness signals, drop-in log stream configs (Cloudflare, CloudWatch, Datadog).
+### Level 10: Bot Behavior Mapping & Log Config Templates
+Status code & redirect chain (per-hop latency reported as "not measured"), crawl budget estimation, bot behavior / freshness signals, and **example** log config templates (Cloudflare, CloudWatch, Datadog) — the tool does not connect to your logging infrastructure.
 
-### Level 11: Multi-Model Synthetic User & LLM Behavior Simulation
-Synthetic agent behavior, RAG chunk simulation, agentic readiness (CTA parsability, form accessibility, JS dependency), LLM readiness.
+### Level 11: Synthetic Content & LLM Visibility Heuristics
+Synthetic agent behavior, RAG chunk simulation, agentic readiness (CTA parsability, form accessibility, JS dependency), direct-answer & LLM-citation **structural heuristics** (labeled as such — no real LLM inference is performed).
 
-### Level 12: Reverse-Engineered Core Algorithm & Quality Classifier
+### Level 12: Algorithmic Quality & Helpful-Content Classifier
 Content freshness, E-E-A-T signals, quality thresholds, quality flags, helpful-content alignment.
 
 ### Level 13: Edge-Native Patching & CI/CD Gatekeeping
@@ -336,20 +378,20 @@ Passage-level retrieval scoring, entity flow tracking, heading drift, content cl
 ### Level 16: Third-Party Consensus & Entity Alignment Scorer
 Entity consensus, citation quality, knowledge panel readiness, factual claims, trust-level scoring.
 
-### Level 17: Multi-Agent Autonomous Sandbox & Fix Validator
-Schema/heading/canonical auto-fixes with validation tests, diagnostic workflow, fix validation.
+### Level 17: Autonomous Fix Generator & Red-Team Checks
+Schema/heading/canonical auto-fixes with validation tests, diagnostic workflow, fix validation, red-team header/HTML checks (with clear "Not measured" notes on post-fix targets).
 
 ### Level 18: Zero-Click & Agentic Commerce Visibility
 AI Overview readiness, featured snippet optimization, zero-click CTR estimation, agentic commerce audit, brand mention share, entity prominence.
 
-### Level 19: Edge Orchestration & Canary Deployment Safety
-Edge worker deployment, canary (progressive rollout), rollback triggers, error budget monitoring, deployment checklist.
+### Level 19: Edge Orchestration & Self-Correction Rules
+Edge worker deployment, canary (progressive rollout), rollback triggers, error budget monitoring, self-correction rules with honest deploy-time estimates.
 
-### Level 20: Adversarial Red Team & Prompt Injection Audit
-Prompt injection testing, output manipulation, hallucination triggers, jailbreak patterns, data extraction attempts, injection risk scoring.
+### Level 20: Adversarial Checks & Security Header Audit
+Security header analysis, information disclosure, cloaking detection, and robustness checks (rate limiting / UA cloaking / open redirect / parameter pollution are honestly reported as skipped where not measurable).
 
-### Level 21: Site-Wide Risk Aggregation & Executive Dashboard
-Cross-page pattern analysis, risk distribution, portfolio scoring, executive summary, KPI dashboard, benchmark comparison.
+### Level 21: Financial Impact & Revenue Attribution Engine
+Revenue-at-risk per issue, ROI analysis, quarterly projections, priority action plan — all gated on real user-supplied traffic data. Without `monthlyTraffic`, `avgOrderValue` and `conversionRate`, every dollar figure is `0` with a clear explanation.
 
 ---
 
@@ -366,7 +408,7 @@ Cross-page pattern analysis, risk distribution, portfolio scoring, executive sum
 | 7 | Automated Engineering PRs | Branch + files + tests | Level 17 `pullRequests` |
 | 8 | Self-Healing Edge Workers | Deploy-ready code | Levels 6, 13, 19 |
 | 9 | CI/CD Build Gatekeeper Logs | Workflow + hook + pipeline | Level 13 |
-| 10 | Log-Stream Bot Behavior Maps | Freshness signals + log configs | Level 10 |
+| 10 | Bot Behavior Maps & Log Config Templates | Freshness signals + example log configs | Level 10 |
 | 11 | Algorithmic Quality Threshold Alerts | Flag + threshold watch | Levels 8, 12, 20 |
 | 12 | Multi-Modal Asset Diagnostics | Image/video/audio compliance | Level 7 |
 | 13 | Revenue-at-Risk Dashboard | Monetized financial model | Level 14 |
@@ -540,7 +582,7 @@ rm -rf node_modules && npm install
 ## FAQ
 
 **Q: Does this tool crawl my entire site?**  
-A: No. It analyzes a single URL per request. For site-wide analysis, run multiple audits and use Level 21 (Site-Wide Risk Aggregation).
+A: No. It analyzes a single URL per request. For site-wide analysis, run multiple audits and use Level 20's site-wide risk projection (which explicitly notes it reflects the audited page only, not a full crawl).
 
 **Q: Does it work on SPAs (React, Angular, Vue)?**  
 A: Yes. Puppeteer renders JavaScript before analysis. Level 2 specifically compares SSR vs CSR to detect JS-dependent content.
@@ -578,7 +620,7 @@ A: Enter your monthly organic traffic, average order value and conversion rate o
 - [ ] **API client libraries** — JavaScript, Python, and Go SDKs
 - [ ] **Integration plugins** — WordPress, Shopify, Webflow, Contentful
 - [ ] **Real-time WebSocket streaming** — live audit progress
-- [ ] **AI-powered fix generation** — LLM integration for automated remediation
+- [ ] **AI-powered fix generation** — optional LLM integration for automated remediation (currently the fix generator uses rule-based templates, honestly labeled)
 
 ---
 
@@ -629,7 +671,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ---
 
 <div align="center">
-  <strong>Complete ON Page SEO 2026</strong> — 21-Level AI-Powered On-Page SEO Audit & Fix Generator
+  <strong>Complete ON Page SEO 2026</strong> — 21-Level On-Page SEO Audit & Fix Generator
   <br>
   Built with ❤️ for the SEO community
 </div>

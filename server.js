@@ -323,18 +323,18 @@ const LEVEL_NAMES = [
   'Edge Computing & Serverless Worker Integration',
   'Multi-Modal Content & Spatial Asset Auditing',
   'Predictive SERP Volatility & Algorithm Impact Simulator',
-  'Continuous SEO A/B Testing & Rollback Safety Nets',
-  'Real-Time Log-Stream Intelligence & Bot Behavior Mapping',
-  'Multi-Model Synthetic User & LLM Behavior Simulation',
-  'Reverse-Engineered Core Algorithm & Quality Classifier',
+  'SEO A/B Testing & Rollback Safety Guidance',
+  'Bot Behavior Mapping & Log Config Templates',
+  'Synthetic Content & LLM Visibility Heuristics',
+  'Algorithmic Quality & Helpful-Content Classifier',
   'Edge-Native Patching & CI/CD Gatekeeping',
   'Financial Attribution & Revenue Impact Engine',
   'Passage Vector & Cosine Similarity Profiler',
   'Third-Party Consensus & Entity Alignment Scorer',
-  'Multi-Agent Autonomous Sandbox & Fix Validator',
+  'Autonomous Fix Generator & Red-Team Checks',
   'Zero-Click & Agentic Commerce Visibility Metrics',
   'Edge Orchestration & Canary Deployment Safety',
-  'Adversarial Red Team & Prompt Injection Audit',
+  'Adversarial Checks & Security Header Audit',
   'Site-Wide Risk Aggregation & Executive Dashboard'
 ];
 
@@ -411,9 +411,12 @@ async function auditUrl(url, onProgress, config) {
       if (timing) perf = timing;
     } catch {
       perf = {
-        ttfb: Math.round(navTime * 0.3),
-        domContentLoaded: Math.round(navTime * 0.7),
-        loadComplete: navTime
+        ttfb: null,
+        domContentLoaded: null,
+        loadComplete: null,
+        domInteractive: null,
+        responseEnd: null,
+        note: 'Navigation timing could not be extracted — performance metrics were NOT estimated from wall-clock time.'
       };
     }
 
@@ -456,10 +459,10 @@ async function auditUrl(url, onProgress, config) {
     { fn: level14, args: [$, bodyText, finalUrl, cfg], num: 14 },
     { fn: level15, args: [$, bodyText, cfg], num: 15 },
     { fn: level16, args: [$, finalUrl, cfg], num: 16 },
-    { fn: level17, args: [$, finalUrl, cfg], num: 17 },
+    { fn: level17, args: [$, finalUrl, cfg, responseHeaders], num: 17 },
     { fn: level18, args: [$, bodyText, finalUrl, cfg], num: 18 },
     { fn: level19, args: [$, finalUrl, cfg], num: 19 },
-    { fn: level20, args: [$, bodyText, cfg], num: 20 },
+    { fn: level20, args: [$, bodyText, finalUrl, cfg], num: 20 },
     { fn: level21, args: [$, bodyText, finalUrl, cfg], num: 21 }
   ];
 

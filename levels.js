@@ -30,7 +30,7 @@ function level1($, url, headers, rawHtml, config) {
     hasSeparator: /[-–—|:;]/.test(titleText)
   };
 
-  if (!titleText) { p += 25; issues.push({ severity: 'critical', impact: 'critical', message: 'No title tag found — Google auto-generates a poor title from H1 or content, reducing CTR by ~30%', element: 'title', selector: 'head > title', link: url, evidence: 'Title tag count: 0 in <head>', fix: '<title>Primary Keyword - Secondary Keyword | Brand Name</title>', recommendation: 'Add a unique, descriptive title tag to every page. Place primary keyword at the start.', steps: ['Open your HTML file or CMS page editor', 'Locate the <head> section (usually near the top of the HTML)', 'Add or replace the <title> tag with: <title>Your Primary Keyword - Description | Brand</title>', 'Keep title between 50-60 characters (580px pixel width max)', 'Front-load the primary keyword for maximum SEO impact', 'Ensure each page has a unique title (no duplicates across your site)', 'Save and deploy the changes'] }); }
+  if (!titleText) { p += 25; issues.push({ severity: 'critical', impact: 'critical', message: 'No title tag found in <head> — Google must derive a title from page content, losing control over how the page appears in search results', element: 'title', selector: 'head > title', link: url, evidence: 'Title tag count: 0 in <head>', fix: '<title>' + ((cfg.keywords || '').split(',')[0] || 'Primary Keyword') + ' - ' + (cfg.brand || 'Brand Name') + '</title>', recommendation: 'Add a unique, descriptive title tag to every page. Place the primary keyword at the start.', steps: ['Add a <title> tag inside the <head> section', 'Keep title between 50-60 characters (580px pixel width max)', 'Front-load the primary keyword for maximum SEO impact', 'Ensure each page has a unique title (no duplicates across your site)', 'Save and deploy the changes'] }); }
   else {
     if (titleText.length < 20) { p += 15; issues.push({ severity: 'critical', impact: 'high', message: 'Title too short: ' + titleText.length + ' chars. "' + titleText + '" under 20 chars wastes SERP real estate', element: 'title', selector: $('title').length ? sel($, $('title')[0]) : 'head > title', link: url, evidence: 'Length: ' + titleText.length + ' chars, min recommended: 50', fix: '<title>' + (h1Text || 'Your Primary Keyword') + ' - Detailed Description | ' + (data.config.brand || 'Brand Name') + '</title>', steps: ['Current title is only ' + titleText.length + ' characters — far below the optimal 50-60 range', 'Expand the title by adding: Primary Keyword + Secondary Keyword + Brand', 'Example pattern: "Primary Keyword - Supporting Detail | Brand Name"', 'Ensure the title accurately describes the page content', 'Test pixel width using a title pixel counter tool (target: under 580px)', 'Deploy and verify in Google Search Console after indexing'] }); }
     else if (titleText.length < 30) { p += 5; issues.push({ severity: 'warning', impact: 'medium', message: 'Title below optimal length: ' + titleText.length + ' chars — could include more descriptive keywords', element: 'title', selector: sel($, $('title')[0]), link: url, fix: 'Add more descriptive keywords to reach 50-60 characters', steps: ['Add a secondary keyword or descriptive phrase to the title', 'Include your brand name if not already present', 'Target 50-60 characters total', 'Front-load the most important keywords'] }); }
@@ -57,12 +57,12 @@ function level1($, url, headers, rawHtml, config) {
     ogDescription: ogDesc.substring(0, 200), ogAligned: ogDescAligned
   };
 
-  if (!desc) { p += 20; issues.push({ severity: 'critical', impact: 'critical', message: 'No meta description — Google auto-generates one from content, research shows this reduces CTR by ~5.8%', element: 'meta[name="description"]', link: url, evidence: 'Meta description tag count: 0', fix: '<meta name="description" content="Write a compelling 150-155 character description that includes your primary keyword and a call-to-action. This appears below your title in search results.">', recommendation: 'Write a compelling 150-155 char description with primary keyword and CTA', steps: ['Open your HTML file or CMS page editor', 'Locate the <head> section', 'Add: <meta name="description" content="Your compelling description here">', 'Write 150-155 characters (Google truncates at ~155-160)', 'Include your primary keyword naturally in the first 100 characters', 'Add a call-to-action: "Learn how...", "Discover why...", "Get started..."', 'Make it unique for every page — duplicate descriptions hurt rankings', 'Save and deploy. Monitor CTR in Google Search Console after indexing'] }); }
+  if (!desc) { p += 20; issues.push({ severity: 'critical', impact: 'critical', message: 'No meta description — Google will auto-generate a snippet from page content, meaning you lose control over the text shown in results and it may not include your keyword', element: 'meta[name="description"]', link: url, evidence: 'Meta description tag count: 0', fix: '<meta name="description" content="' + (cfg.keywords ? cfg.keywords.split(',')[0] : 'Primary Keyword') + ' — ' + (cfg.brand || 'Brand Name') + '. Write a compelling description that includes your primary keyword and a call-to-action.">', recommendation: 'Write a compelling 150-155 char description with primary keyword and CTA', steps: ['Locate the <head> section', 'Add: <meta name="description" content="Your compelling description here">', 'Write 150-155 characters (Google truncates at ~155-160)', 'Include your primary keyword naturally in the first 100 characters', 'Add a call-to-action: "Learn how...", "Discover why...", "Get started..."', 'Make it unique for every page — duplicate descriptions hurt rankings', 'Save and deploy. Monitor CTR in Google Search Console after indexing'] }); }
   else {
     if (descLen < 70) { p += 8; issues.push({ severity: 'warning', impact: 'medium', message: 'Meta description too short: ' + descLen + ' chars — optimal is 150-155', element: 'meta[name="description"]', link: url, evidence: 'Current: ' + descLen + ' chars, target: 150-155', fix: 'Expand description to 150-155 characters with compelling copy and keywords', steps: ['Your description is only ' + descLen + ' characters — Google can display up to ~155', 'Add more descriptive text about what the page offers', 'Include the primary keyword naturally', 'Add a call-to-action (e.g., "Learn more", "Shop now", "Read the guide")', 'Aim for exactly 150-155 characters for maximum SERP visibility'] }); }
     else if (descLen < 120) { p += 3; issues.push({ severity: 'info', impact: 'low', message: 'Meta description below optimal range: ' + descLen + ' chars (target: 150-155)', element: 'meta[name="description"]', link: url, fix: 'Add 30-40 more characters with additional keyword-rich copy', steps: ['Description is slightly short at ' + descLen + ' chars', 'Add a secondary keyword or benefit statement', 'Include a CTA if not already present'] }); }
     if (descLen > 160) { p += 5; issues.push({ severity: 'warning', impact: 'medium', message: 'Meta description too long: ' + descLen + ' chars — Google truncates at ~155-160 chars', element: 'meta[name="description"]', link: url, evidence: 'Current: ' + descLen + ' chars, truncation point: ~155 chars', fix: 'Trim to 150-155 characters. Keep the most important info and CTA at the start.', steps: ['Your description exceeds 160 characters — the last ' + (descLen - 155) + ' characters will be cut off in search results', 'Identify the most compelling part of your description', 'Move the primary keyword and CTA to the first 100 characters', 'Remove redundant words or secondary details', 'Test by pasting into a character counter tool'] }); }
-    if (!descHasCTA && descLen > 50) { p += 2; issues.push({ severity: 'info', impact: 'low', message: 'Meta description lacks a clear call-to-action — adding one can improve CTR by 2-4%', element: 'meta[name="description"]', link: url, fix: 'Add a CTA like "Learn how...", "Discover why...", "Get started..."', steps: ['CTAs in meta descriptions encourage clicks from search results', 'Add action verbs: Learn, Discover, Find, Get, Start, Try, Shop, Read', 'Place the CTA near the end of the description', 'Example: "... Read our complete guide to learn more"', 'A/B test different CTAs in Google Search Console'] }); }
+    if (!descHasCTA && descLen > 50) { p += 2; issues.push({ severity: 'info', impact: 'low', message: 'Meta description lacks a clear call-to-action — CTAs give users a reason to click and can influence CTR, though impact varies by niche', element: 'meta[name="description"]', link: url, fix: 'Add a CTA like "Learn how...", "Discover why...", "Get started..."', steps: ['CTAs in meta descriptions encourage clicks from search results', 'Add action verbs: Learn, Discover, Find, Get, Start, Try, Shop, Read', 'Place the CTA near the end of the description', 'Example: "... Read our complete guide to learn more"', 'A/B test different CTAs in Google Search Console'] }); }
     if (!descHasKeyword && descKeywords) { p += 2; issues.push({ severity: 'info', impact: 'medium', message: 'Primary keyword phrase "' + descKeywords + '" not found in meta description — keywords in descriptions get bolded in SERPs', element: 'meta[name="description"]', link: url, evidence: 'H1 keyword "' + descKeywords + '" not in description', fix: 'Include the primary keyword phrase "' + descKeywords + '" naturally in the description', steps: ['Google bolds matching keywords in descriptions, increasing visibility', 'Your primary keyword from the H1 should appear in the meta description', 'Rewrite the description to naturally include "' + descKeywords + '"', 'Place it in the first 100 characters for maximum impact', 'Don\'t keyword-stuff — keep it readable'] }); }
     if (ogDesc && !ogDescAligned) { p += 2; issues.push({ severity: 'info', impact: 'low', message: 'OG:description differs from HTML meta description — social platforms may show different text', element: 'meta[property="og:description"]', link: url, fix: 'Set og:description to match the HTML meta description', steps: ['OG:description controls what appears when shared on social media', 'Set <meta property="og:description" content="same as meta description">', 'This ensures consistent messaging across search and social'] }); }
   }
@@ -195,7 +195,7 @@ function level2($, rawHtml, renderedHtml, perf) {
   const schema = validateSchemaComprehensive($);
   data.schemaValidation = { validCount: schema.validCount, invalidCount: schema.invalidCount, total: schema.schemas.length, types: schema.schemas.filter(s => s.valid).map(s => s.type), missingRequired: schema.missingRequired, circularRefs: schema.circularRefs, warnings: schema.warnings };
   if (schema.invalidCount > 0) { p += 12; issues.push({ severity: 'critical', impact: 'high', message: schema.invalidCount + ' invalid JSON-LD schema(s) — ' + schema.missingRequired.slice(0, 3).map(m => m.schemaType + ': ' + m.field).join('; '), element: 'JSON-LD structured data', link: '', evidence: schema.missingRequired.map(m => m.schemaType + ' missing ' + m.field).join(', '), fix: 'Fix required fields and validate at https://validator.schema.org', steps: ['Invalid structured data won\'t trigger rich results in Google Search', 'Missing required fields break the schema completely', 'For each invalid schema:', '1. Open the JSON-LD block in your HTML', '2. Add the missing required fields: ' + schema.missingRequired.slice(0, 3).map(m => m.field).join(', '), '3. Validate at https://validator.schema.org/', '4. Test with Google Rich Results Test: https://search.google.com/test/rich-results', '5. Deploy and monitor in Google Search Console > Enhancements'] }); }
-  if (schema.schemas.filter(s => s.valid).length === 0) { p += 8; issues.push({ severity: 'warning', impact: 'high', message: 'No valid structured data found — missing rich result opportunities that significantly increase CTR', element: 'structured data', link: '', fix: 'Add at minimum: Organization, WebSite, and page-type specific schemas', steps: ['Structured data enables rich results (stars, FAQs, how-tos, etc.) in Google', 'Rich results can increase CTR by 20-30%', 'Add these essential schemas:', '1. Organization schema (brand name, logo, social profiles)', '2. WebSite schema (site name, search action)', '3. BreadcrumbList schema (navigation path)', '4. Page-type specific: Article, Product, FAQ, HowTo, LocalBusiness', 'Generate schema at: https://technicalseo.com/tools/schema-markup-generator/', 'Validate at: https://validator.schema.org/'] }); }
+  if (schema.schemas.filter(s => s.valid).length === 0) { p += 8; issues.push({ severity: 'warning', impact: 'high', message: 'No valid structured data found — missing rich result opportunities that significantly increase CTR', element: 'structured data', link: '', fix: 'Add at minimum: Organization, WebSite, and page-type specific schemas', steps: ['Structured data enables rich results (stars, FAQs, how-tos, etc.) in Google', 'Rich results can improve visibility and CTR in eligible queries', 'Add these essential schemas:', '1. Organization schema (brand name, logo, social profiles)', '2. WebSite schema (site name, search action)', '3. BreadcrumbList schema (navigation path)', '4. Page-type specific: Article, Product, FAQ, HowTo, LocalBusiness', 'Validate at: https://validator.schema.org/'] }); }
 
   const idMap = {};
   $('[id]').each((i, el) => {
@@ -208,15 +208,16 @@ function level2($, rawHtml, renderedHtml, perf) {
 
   const cwvMetrics = {};
   if (perf) {
+    if (perf.ttfb !== undefined) cwvMetrics.ttfv = perf.ttfb;
     if (perf.lcp) cwvMetrics.lcp = perf.lcp;
     if (perf.fid) cwvMetrics.fid = perf.fid;
     if (perf.cls) cwvMetrics.cls = perf.cls;
     if (perf.inp) cwvMetrics.inp = perf.inp;
-    if (perf.ttfv) cwvMetrics.ttfv = perf.ttfv;
     if (perf.fcp) cwvMetrics.fcp = perf.fcp;
     if (perf.si) cwvMetrics.si = perf.si;
     if (perf.tbt) cwvMetrics.tbt = perf.tbt;
   }
+  data.measuredTimings = perf || {};
   const cwv = analyzeCoreWebVitals(cwvMetrics);
   data.coreWebVitals = cwv;
 
@@ -233,7 +234,8 @@ function level2($, rawHtml, renderedHtml, perf) {
   data.lcpElement = lcpCandidate;
   if (lcpCandidate && !lcpCandidate.hasDimensions && lcpCandidate.tag === 'img') { p += 5; issues.push({ severity: 'warning', impact: 'high', message: 'Potential LCP element (img: "' + lcpCandidate.src.substring(0, 40) + '") lacks explicit dimensions — causes CLS', element: lcpCandidate.tag, selector: lcpCandidate.selector, link: '', recommendation: 'Add width/height to this image to prevent layout shift' }); }
 
-  if (cwv.verdict === 'fail') { p += 15; issues.push({ severity: 'warning', impact: 'high', message: 'Core Web Vitals assessment: FAIL — ' + cwv.failedTests.join(', ') + ' failing. Poor CWV directly impacts rankings under Google\'s page experience update.', element: 'Core Web Vitals', link: '', evidence: 'Failed: ' + cwv.failedTests.join(', ') + '. Score: ' + cwv.score }); }
+  if (cwv.measuredCount > 0 && cwv.verdict === 'fail') { p += 15; issues.push({ severity: 'warning', impact: 'high', message: 'Core Web Vitals assessment: FAIL — ' + cwv.failedTests.join(', ') + ' failing. Poor CWV directly impacts rankings under Google\'s page experience update.', element: 'Core Web Vitals', link: '', evidence: 'Failed: ' + cwv.failedTests.join(', ') + '. Score: ' + cwv.score }); }
+  if (cwv.measuredCount > 0 && cwv.verdict === 'needs-improvement') { p += 8; issues.push({ severity: 'warning', impact: 'medium', message: 'Core Web Vitals assessment: NEEDS IMPROVEMENT — ' + cwv.failedTests.join(', ') + ' below the "good" threshold.', element: 'Core Web Vitals', link: '', evidence: 'Needs improvement: ' + cwv.failedTests.join(', ') + '. Score: ' + cwv.score }); }
 
   const resourceCounts = { scripts: $('script[src]').length, inlineScripts: $('script:not([src])').length, stylesheets: $('link[rel="stylesheet"]').length, images: $('img').length, iframes: $('iframe').length };
   const renderBlocking = [];
@@ -297,8 +299,8 @@ function level3($, bodyText, url, config) {
   };
 
   if (wc < 300) { p += 25; issues.push({ severity: 'critical', impact: 'critical', message: 'Very thin content: only ' + wc + ' words — pages under 300 words rarely rank competitively', element: 'page content', link: '', evidence: wc + ' words (target: 1,500+)', recommendation: 'Expand to at least 1,500+ words with original research, examples, and detailed explanations' }); }
-  else if (wc < 800) { p += 10; issues.push({ severity: 'warning', impact: 'high', message: 'Content may be thin (' + wc + ' words) — top-ranking pages average 1,500-2,500 words', element: 'page content', link: '', evidence: wc + ' words vs competitive benchmark 1,500+', recommendation: 'Add 700+ more words covering subtopics and user questions' }); }
-  else if (wc < 1500) { p += 4; issues.push({ severity: 'info', impact: 'medium', message: 'Content length (' + wc + ' words) below competitive benchmark of 1,500 words', element: 'page content', link: '' }); }
+  else if (wc < 800) { p += 10; issues.push({ severity: 'warning', impact: 'high', message: 'Content may be thin (' + wc + ' words) — pages under ~800 words generally lack the depth needed to cover a topic comprehensively', element: 'page content', link: '', evidence: wc + ' words; benchmark is a heuristic, not a guarantee of ranking', recommendation: 'Add 700+ more words covering subtopics and user questions' }); }
+  else if (wc < 1500) { p += 4; issues.push({ severity: 'info', impact: 'medium', message: 'Content length (' + wc + ' words) is on the shorter side — expand if competitors in this niche publish longer, more detailed content', element: 'page content', link: '' }); }
 
   const entities = extractKnowledgeGraphEntities(bodyText);
   data.knowledgeGraphEntities = { total: entities.length, entities: entities.slice(0, 20), topTypes: [...new Set(entities.slice(0, 10).map(e => e.type))] };
@@ -381,8 +383,8 @@ function level3($, bodyText, url, config) {
   if (kwDensity.length > 0) {
     const topKwd = kwDensity[0];
     const densityNum = parseFloat(topKwd.density);
-    if (densityNum > 5) { p += 15; issues.push({ severity: 'critical', impact: 'critical', message: 'Severe keyword stuffing: "' + topKwd.word + '" at ' + topKwd.density + ' density (' + topKwd.count + 'x) — Google spam signal', element: 'keyword density', link: '', evidence: '"' + topKwd.word + '" at ' + topKwd.density + ' (safe limit: < 3%)', recommendation: 'Use synonyms and natural language instead of repeating keywords' }); }
-    else if (densityNum > 3) { p += 10; issues.push({ severity: 'warning', impact: 'high', message: 'Keyword density too high for "' + topKwd.word + '": ' + topKwd.density + ' — over 3% appears manipulative', element: 'keyword density', link: '' }); }
+    if (densityNum > 5) { p += 15; issues.push({ severity: 'critical', impact: 'critical', message: 'Very high keyword density: "' + topKwd.word + '" at ' + topKwd.density + ' density (' + topKwd.count + 'x) — reads as keyword stuffing, which search engines may treat as spam', element: 'keyword density', link: '', evidence: '"' + topKwd.word + '" at ' + topKwd.density + ' (common guidance: keep under 3%)', recommendation: 'Use synonyms and natural language instead of repeating keywords' }); }
+    else if (densityNum > 3) { p += 10; issues.push({ severity: 'warning', impact: 'high', message: 'High keyword density for "' + topKwd.word + '": ' + topKwd.density + ' — commonly flagged as over-optimized above ~3%; vary phrasing naturally', element: 'keyword density', link: '' }); }
   }
 
   const bigrams = analyzeBigrams(bodyText, 10);
@@ -430,15 +432,15 @@ function level4($, bodyText, url) {
   const lowRetrievalChunks = rag.retrievabilityScores.filter(c => c.retrievabilityScore < 50);
   if (lowRetrievalChunks.length > 0) { data.lowRetrievalChunks = lowRetrievalChunks.slice(0, 5); }
 
-  const daScore = directAnswerScorer(bodyText, bodyText);
+  const daScore = directAnswerScorer('', bodyText);
   data.directAnswer = daScore;
-  if (!daScore.hasDirectAnswer) { p += 8; issues.push({ severity: 'warning', impact: 'high', message: 'No high-confidence direct answer sections found — AI search engines (Google AI Overviews, Bing Chat) prefer concise extractable answers', element: 'content format', link: '', evidence: 'Direct Answer Score: ' + daScore.directAnswerScore + '/100', recommendation: 'Add concise Q&A pairs, definition sentences ("X is Y"), numbered steps, and comparison tables' }); }
+  if (!daScore.hasDirectAnswer) { p += 8; issues.push({ severity: 'warning', impact: 'high', message: 'No high-confidence direct answer sections found — AI search engines (Google AI Overviews, Bing Chat) prefer concise extractable answers', element: 'content format', link: '', evidence: 'Direct Answer Score: ' + daScore.directAnswerScore + '/100 (no real user query supplied — structural Q&A/definition/list/table signals only)', recommendation: 'Add concise Q&A pairs, definition sentences ("X is Y"), numbered steps, and comparison tables' }); }
   if (daScore.listCandidates.length > 0 || daScore.tableCandidates.length > 0) { data.structuredAnswerCandidates = { lists: daScore.listCandidates.slice(0, 3), tables: daScore.tableCandidates.slice(0, 5) }; }
 
-  const citationScore = simulateLLMCitation(bodyText, bodyText.substring(0, 200));
+  const citationScore = simulateLLMCitation(bodyText, '');
   data.llmCitation = citationScore;
   data.llmCitationConfidence = citationScore.llmConfidence;
-  if (citationScore.llmConfidence === 'low') { p += 5; issues.push({ severity: 'info', impact: 'medium', message: 'Low LLM citation-worthiness score (' + citationScore.avgCitationScore + '/100 avg) — AI systems unlikely to cite this page as an authoritative source', element: 'content authority', link: '', evidence: 'Avg citation score: ' + citationScore.avgCitationScore + ', extractable facts: ' + citationScore.totalExtractableFacts, recommendation: 'Add statistics, data points, quotes, and authoritative references to increase citation potential' }); }
+  if (citationScore.llmConfidence === 'low') { p += 5; issues.push({ severity: 'info', impact: 'medium', message: 'Low extractable-fact density (' + citationScore.avgCitationScore + '/100 avg) — the page has few statistics, data points, quotes, or authoritative references an LLM could cite (no real LLM inference performed; score is a structural heuristic)', element: 'content authority', link: '', evidence: 'Avg citation score: ' + citationScore.avgCitationScore + ', extractable facts: ' + citationScore.totalExtractableFacts, recommendation: 'Add statistics, data points, quotes, and authoritative references to increase citation potential' }); }
   if (citationScore.topCitations.length > 0) { data.topCitationSections = citationScore.topCitations; }
 
   const questionPhrases = (bodyText.match(/\b(how|what|why|when|where|who|which|can|does|is|are|do|should|will|would|could|may|might)\b\s+[^?]+\?/gi) || []);
@@ -525,9 +527,11 @@ function level5($, url) {
       headline: titleText, description: descContent || firstP.substring(0, 160),
       authorName: $('meta[name="author"]').attr('content') || '',
       publisherName: brandName,
-      name: titleText, price: '0', currency: 'USD',
-      questions: pageType === 'FAQPage' ? [{ question: h1Text || 'Question?', answer: firstP.substring(0, 200) || 'Answer.' }] : [],
-      items: ['Home', titleText || 'Page'],
+      name: titleText,
+      price: $('meta[property="product:price:amount"]').attr('content') || '',
+      currency: $('meta[property="product:price:currency"]').attr('content') || 'USD',
+      questions: pageType === 'FAQPage' ? [{ question: h1Text || '', answer: firstP.substring(0, 200) || '' }] : [],
+      items: titleText ? ['Home', titleText] : [],
       baseUrl: url.replace(/\/$/, '')
     });
     fixes.push({
@@ -690,7 +694,7 @@ function level5($, url) {
       location: issue.selector || issue.element || url,
       description: (issue.message || issue.recommendation || '').substring(0, 200),
       recommendation: (issue.recommendation || issue.fix || '').substring(0, 200)
-    })) : [{ name: 'Missing title tag', priority: 'Critical', location: 'head', description: 'Page has no title tag', recommendation: 'Add a descriptive title tag' }]
+    })) : []
   };
   data.jiraTicket = formatJiraTicket(ticketFindings);
 
@@ -708,12 +712,12 @@ jobs:
         run: |
           curl -s -X POST \${{ secrets.SEO_AUDIT_URL }}/api/audit \\
             -H "Content-Type: application/json" \\
-            -d '{"url": "https://example.com"}'
+            -d '{"url": "${url}"}'
       - name: Check Score Threshold
         run: |
           SCORE=$(curl -s -X POST \${{ secrets.SEO_AUDIT_URL }}/api/audit \\
             -H "Content-Type: application/json" \\
-            -d '{"url": "https://example.com"}' | jq -r '.overallScore // 0')
+            -d '{"url": "${url}"}' | jq -r '.overallScore // 0')
           if [ "$SCORE" -lt 70 ]; then
             echo "SEO score $SCORE is below threshold of 70"
             exit 1
@@ -744,7 +748,7 @@ jobs:
 // wrangler deploy worker.js --env production
 `,
     preCommit: `# Add to package.json scripts:
-# "seo:check": "curl -s -X POST http://localhost:3000/api/audit -H 'Content-Type: application/json' -d '{\\"url\\": \\"https://example.com\\"}' | jq '.overallScore'"
+# "seo:check": "curl -s -X POST http://localhost:3000/api/audit -H 'Content-Type: application/json' -d '{\\"url\\": \\"${url}\\"}' | jq '.overallScore'"
 #
 # Add pre-commit hook (.husky/pre-commit):
 # npm run seo:check && git add -A`
@@ -796,7 +800,7 @@ function level6(headers, $, url) {
   data.cdn = { detected: detectedCdn, server: h['server'] || 'unknown', poweredBy: h['x-powered-by'] || '', via: h['via'] || '', hasCDN: detectedCdn !== 'none' };
 
   if (detectedCdn === 'none') {
-    issues.push({ severity: 'info', impact: 'low', message: 'No CDN detected. Origin server exposed - higher latency for global users. CDNs reduce TTFB by 30-60%.', element: 'CDN', fix: 'Deploy behind Cloudflare (free tier), CloudFront, or Fastly for global edge caching.', link: url, evidence: 'Server: ' + (h['server'] || 'unknown') });
+    issues.push({ severity: 'info', impact: 'low', message: 'No CDN detected. Origin server exposed - higher latency for global users. CDNs cache content closer to users and can reduce TTFB for far-away visitors.', element: 'CDN', fix: 'Deploy behind Cloudflare (free tier), CloudFront, or Fastly for global edge caching.', link: url, evidence: 'Server: ' + (h['server'] || 'unknown') });
     p += 5;
   }
 
@@ -1049,7 +1053,7 @@ function level7($) {
     p += Math.min(5, noLazy);
   }
   if (totalPngGif > 0) {
-    issues.push({ severity: 'warning', impact: 'medium', message: totalPngGif + ' images in PNG/GIF format - WebP/AVIF reduce file size by 25-35% without quality loss.', element: 'image format', fix: 'Convert PNG to WebP (lossless) and GIF to WebP/AVIF. Use <picture> with WebP fallback.', link: '', evidence: totalPngGif + ' non-modern format images' });
+    issues.push({ severity: 'warning', impact: 'medium', message: totalPngGif + ' images in PNG/GIF format - WebP/AVIF typically compress images smaller than PNG/GIF, reducing transfer size.', element: 'image format', fix: 'Convert PNG to WebP (lossless) and GIF to WebP/AVIF. Use <picture> with WebP fallback.', link: '', evidence: totalPngGif + ' non-modern format images' });
     p += Math.min(8, totalPngGif * 2);
   }
   if (missingSrcset > 0 && missingSrcset > totalImages * 0.5) {
@@ -1325,9 +1329,9 @@ function level8($, bodyText, url) {
 
   // Subfunction 8: Zero-Click Risk Projection
   subfunctions.zeroClickRisk = {
-    aiOverviewRisk: subfunctions.serpFeatures.aiOverview.score > 60 ? 'high - AI Overview may trigger, reducing CTR by 20-40%' : 'low',
-    featuredSnippetRisk: subfunctions.serpFeatures.featuredSnippet.ready ? 'moderate - snippet may reduce CTR but increase brand visibility' : 'low',
-    estimatedCTRImpact: subfunctions.serpFeatures.aiOverview.score > 60 ? '-20% to -40%' : subfunctions.serpFeatures.featuredSnippet.ready ? '-10% to -20%' : 'minimal',
+    aiOverviewRisk: subfunctions.serpFeatures.aiOverview.score > 60 ? 'high - AI Overview may trigger for eligible queries' : 'low',
+    featuredSnippetRisk: subfunctions.serpFeatures.featuredSnippet.ready ? 'moderate - snippet may reduce clicks but increase brand visibility' : 'low',
+    estimatedCTRImpact: subfunctions.serpFeatures.aiOverview.score > 60 ? '-20% to -40% (qualitative projection, not measured)' : subfunctions.serpFeatures.featuredSnippet.ready ? '-10% to -20% (qualitative projection, not measured)' : 'minimal',
     mitigationStrategy: subfunctions.serpFeatures.aiOverview.score > 60 ? 'Add unique data points and analysis that AI Overviews would need to cite you as source' : 'Optimize for snippet eligibility to capture voice search share'
   };
 
@@ -1406,9 +1410,9 @@ function level9($, bodyText, url) {
     const cleanTitle = title.replace(/[-|\u2013\u2014].*$/, '').trim();
     const brand = title.includes('|') ? title.split('|').pop().trim() : 'Brand';
     titleVariants.push(
-      { variant: 'A (Control)', title: title, hypothesis: 'Current title - baseline', estimatedCTR: 'baseline', charCount: title.length },
-      { variant: 'B (Front-loaded)', title: cleanTitle.substring(0, 55), hypothesis: 'Shorter, front-loaded version reduces truncation risk', estimatedCTR: '+5-15%', charCount: Math.min(cleanTitle.length, 55) },
-      { variant: 'C (Benefit-driven)', title: cleanTitle.substring(0, 40) + ': ' + brand, hypothesis: 'Adding benefit hook increases emotional engagement and CTR', estimatedCTR: '+3-12%', charCount: Math.min(cleanTitle.length + 3, 65) }
+      { variant: 'A (Control)', title: title, hypothesis: 'Current title - baseline', estimatedCTR: 'not measured (no A/B test run)', charCount: title.length },
+      { variant: 'B (Front-loaded)', title: cleanTitle.substring(0, 55), hypothesis: 'Shorter, front-loaded version reduces truncation risk', estimatedCTR: 'not measured (no A/B test run)', charCount: Math.min(cleanTitle.length, 55) },
+      { variant: 'C (Benefit-driven)', title: cleanTitle.substring(0, 40) + ': ' + brand, hypothesis: 'Adding benefit hook increases emotional engagement and CTR', estimatedCTR: 'not measured (no A/B test run)', charCount: Math.min(cleanTitle.length + 3, 65) }
     );
   }
 
@@ -1464,8 +1468,8 @@ function level9($, bodyText, url) {
     p += 2;
   }
 
-  return { level: 9, name: 'Continuous SEO A/B Testing & Rollback Safety Nets', score: sc(p), issues, data: subfunctions };
-  } catch (e) { return { level: 9, name: 'Continuous SEO A/B Testing & Rollback Safety Nets', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 9 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
+  return { level: 9, name: 'SEO A/B Testing & Rollback Safety Guidance', score: sc(p), issues, data: subfunctions };
+  } catch (e) { return { level: 9, name: 'SEO A/B Testing & Rollback Safety Guidance', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 9 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
 }
 
 function level10($, statusCode, redirects, url) {
@@ -1497,7 +1501,7 @@ function level10($, statusCode, redirects, url) {
       p += 25;
     }
   } else if (status >= 300 && status < 400) {
-    issues.push({ severity: 'info', impact: 'medium', message: 'HTTP ' + status + ' redirect - not a final destination. Redirects dilute PageRank by ~15% per hop.', element: 'redirect', fix: 'Update to 301 if redirect should be permanent.', link: url });
+    issues.push({ severity: 'info', impact: 'medium', message: 'HTTP ' + status + ' redirect - not a final destination. Every redirect hop adds latency and can spread link equity across URLs.', element: 'redirect', fix: 'Update to 301 if redirect should be permanent.', link: url });
     p += 3;
   }
 
@@ -1513,15 +1517,15 @@ function level10($, statusCode, redirects, url) {
     chain: redirs,
     loopDetected: loopFound,
     excessive: redirs.length > 3,
-    timeOverhead: redirs.length * 50 + 'ms (estimated)',
-    hopDetails: redirs.map((r, i) => ({ hop: i + 1, url: r, estimatedTimeMs: (i + 1) * 50 }))
+    timeOverhead: redirs.length > 0 ? 'per-hop latency not measured (would require synthetic-browser timing per redirect)' : 'none',
+    hopDetails: redirs.map((r, i) => ({ hop: i + 1, url: r, estimatedTimeMs: null, note: 'per-hop timing not measured' }))
   };
 
   if (loopFound) {
     issues.push({ severity: 'critical', impact: 'critical', message: 'Redirect loop detected! URL appears multiple times in chain. Browsers and crawlers will give up.', element: 'redirect loop', fix: 'Fix redirect config. Ensure chain A -> B -> C.', link: url, evidence: 'Loop in chain: ' + redirs.join(' -> ') });
     p += 30;
   } else if (redirs.length > 3) {
-    issues.push({ severity: 'warning', impact: 'high', message: 'Excessive redirect chain: ' + redirs.length + ' hops. Each hop adds ~50ms latency and ~15% PageRank loss.', element: 'redirect chain', fix: 'Flatten chain to max 1 redirect. Update internal links to final URL.', link: url, evidence: redirs.join(' -> ') });
+    issues.push({ severity: 'warning', impact: 'high', message: 'Excessive redirect chain: ' + redirs.length + ' hops. Each hop adds network latency and can spread link equity across multiple URLs.', element: 'redirect chain', fix: 'Flatten chain to max 1 redirect. Update internal links to final URL.', link: url, evidence: redirs.join(' -> ') });
     p += 12;
   }
 
@@ -1559,7 +1563,7 @@ function level10($, statusCode, redirects, url) {
   const wc = countWords($('body').text().replace(/\s+/g, ' ').trim());
 
   const freshnessScore = ($('meta[property="article:published_time"]').length ? 30 : 0) + ($('meta[property="article:modified_time"]').length ? 30 : 0) + ($('[rel="author"]').length ? 15 : 0) + ($('time').length > 1 ? 25 : 0);
-  const estimatedCrawlFrequency = freshnessScore >= 80 ? 'daily to weekly' : freshnessScore >= 50 ? 'weekly to bi-weekly' : 'bi-weekly to monthly';
+  const estimatedCrawlFrequency = 'Not measured — actual crawl frequency depends on Google\'s internal signals (site authority, content freshness, crawl demand) and cannot be derived from a single page fetch. Freshness-signal score: ' + freshnessScore + '/100 (on-page recency markers only).';
 
   const crawlBudgetWaste = [];
   if (wc < 200) crawlBudgetWaste.push('Thin content (' + wc + ' words)');
@@ -1584,13 +1588,14 @@ function level10($, statusCode, redirects, url) {
     crawlBudgetWaste
   };
   subfunctions.logStreamConfig = {
-    cloudflare: { type: 'Cloudflare Logpush', fields: 'ClientIP, ClientRequestHost, ClientRequestURI, EdgeResponseStatus, EdgeStartTimestamp, EdgeDurationMs, CacheCacheStatus' },
-    cloudwatch: { type: 'CloudWatch Logs', logGroup: '/aws/seo-audit/crawl-budget', fields: ['timestamp', 'url', 'status', 'userAgent', 'durationMs', 'isBot'] },
-    datadog: { type: 'Datadog Logs', logSource: 'seo_audit_crawl', tags: ['env:production', 'team:seo'], monitorQuery: 'avg(last_5m):avg:seo.crawl.duration_ms{*} > 2000' }
+    note: 'Template field mappings only — this tool does NOT connect to or instrument your logging infrastructure. Set these up in your own Cloudflare/CloudWatch/Datadog accounts to start measuring; the example field names below must match your real log schema.',
+    cloudflare: { type: 'Cloudflare Logpush (example)', fields: 'ClientIP, ClientRequestHost, ClientRequestURI, EdgeResponseStatus, EdgeStartTimestamp, EdgeDurationMs, CacheCacheStatus' },
+    cloudwatch: { type: 'CloudWatch Logs (example)', logGroup: '<your-log-group, e.g. /aws/seo-audit/crawl-budget>', fields: ['timestamp', 'url', 'status', 'userAgent', 'durationMs', 'isBot'] },
+    datadog: { type: 'Datadog Logs (example)', logSource: '<your-log-source>', tags: ['env:<your-env>', 'team:<your-team>'], monitorQuery: '<add your own query against metrics you actually emit>' }
   };
 
-  return { level: 10, name: 'Real-Time Log-Stream Intelligence & Bot Behavior Mapping', score: sc(p), issues, data: subfunctions };
-  } catch (e) { return { level: 10, name: 'Real-Time Log-Stream Intelligence & Bot Behavior Mapping', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 10 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
+  return { level: 10, name: 'Bot Behavior Mapping & Log Config Templates', score: sc(p), issues, data: subfunctions };
+  } catch (e) { return { level: 10, name: 'Bot Behavior Mapping & Log Config Templates', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 10 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
 }
 
 function level11($, bodyText, url) {
@@ -1754,8 +1759,8 @@ function level11($, bodyText, url) {
     lowQualityChunks: (chunkResult.retrievabilityScores || []).filter(c => c.retrievabilityScore < 50).length
   };
 
-  return { level: 11, name: 'Multi-Model Synthetic User & LLM Behavior Simulation', score: sc(p), issues, data: subfunctions };
-  } catch (e) { return { level: 11, name: 'Multi-Model Synthetic User & LLM Behavior Simulation', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 11 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
+  return { level: 11, name: 'Synthetic Content & LLM Visibility Heuristics', score: sc(p), issues, data: subfunctions };
+  } catch (e) { return { level: 11, name: 'Synthetic Content & LLM Visibility Heuristics', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 11 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
 }
 
 function level12($, bodyText, url, config) {
@@ -1921,10 +1926,6 @@ function level12($, bodyText, url, config) {
     p += 8;
   }
 
-  const consensusSources = [
-    { label: 'Wikipedia', content: '' },
-    { label: 'Google Knowledge Graph pattern', content: pageTopic }
-  ];
   const entityConsensusResults = [];
   topicEntities.slice(0, 5).forEach(te => {
     if (te.length > 3) {
@@ -1935,7 +1936,7 @@ function level12($, bodyText, url, config) {
   data.entityConsensus = entityConsensusResults;
   const weakConsensusEntities = entityConsensusResults.filter(e => e.consensusLevel === 'weak/no consensus');
   if (weakConsensusEntities.length > 0) {
-    issues.push({ severity: 'info', impact: 'low', message: weakConsensusEntities.length + ' entity/claim(s) could not be cross-referenced against external knowledge bases. Unverifiable claims may reduce trust signals for EEAT.', element: 'entity verification', fix: 'Add citations from authoritative sources to support unverifiable claims.', link: url });
+    issues.push({ severity: 'info', impact: 'low', message: weakConsensusEntities.length + ' topic entit(ies) appear weakly across the page content. This measures on-page consistency only — external knowledge-base verification was NOT performed.', element: 'entity verification', fix: 'Reference the topic entities consistently in headings and body. For external support, add citations from authoritative sources.', link: url });
     p += 3;
   }
 
@@ -1979,8 +1980,8 @@ function level12($, bodyText, url, config) {
     p += 3;
   }
 
-  return { level: 12, name: 'Reverse-Engineered Core Algorithm & Quality Classifier', score: sc(p), issues, data };
-  } catch (e) { return { level: 12, name: 'Reverse-Engineered Core Algorithm & Quality Classifier', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 12 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
+  return { level: 12, name: 'Algorithmic Quality & Helpful-Content Classifier', score: sc(p), issues, data };
+  } catch (e) { return { level: 12, name: 'Algorithmic Quality & Helpful-Content Classifier', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 12 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
 }
 
 function level13($, url) {
@@ -2112,7 +2113,7 @@ function level13($, url) {
     const ogFixes = [];
     if (!openGraphTags.title && titleText) ogFixes.push('<meta property="og:title" content="' + titleText.replace(/\"/g, '&quot;') + '" />');
     if (!openGraphTags.description) ogFixes.push('<meta property="og:description" content="' + (metaDesc || text.substring(0, 155)).replace(/\"/g, '&quot;') + '" />');
-    if (!openGraphTags.image) ogFixes.push('<meta property="og:image" content="' + url.replace(/\/$/, '') + '/og-image.jpg" />');
+    if (!openGraphTags.image) ogFixes.push('<!-- og:image — add the real URL of a 1200x630px image hosted on this domain (e.g. ' + url.replace(/\/$/, '') + '/images/social-share.jpg — replace with actual path) -->');
     if (!openGraphTags.url) ogFixes.push('<meta property="og:url" content="' + url + '" />');
     if (ogFixes.length > 0) {
       patches.push({ type: 'open-graph', element: 'meta[property^="og:"]', action: 'inject', code: ogFixes.join('\n'), risk: 'low', description: 'Add missing Open Graph tags for social sharing optimization' });
@@ -2215,7 +2216,7 @@ function level13($, url) {
     "",
     "      - name: Run SEO Validation",
     "        run: |",
-    "          npx seo-audit https://example.com\${{ github.head_ref }} \\",
+    "          npx seo-audit " + url + " \\",
     "            --fail-on=critical \\",
     "            --format=github-annotation",
     "",
@@ -2241,7 +2242,7 @@ function level13($, url) {
     "  image: node:20",
     "  script:",
     "    - npm ci",
-    "    - npx seo-audit https://example.com/$CI_COMMIT_REF_NAME --fail-on=critical --format=gitlab-annotation",
+    "    - npx seo-audit " + url + " --fail-on=critical --format=gitlab-annotation",
     "  rules:",
     "    - if: '$CI_PIPELINE_SOURCE == \"merge_request_event\"'",
     "  artifacts:",
@@ -2335,7 +2336,7 @@ function level14($, bodyText, url, config) {
     signals: { ecommerce: hasEcommerce, pricing: hasPricing, buyButton: hasBuyButton }
   };
 
-  // Subfunction 2: Business Metrics (derived from real page signals, not hardcoded)
+  // Subfunction 2: Business Metrics (monetary values ONLY from real user-supplied inputs)
   const imgCount = $('img').length;
   const imgWithDims = $('img').filter((i, el) => $(el).attr('width') && $(el).attr('height')).length;
   const hasCanonical = $('link[rel="canonical"]').length > 0;
@@ -2346,7 +2347,13 @@ function level14($, bodyText, url, config) {
   const hasTitle = !!title;
   const hasMetaDesc = !!($('meta[name="description"]').attr('content') || '').trim();
   const hasH1 = $('h1').length > 0;
-  const serverTimingMs = 200;
+
+  // No fabricated traffic/conversion assumptions: if the user did not supply real
+  // analytics inputs, every monetary figure stays 0 and is explicitly marked as unavailable.
+  const hasRealFinancialInputs = inputMonthlyTraffic > 0 && inputAOV > 0 && inputCVR > 0;
+  const organicTraffic = hasRealFinancialInputs ? inputMonthlyTraffic : 0;
+  const conversionRate = hasRealFinancialInputs ? inputCVR : 0;
+  const avgOrderValue = hasRealFinancialInputs ? inputAOV : 0;
 
   const pageQualityScore = (() => {
     let score = 100;
@@ -2364,29 +2371,24 @@ function level14($, bodyText, url, config) {
   })();
 
   const visibilityDrop = Math.max(0.05, (100 - pageQualityScore) / 200);
-  const conversionRates = { product: 0.025, checkout: 0.35, landing: 0.05, category: 0.015, informational: 0.005, blog: 0.008 };
-  const avgOrderValues = { product: 75, checkout: 75, landing: 50, category: 45, informational: 0, blog: 0 };
-  const baseTraffic = { product: 5000, checkout: 2000, landing: 8000, category: 3000, informational: 10000, blog: 8000 };
-  const costPerClick = { product: 1.50, checkout: 2.00, landing: 1.20, category: 0.80, informational: 0.50, blog: 0.40 };
-
-  const organicTraffic = baseTraffic[pageType] || 5000;
-  const conversionRate = conversionRates[pageType] || 0.01;
-  const avgOrderValue = avgOrderValues[pageType] || 50;
-  const cpc = costPerClick[pageType] || 0.50;
 
   subfunctions.businessMetrics = {
     pageType,
     pageQualityScore,
-    organicTrafficEstimate: organicTraffic,
-    conversionRateEstimate: conversionRate,
-    avgOrderValueEstimate: avgOrderValue,
+    financialInputStatus: hasRealFinancialInputs
+      ? 'Monetary figures derived from user-supplied monthlyTraffic, avgOrderValue and conversionRate.'
+      : 'NO traffic data supplied — all monetary figures are 0. Provide monthlyTraffic, avgOrderValue and conversionRate to enable financial modeling.',
+    hasRealFinancialInputs,
+    organicTraffic,
+    conversionRate,
+    avgOrderValue,
     visibilityDropFactor: visibilityDrop,
     estimatedMonthlyRevenue: Math.round(organicTraffic * conversionRate * avgOrderValue),
     estimatedAnnualRevenue: Math.round(organicTraffic * conversionRate * avgOrderValue * 12),
-    pageSignals: { hasTitle, hasMetaDesc, hasH1, hasCanonical, hasSchema, hasViewport, wordCount: wc, imageCount: imgCount, imagesWithDimensions: imgWithDims, internalLinkCount: internalLinks, serverTimingMs, securityHeadersCount: 0 }
+    pageSignals: { hasTitle, hasMetaDesc, hasH1, hasCanonical, hasSchema, hasViewport, wordCount: wc, imageCount: imgCount, imagesWithDimensions: imgWithDims, internalLinkCount: internalLinks }
   };
 
-  // Subfunction 3: Revenue at Risk (with real page signals)
+  // Subfunction 3: Revenue at Risk (only quantifiable with real user inputs)
   const revenueCalc = calculateRevenueAtRisk({
     organicTraffic,
     conversionRate,
@@ -2397,7 +2399,7 @@ function level14($, bodyText, url, config) {
     pageSignals: {
       hasTitle, hasMetaDesc, hasCanonical, hasH1, hasSchema, hasViewport,
       wordCount: wc, imageCount: imgCount, imagesWithDimensions: imgWithDims,
-      internalLinkCount: internalLinks, serverTimingMs, securityHeadersCount: 0
+      internalLinkCount: internalLinks
     }
   });
   subfunctions.revenueAtRisk = revenueCalc;
@@ -2424,76 +2426,92 @@ function level14($, bodyText, url, config) {
       annualRevenueAtRisk: '$' + Math.round(revenueCalc.totalAtRisk).toLocaleString(),
       annualRoi: revenueCalc.totalAtRisk > 0 ? Math.round((revenueCalc.totalAtRisk / Math.max(1, totalFixCost)) * 100) + '%' : 'N/A',
       breakEvenDays: revenueCalc.totalAtRisk > 0 ? Math.ceil(totalFixCost / (revenueCalc.totalAtRisk / 365)) + ' days' : 'N/A',
-      recommendation: revenueCalc.totalAtRisk > totalFixCost * 3 ? 'Fix now — high ROI, positive within first year' : 'Evaluate priority'
+      recommendation: revenueCalc.totalAtRisk > totalFixCost * 3 ? 'Fix now — high ROI, positive within first year' : 'Evaluate priority',
+      methodology: 'Effort hours (0.3-8h per fix) and $150/hour rate are assumed planning estimates, not quoted prices. Adjust for your own resource costs.'
     };
   })();
 
-  // Subfunction 5: Quarterly Projections
-  subfunctions.quarterlyProjections = [
-    { quarter: 'Q1', revenueAtRisk: '$' + Math.round(revenueCalc.totalAtRisk * 0.25).toLocaleString(), action: 'Fix critical issues now' },
-    { quarter: 'Q2', revenueAtRisk: '$' + Math.round(revenueCalc.totalAtRisk * 0.5).toLocaleString(), action: 'Lost opportunity cost accumulating' },
-    { quarter: 'Q3', revenueAtRisk: '$' + Math.round(revenueCalc.totalAtRisk * 0.75).toLocaleString(), action: 'Compounding revenue loss' },
-    { quarter: 'Q4', revenueAtRisk: '$' + Math.round(revenueCalc.totalAtRisk).toLocaleString(), action: 'Full annualized loss realized' }
-  ];
+  // Subfunction 5: Quarterly Projections (real inputs only)
+  subfunctions.quarterlyProjections = hasRealFinancialInputs
+    ? [
+      { quarter: 'Q1', revenueAtRisk: '$' + Math.round(revenueCalc.totalAtRisk * 0.25).toLocaleString(), action: 'Fix critical issues now' },
+      { quarter: 'Q2', revenueAtRisk: '$' + Math.round(revenueCalc.totalAtRisk * 0.5).toLocaleString(), action: 'Lost opportunity cost accumulating' },
+      { quarter: 'Q3', revenueAtRisk: '$' + Math.round(revenueCalc.totalAtRisk * 0.75).toLocaleString(), action: 'Compounding revenue loss' },
+      { quarter: 'Q4', revenueAtRisk: '$' + Math.round(revenueCalc.totalAtRisk).toLocaleString(), action: 'Full annualized loss realized' }
+    ]
+    : [{ note: 'Projections unavailable — supply monthlyTraffic, avgOrderValue and conversionRate to enable quarterly revenue-at-risk modeling.' }];
 
   // Subfunction 6: Priority Action Plan
   subfunctions.priorityActionPlan = (() => {
     const items = [];
-    if (!hasTitle) items.push({ rank: 1, issue: 'Add title tag', impact: 'critical', roi: 'high', effort: 'low', revenueImpact: '$' + Math.round(revenueCalc.totalAtRisk * 0.2).toLocaleString() });
-    if (!hasMetaDesc) items.push({ rank: items.length + 1, issue: 'Add meta description', impact: 'critical', roi: 'high', effort: 'low', revenueImpact: '$' + Math.round(revenueCalc.totalAtRisk * 0.15).toLocaleString() });
-    if (!hasCanonical) items.push({ rank: items.length + 1, issue: 'Add canonical tag', impact: 'critical', roi: 'high', effort: 'low', revenueImpact: '$' + Math.round(revenueCalc.totalAtRisk * 0.12).toLocaleString() });
-    if (!hasViewport) items.push({ rank: items.length + 1, issue: 'Add viewport meta', impact: 'critical', roi: 'high', effort: 'low', revenueImpact: '$' + Math.round(revenueCalc.totalAtRisk * 0.1).toLocaleString() });
-    if (!hasH1) items.push({ rank: items.length + 1, issue: 'Add H1 heading', impact: 'high', roi: 'medium', effort: 'low', revenueImpact: '$' + Math.round(revenueCalc.totalAtRisk * 0.08).toLocaleString() });
-    if (!hasSchema) items.push({ rank: items.length + 1, issue: 'Add structured data', impact: 'high', roi: 'medium', effort: 'medium', revenueImpact: '$' + Math.round(revenueCalc.totalAtRisk * 0.08).toLocaleString() });
-    if (wc < 300) items.push({ rank: items.length + 1, issue: 'Expand thin content', impact: 'critical', roi: 'high', effort: 'high', revenueImpact: '$' + Math.round(revenueCalc.totalAtRisk * 0.2).toLocaleString() });
+    const fmt = (frac) => hasRealFinancialInputs ? '$' + Math.round(revenueCalc.totalAtRisk * frac).toLocaleString() : 'n/a (no traffic data)';
+    if (!hasTitle) items.push({ rank: 1, issue: 'Add title tag', impact: 'critical', roi: 'high', effort: 'low', revenueImpact: fmt(0.2) });
+    if (!hasMetaDesc) items.push({ rank: items.length + 1, issue: 'Add meta description', impact: 'critical', roi: 'high', effort: 'low', revenueImpact: fmt(0.15) });
+    if (!hasCanonical) items.push({ rank: items.length + 1, issue: 'Add canonical tag', impact: 'critical', roi: 'high', effort: 'low', revenueImpact: fmt(0.12) });
+    if (!hasViewport) items.push({ rank: items.length + 1, issue: 'Add viewport meta', impact: 'critical', roi: 'high', effort: 'low', revenueImpact: fmt(0.1) });
+    if (!hasH1) items.push({ rank: items.length + 1, issue: 'Add H1 heading', impact: 'high', roi: 'medium', effort: 'low', revenueImpact: fmt(0.08) });
+    if (!hasSchema) items.push({ rank: items.length + 1, issue: 'Add structured data', impact: 'high', roi: 'medium', effort: 'medium', revenueImpact: fmt(0.08) });
+    if (wc < 300) items.push({ rank: items.length + 1, issue: 'Expand thin content', impact: 'critical', roi: 'high', effort: 'high', revenueImpact: fmt(0.2) });
     return items;
   })();
 
   // Issues
   data.highRiskRevenueImpact = (() => {
     const items = [];
-    if (!hasTitle) items.push({ issue: 'Missing title tag', estimatedLoss: '$' + Math.round(revenueCalc.totalAtRisk * 0.2) });
-    if (!hasCanonical) items.push({ issue: 'Missing canonical tag', estimatedLoss: '$' + Math.round(revenueCalc.totalAtRisk * 0.1) });
-    if (!hasH1) items.push({ issue: 'Missing H1 heading', estimatedLoss: '$' + Math.round(revenueCalc.totalAtRisk * 0.08) });
-    if (wc < 300) items.push({ issue: 'Thin content', estimatedLoss: '$' + Math.round(revenueCalc.totalAtRisk * 0.15) });
-    if (!hasSchema) items.push({ issue: 'Missing structured data', estimatedLoss: '$' + Math.round(revenueCalc.totalAtRisk * 0.08) });
+    const fmt = (frac) => hasRealFinancialInputs ? '$' + Math.round(revenueCalc.totalAtRisk * frac) : 'n/a (no traffic data)';
+    if (!hasTitle) items.push({ issue: 'Missing title tag', estimatedLoss: fmt(0.2) });
+    if (!hasCanonical) items.push({ issue: 'Missing canonical tag', estimatedLoss: fmt(0.1) });
+    if (!hasH1) items.push({ issue: 'Missing H1 heading', estimatedLoss: fmt(0.08) });
+    if (wc < 300) items.push({ issue: 'Thin content', estimatedLoss: fmt(0.15) });
+    if (!hasSchema) items.push({ issue: 'Missing structured data', estimatedLoss: fmt(0.08) });
     return items;
   })();
   if (data.highRiskRevenueImpact.length > 0) {
     const totalLoss = data.highRiskRevenueImpact.reduce((a, i) => a + parseInt(i.estimatedLoss.replace('$', '')), 0);
-    issues.push({ severity: 'critical', impact: 'high', message: 'Revenue-at-risk on this ' + pageType + ' page: ~$' + revenueCalc.totalAtRisk.toLocaleString() + '. High risk issues: ' + data.highRiskRevenueImpact.map(i => i.issue + ' (~' + i.estimatedLoss + ')').join(', '), element: 'revenue impact', fix: 'Fix critical SEO issues to recover at-risk revenue. Prioritize: title tag, canonical, H1, and content expansion.', link: url, evidence: 'Page type: ' + pageType + ', AOV: $' + avgOrderValue + ', Conv rate: ' + (conversionRate * 100).toFixed(1) + '%', recommendation: 'Fix title + canonical + content issues to recover ~$' + totalLoss.toLocaleString() + '/year' });
+    if (hasRealFinancialInputs) {
+      issues.push({ severity: 'critical', impact: 'high', message: 'Revenue-at-risk on this ' + pageType + ' page: ~$' + revenueCalc.totalAtRisk.toLocaleString() + '. High risk issues: ' + data.highRiskRevenueImpact.map(i => i.issue + ' (~' + i.estimatedLoss + ')').join(', '), element: 'revenue impact', fix: 'Fix critical SEO issues to recover at-risk revenue. Prioritize: title tag, canonical, H1, and content expansion.', link: url, evidence: 'Page type: ' + pageType + ', AOV: $' + avgOrderValue + ', Conv rate: ' + (conversionRate * 100).toFixed(1) + '%', recommendation: 'Fix title + canonical + content issues to recover ~$' + totalLoss.toLocaleString() + '/year' });
+    } else {
+      issues.push({ severity: 'critical', impact: 'high', message: 'Page has ' + data.highRiskRevenueImpact.length + ' critical on-page issues (' + data.highRiskRevenueImpact.map(i => i.issue).join(', ') + '). Monetary impact cannot be quantified — supply monthlyTraffic, avgOrderValue and conversionRate to enable revenue-at-risk modeling.', element: 'revenue impact', fix: 'Fix critical SEO issues. Provide GA4/analytics inputs for financial quantification.', link: url, evidence: 'Page type: ' + pageType + ', no financial inputs supplied' });
+    }
     p += 15;
-  } else if (revenueCalc.totalAtRisk > 1000) {
+  } else if (hasRealFinancialInputs && revenueCalc.totalAtRisk > 1000) {
     issues.push({ severity: 'warning', impact: 'high', message: 'Estimated revenue-at-risk: ~$' + revenueCalc.totalAtRisk.toLocaleString() + '/year. Even informational pages impact top-of-funnel traffic that converts elsewhere.', element: 'revenue impact', fix: 'Improve content quality, add CTAs, and fix technical SEO to maximize organic traffic value.', link: url, evidence: 'Page type: ' + pageType + ', Total at risk: $' + revenueCalc.totalAtRisk.toLocaleString() });
     p += 8;
   }
 
-  // Subfunction 7: Traffic Estimates & Loss Projection
+  // Subfunction 7: Traffic Estimates & Loss Projection (real inputs only)
   data.trafficEstimates = {
+    hasRealFinancialInputs,
+    financialInputStatus: hasRealFinancialInputs
+      ? 'Traffic figures derived from user-supplied monthlyTraffic.'
+      : 'Traffic figures unavailable — no monthlyTraffic supplied.',
     estimatedMonthlyVisits: organicTraffic,
     estimatedAnnualVisits: organicTraffic * 12,
     estimatedAnnualOrganicRevenue: Math.round(organicTraffic * 12 * conversionRate * avgOrderValue),
-    trafficLossRisk: {
+    trafficLossRisk: hasRealFinancialInputs ? {
       critical: Math.round(organicTraffic * 0.15),
       high: Math.round(organicTraffic * 0.08),
-      medium: Math.round(organicTraffic * 0.03)
-    },
-    recoveryPotential: {
+      medium: Math.round(organicTraffic * 0.03),
+      note: 'Modeled from assumed risk fractions (15%/8%/3% of traffic) — not measured analytics'
+    } : { note: 'Not quantified without traffic data' },
+    recoveryPotential: hasRealFinancialInputs ? {
       fixCritical: '+$' + Math.round(revenueCalc.totalAtRisk * 0.4),
       fixAll: '+$' + Math.round(revenueCalc.totalAtRisk * 0.7),
-      timelineMonths: '3-6'
-    },
+      timelineMonths: '3-6',
+      note: 'Recovery percentages (40%/70% of at-risk revenue) are modeling assumptions, not measured outcomes'
+    } : { note: 'Not quantified without traffic data' },
     conversionValuePerVisitor: (conversionRate * avgOrderValue).toFixed(4)
   };
   subfunctions.trafficEstimates = data.trafficEstimates;
 
-  // Subfunction 8: Competitive Loss Analysis
+  // Subfunction 8: Competitive Loss Analysis (real inputs only)
   const monthlyOrganicRevenue = organicTraffic * conversionRate * avgOrderValue;
   subfunctions.competitiveLoss = {
-    shareOfVoiceLoss: pageQualityScore < 50 ? '25-40%' : pageQualityScore < 70 ? '10-20%' : '< 5%',
-    positionDropRisk: pageQualityScore < 50 ? '5-8 positions' : pageQualityScore < 70 ? '2-4 positions' : 'stable',
-    estimatedClickShareLoss: pageQualityScore < 50 ? '60-70%' : pageQualityScore < 70 ? '20-40%' : '< 10%',
-    dollarImpactOfPositionDrop: '$' + Math.round(monthlyOrganicRevenue * (pageQualityScore < 50 ? 0.5 : pageQualityScore < 70 ? 0.2 : 0.05) * 12).toLocaleString() + '/year'
+    hasRealFinancialInputs,
+    shareOfVoiceLoss: pageQualityScore < 50 ? '25-40% (qualitative estimate)' : pageQualityScore < 70 ? '10-20% (qualitative estimate)' : '< 5% (qualitative estimate)',
+    positionDropRisk: pageQualityScore < 50 ? '5-8 positions (qualitative estimate)' : pageQualityScore < 70 ? '2-4 positions (qualitative estimate)' : 'stable',
+    estimatedClickShareLoss: pageQualityScore < 50 ? '60-70% (qualitative estimate)' : pageQualityScore < 70 ? '20-40% (qualitative estimate)' : '< 10% (qualitative estimate)',
+    dollarImpactOfPositionDrop: hasRealFinancialInputs ? '$' + Math.round(monthlyOrganicRevenue * (pageQualityScore < 50 ? 0.5 : pageQualityScore < 70 ? 0.2 : 0.05) * 12).toLocaleString() + '/year (modeled from supplied inputs)' : 'Not quantified without traffic data'
   };
 
   // Subfunction 9: Cost-Benefit Summary
@@ -2504,7 +2522,8 @@ function level14($, bodyText, url, config) {
     dailyLossRate: '$' + Math.round(revenueCalc.totalAtRisk / 365).toLocaleString() + '/day',
     fixCost: '$' + Math.round(subfunctions.roiAnalysis.totalEffortHours * 150),
     breakEvenDays: revenueCalc.totalAtRisk > 0 ? Math.ceil((subfunctions.roiAnalysis.totalEffortHours * 150) / (revenueCalc.totalAtRisk / 365)) + ' days' : 'N/A',
-    annualRoi: subfunctions.roiAnalysis.annualRoi
+    annualRoi: subfunctions.roiAnalysis.annualRoi,
+    methodology: 'Derived from the ROI model above — fix cost uses the assumed $150/hour rate and assumed effort hours.'
   };
 
   // Subfunction 10: Issue Registry (all detected page issues)
@@ -2799,20 +2818,19 @@ function level16($, url, config) {
   const entityNames = entities.map(e => e.entity).filter(e => e.length > 3).slice(0, 20);
 
   const trustedSources = [
-    { label: 'Wikipedia knowledge base pattern', content: text.substring(0, 500) },
-    { label: 'Google Knowledge Graph pattern', content: text },
-    { label: 'Schema.org entity corpus', content: text }
+    { label: 'On-page occurrence (self-reference)', content: text },
+    { label: 'Structured data fields (schema markup)', content: text }
   ];
 
   const entityConsensusResults = entityNames.map(entity => {
-    const externalContent = trustedSources.map(s => s.content).join(' ');
-    const cr = crossReferenceEntityConsensus(entity, text, externalContent);
+    const cr = crossReferenceEntityConsensus(entity, text, '');
     return {
       entity,
       consensusRatio: cr.consensusRatio,
       consensusLevel: cr.consensusLevel,
       totalMentions: cr.totalMentions,
-      sourcesMentioning: cr.sourcesMentioning
+      sourcesMentioning: cr.sourcesMentioning,
+      sourceNote: 'Consensus is computed from on-page entity occurrence and schema markup only. No external knowledge-base verification (e.g. Wikipedia/Wikidata) was performed, so no claim is made about real-world entity agreement.'
     };
   });
   data.entityConsensus = entityConsensusResults;
@@ -2831,17 +2849,17 @@ function level16($, url, config) {
   };
 
   if (weakConsensus > strongConsensus && entityNames.length > 3) {
-    issues.push({ severity: 'warning', impact: 'high', message: weakConsensus + '/' + entityNames.length + ' entities have weak/no external consensus. Overall consensus rate: ' + overallConsensusRate + '%. Claims about these entities may not align with established knowledge bases.', element: 'entity alignment', fix: 'Verify claims about weakly-consensus entities against authoritative sources. Add citations from .edu, .gov, or research domains.', link: url, evidence: 'Entities with weak consensus: ' + entityConsensusResults.filter(e => e.consensusLevel === 'weak/no consensus').slice(0, 5).map(e => e.entity).join(', '), recommendation: 'Target > 70% consensus rate by citing authoritative external sources' });
+    issues.push({ severity: 'warning', impact: 'high', message: weakConsensus + '/' + entityNames.length + ' entities appear only weakly across the on-page content. Overall on-page entity occurrence rate: ' + overallConsensusRate + '%. (On-page consensus reflects internal consistency only — it is not external knowledge-base verification.)', element: 'entity alignment', fix: 'Ensure core entities are referenced consistently in headings, body, and structured data. Add citations from .edu, .gov, or research domains for external support.', link: url, evidence: 'Entities with weak on-page occurrence: ' + entityConsensusResults.filter(e => e.consensusLevel === 'weak/no consensus').slice(0, 5).map(e => e.entity).join(', '), recommendation: 'Target > 70% on-page entity consistency by aligning headings, body text, and schema' });
     p += 10;
   }
   if (overallConsensusRate < 50 && entityNames.length > 2) {
-    issues.push({ severity: 'warning', impact: 'high', message: 'Low entity consensus alignment: ' + overallConsensusRate + '%. Page entities may not be well-recognized or verifiable against external knowledge graphs.', element: 'entity trust', fix: 'Strengthen entity recognition by using well-known terminology, linking to authoritative sources, and adding structured data.', link: url, evidence: 'Consensus rate: ' + overallConsensusRate + '% across ' + entityNames.length + ' entities' });
+    issues.push({ severity: 'warning', impact: 'high', message: 'Low on-page entity consistency: ' + overallConsensusRate + '%. Entities mentioned in one place are not reinforced elsewhere on the page.', element: 'entity trust', fix: 'Reinforce entity recognition by consistent naming across title, headings, body, and structured data.', link: url, evidence: 'Consistency rate: ' + overallConsensusRate + '% across ' + entityNames.length + ' entities (on-page only)' });
     p += 8;
   }
 
   const externalLinks = [];
   let hostname = '';
-  try { hostname = new URL(url || 'https://example.com').hostname; } catch {}
+  try { hostname = new URL(url).hostname; } catch {}
   $('a[href^="http"]').each((i, el) => {
     const href = $(el).attr('href') || '';
     try {
@@ -2993,7 +3011,7 @@ function level16($, url, config) {
   } catch (e) { return { level: 16, name: 'Third-Party Consensus & Entity Alignment Scorer', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 16 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
 }
 
-function level17($, url, config) {
+function level17($, url, config, responseHeaders) {
   try {
   const issues = [];
   let p = 0;
@@ -3078,14 +3096,14 @@ function level17($, url, config) {
     p += 8;
   }
 
-  const redTeamResults = redTeamTest(url);
+  const redTeamResults = redTeamTest(url, $, responseHeaders || {});
   data.redTeam = redTeamResults;
 
   if (redTeamResults.criticalFindings > 2) {
-    issues.push({ severity: 'critical', impact: 'high', message: 'Red-team analysis found ' + redTeamResults.criticalFindings + ' critical vulnerabilities. Page scored ' + redTeamResults.overallRisk.toUpperCase() + ' risk for core update penalty patterns.', element: 'security/robustness', fix: 'Address critical findings: ' + redTeamResults.tests.filter(t => t.severity === 'high').map(t => t.test).join(', ') + '.', link: url, evidence: 'Risk: ' + redTeamResults.overallRisk + ', Critical tests: ' + redTeamResults.criticalFindings });
+    issues.push({ severity: 'critical', impact: 'high', message: 'Red-team analysis found ' + redTeamResults.criticalFindings + ' high-risk findings from real header/HTML checks. Page scored ' + redTeamResults.overallRisk.toUpperCase() + ' risk.', element: 'security/robustness', fix: 'Address findings: ' + redTeamResults.tests.filter(t => t.severity === 'high').map(t => t.test).join(', ') + '.', link: url, evidence: 'Risk: ' + redTeamResults.overallRisk + ', High findings: ' + redTeamResults.criticalFindings });
     p += 12;
   } else if (redTeamResults.criticalFindings > 0) {
-    issues.push({ severity: 'warning', impact: 'medium', message: 'Red-team found ' + redTeamResults.criticalFindings + ' medium-risk vulnerabilities. Overall risk: ' + redTeamResults.overallRisk.toUpperCase() + '.', element: 'robustness', fix: 'Review: ' + redTeamResults.tests.filter(t => t.severity === 'high').map(t => t.test).join(', '), link: url, evidence: 'Risk: ' + redTeamResults.overallRisk });
+    issues.push({ severity: 'warning', impact: 'medium', message: 'Red-team found ' + redTeamResults.criticalFindings + ' high-risk finding(s). Overall risk: ' + redTeamResults.overallRisk.toUpperCase() + '.', element: 'robustness', fix: 'Review: ' + redTeamResults.tests.filter(t => t.severity === 'high').map(t => t.test).join(', '), link: url, evidence: 'Risk: ' + redTeamResults.overallRisk });
     p += 6;
   }
 
@@ -3113,7 +3131,7 @@ function level17($, url, config) {
         branch: branchName + '-' + idx,
         commitMessage: commitMsg,
         files: [{
-          path: fix.type === 'schema' ? '/src/components/SEO/Schema.jsx' : fix.type.includes('heading') ? '/src/components/SEO/HeadingHierarchy.jsx' : '/src/components/SEO/CanonicalTag.jsx',
+          path: fix.type === 'schema' ? 'index.html (or your site template file)' : fix.type.includes('heading') ? 'index.html (heading section)' : 'index.html (head section)',
           changes: fix.fix ? fix.fix.code : '',
           description: fix.fix ? fix.fix.description : ''
         }],
@@ -3146,19 +3164,20 @@ function level17($, url, config) {
         aiPatternScore: aiPatterns.score
       },
       after: {
-        schemaErrors: 0,
-        headingIssues: 0,
-        canonicalIssues: 0,
-        redTeamCritical: 0,
-        aiPatternScore: 0
+        note: 'Not measured — these are projected targets IF the generated fixes are applied and verified. Values are NOT asserted as resolved.',
+        schemaErrorsTarget: 0,
+        headingIssuesTarget: 0,
+        canonicalIssuesTarget: 0,
+        redTeamCriticalTarget: null,
+        aiPatternScoreTarget: null
       }
     },
     fixSummary: autoFixes.map(f => ({ type: f.type, description: f.fix ? f.fix.description : 'Generated fix', risk: f.fix ? f.fix.risk : 'unknown' }))
   };
   data.sandboxReport = sandboxReport;
 
-  return { level: 17, name: 'Multi-Agent Autonomous SEO Sandbox', score: sc(p), issues, data };
-  } catch (e) { return { level: 17, name: 'Multi-Agent Autonomous SEO Sandbox', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 17 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
+  return { level: 17, name: 'Autonomous Fix Generator & Red-Team Checks', score: sc(p), issues, data };
+  } catch (e) { return { level: 17, name: 'Autonomous Fix Generator & Red-Team Checks', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 17 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
 }
 
 function level18($, bodyText, url) {
@@ -3358,9 +3377,11 @@ function level19($, url, config) {
 
   if (schemas.some(s => !s.valid) || schemas.length === 0) {
     const schemaType = 'WebPage';
+    const pageTitleForSchema = titleAnalysis.title || '';
+    const schemaData = JSON.stringify(JSON.parse(generateSchemaCode(schemaType, { name: pageTitleForSchema, description: pageTitleForSchema })));
     edgeWorkerScript.push("  // Auto-fix: Schema injection");
     edgeWorkerScript.push("  if (config.injectSchema && !html.includes('application/ld+json')) {");
-    edgeWorkerScript.push("    const schema = " + JSON.stringify(JSON.parse(generateSchemaCode(schemaType, { name: 'Page', description: 'Auto-generated schema' }))) + ";");
+    edgeWorkerScript.push("    const schema = " + schemaData + ";");
     edgeWorkerScript.push("    const schemaTag = '<script type=\"application/ld+json\">' + JSON.stringify(schema) + '</script>';");
     edgeWorkerScript.push("    html = html.replace('</head>', schemaTag + '</head>');");
     edgeWorkerScript.push("  }");
@@ -3526,7 +3547,7 @@ function level19($, url, config) {
     detection: 'Server error response detected',
     action: 'Serve stale cache or generate fallback page, retry upstream with exponential backoff',
     config: { workerPath: 'src/edge/error-fallback.js', deployTarget: 'edge', cacheTTL: 300 },
-    testCmd: 'curl -sI https://httpstat.us/500 | head -1'
+    testCmd: 'curl -sI ' + url + ' | head -1'
   });
   selfCorrectionRules.push({
     id: 'CORR-005',
@@ -3547,15 +3568,15 @@ function level19($, url, config) {
     action: r.action,
     deployTarget: r.config.deployTarget,
     testCommand: r.testCmd,
-    estimatedDeployTime: r.priority <= 2 ? '1 hour' : r.priority <= 3 ? '2 hours' : '4 hours'
+    estimatedDeployTime: r.priority <= 2 ? '1 hour (estimate)' : r.priority <= 3 ? '2 hours (estimate)' : '4 hours (estimate)'
   }));
   data.prioritizedFixes = prioritizedFixes;
 
-  return { level: 19, name: 'Edge-Native Multi-Agent Orchestration & Self-Correction', score: sc(p), issues, data };
-  } catch (e) { return { level: 19, name: 'Edge-Native Multi-Agent Orchestration & Self-Correction', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 19 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
+  return { level: 19, name: 'Edge Orchestration & Self-Correction Rules', score: sc(p), issues, data };
+  } catch (e) { return { level: 19, name: 'Edge Orchestration & Self-Correction Rules', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 19 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
 }
 
-function level20($, bodyText, config) {
+function level20($, bodyText, url, config) {
   try {
   const issues = [];
   let p = 0;
@@ -3725,19 +3746,21 @@ function level20($, bodyText, config) {
   }
   data.thresholdWarnings = thresholdWarnings;
 
-  const siteWideRisk = calculateSiteWideRisk([
-    { score: overallQuality, url: 'N/A' },
-    { score: unhelpfulContent.helpfulRatio, url: 'N/A' },
-    { score: eeatSignals.totalScore, url: 'N/A' },
-    { score: qualityThresholds.wordCount.score, url: 'N/A' },
-    { score: qualityThresholds.headingDensity.score, url: 'N/A' },
-    { score: qualityThresholds.imageDensity.score, url: 'N/A' },
-    { score: qualityThresholds.linkDensity.score, url: 'N/A' }
-  ]);
+  const dimensionScores = [
+    { name: 'Overall quality', score: overallQuality },
+    { name: 'Helpful content ratio', score: unhelpfulContent.helpfulRatio },
+    { name: 'E-E-A-T signals', score: eeatSignals.totalScore },
+    { name: 'Word count', score: qualityThresholds.wordCount.score },
+    { name: 'Heading density', score: qualityThresholds.headingDensity.score },
+    { name: 'Image density', score: qualityThresholds.imageDensity.score },
+    { name: 'Link density', score: qualityThresholds.linkDensity.score }
+  ];
+  const siteWideRisk = calculateSiteWideRisk(dimensionScores.map(d => ({ score: d.score, url: url })), 'on-page quality dimensions');
+  siteWideRisk.note = 'Single-page analysis — risk level reflects this audited page only. It is NOT a crawl of the full site. Apply the same fixes to templated pages for site-wide effect.';
   data.siteWideRisk = siteWideRisk;
 
   if (siteWideRisk.riskLevel === 'high' || siteWideRisk.riskLevel === 'medium-high') {
-    issues.push({ severity: 'critical', impact: 'high', message: 'Site-wide risk projection: ' + siteWideRisk.riskLevel.toUpperCase() + ' (score: ' + siteWideRisk.siteRiskScore + '). Cumulative risk if multiple pages share same template/quality profile. Pages in critical: ' + siteWideRisk.distribution.critical + ', poor: ' + siteWideRisk.distribution.poor + '.', element: 'site-wide risk', fix: 'Address all critical-quality issues on this page and propagate fixes across templated pages. ' + siteWideRisk.recommendation, link: 'N/A', evidence: 'Site risk: ' + siteWideRisk.siteRiskScore + ', Level: ' + siteWideRisk.riskLevel + ', Avg score: ' + siteWideRisk.avgScore + ', Distribution: critical=' + siteWideRisk.distribution.critical + ' poor=' + siteWideRisk.distribution.poor + ' fair=' + siteWideRisk.distribution.fair + ' good=' + siteWideRisk.distribution.good });
+    issues.push({ severity: 'critical', impact: 'high', message: 'Risk projection for ' + url + ': ' + siteWideRisk.riskLevel.toUpperCase() + ' (score: ' + siteWideRisk.siteRiskScore + '). Computed from ' + siteWideRisk.pageCount + ' on-page quality dimensions of this audited page, not from a full site crawl.', element: 'site-wide risk', fix: 'Address all critical-quality issues on this page and propagate fixes across templated pages. ' + siteWideRisk.recommendation, link: url, evidence: 'Dimensions evaluated: ' + dimensionScores.map(d => d.name + '=' + d.score).join(', ') });
     p += 10;
   }
 
@@ -3776,20 +3799,32 @@ function level21($, bodyText, url, config) {
   else if (/\b(landing|landing-page|lp\/)\b/i.test(url) || url.split('/').filter(x => x).length <= 2) pageType = 'landing';
   data.pageType = pageType;
 
-  let organicTraffic = 5000;
-  let conversionRate = 0.02;
-  let avgOrderValue = 75;
+  let organicTraffic = 0;
+  let conversionRate = 0;
+  let avgOrderValue = 0;
+  const hasRealFinancialInputs = inputMonthlyTraffic > 0 && inputAOV > 0 && inputCVR > 0;
+  if (hasRealFinancialInputs) {
+    organicTraffic = inputMonthlyTraffic;
+    conversionRate = inputCVR;
+    avgOrderValue = inputAOV;
+  }
 
-  if (pageType === 'product') { organicTraffic = 8000; conversionRate = 0.035; avgOrderValue = 89; }
-  else if (pageType === 'category') { organicTraffic = 12000; conversionRate = 0.025; avgOrderValue = 65; }
-  else if (pageType === 'article') { organicTraffic = 15000; conversionRate = 0.008; avgOrderValue = 0; }
-  else if (pageType === 'landing') { organicTraffic = 10000; conversionRate = 0.04; avgOrderValue = 120; }
-  else if (pageType === 'support') { organicTraffic = 5000; conversionRate = 0.005; avgOrderValue = 0; }
-
-  data.trafficEstimates = { organicTraffic, conversionRate, avgOrderValue, pageType };
+  data.trafficEstimates = {
+    hasRealFinancialInputs,
+    financialInputStatus: hasRealFinancialInputs
+      ? 'Monetary figures derived from user-supplied monthlyTraffic, avgOrderValue and conversionRate.'
+      : 'NO traffic data supplied — all monetary figures are 0. Provide monthlyTraffic, avgOrderValue and conversionRate to enable financial modeling.',
+    organicTraffic, conversionRate, avgOrderValue, pageType
+  };
 
   const titleAnalysis = analyzeTitlePrecision($, url);
   data.titleAnalysis = titleAnalysis;
+
+  const revMoney = (frac) => {
+    if (!hasRealFinancialInputs) return 'Revenue impact not quantified (no traffic data supplied)';
+    const amt = Math.round(organicTraffic * conversionRate * avgOrderValue * frac);
+    return 'Modeled revenue impact (assumed ' + Math.round(frac * 100) + '% of monthly organic revenue): ~$' + amt.toLocaleString();
+  };
 
   const canonicalAnalysis = analyzeCanonicalIntegrity($, url);
   data.canonicalAnalysis = canonicalAnalysis;
@@ -3825,7 +3860,7 @@ function level21($, bodyText, url, config) {
       fixComplexity: 'easy',
       fix: 'Optimize title tag to 50-60 characters with primary keyword front-loaded'
     });
-    issues.push({ severity: 'warning', impact: 'high', message: 'Title issues may reduce CTR by ~3%. Revenue at risk: ~$' + Math.round(organicTraffic * conversionRate * avgOrderValue * 0.03) + '.', element: 'title', fix: 'Fix: ' + titleAnalysis.recommendations.join('; '), link: url, evidence: 'Title: "' + titleAnalysis.title + '", Truncation: ' + titleAnalysis.truncationRisk });
+    issues.push({ severity: 'warning', impact: 'high', message: 'Title issues detected (truncation/rewrite risk). ' + revMoney(0.03) + '.', element: 'title', fix: 'Fix: ' + titleAnalysis.recommendations.join('; '), link: url, evidence: 'Title: "' + titleAnalysis.title + '", Truncation: ' + titleAnalysis.truncationRisk });
     p += 8;
   }
 
@@ -3840,7 +3875,7 @@ function level21($, bodyText, url, config) {
       fixComplexity: 'easy',
       fix: 'Set self-referencing canonical tag pointing to ' + url
     });
-    issues.push({ severity: 'warning', impact: 'high', message: 'Canonical issues dilute ranking signals. Revenue at risk: ~$' + Math.round(organicTraffic * conversionRate * avgOrderValue * 0.05) + '.', element: 'canonical', fix: 'Add self-referencing canonical tag.', link: url, evidence: canonicalAnalysis.issues.join('; ') });
+    issues.push({ severity: 'warning', impact: 'high', message: 'Canonical issues dilute ranking signals. ' + revMoney(0.05) + '.', element: 'canonical', fix: 'Add self-referencing canonical tag.', link: url, evidence: canonicalAnalysis.issues.join('; ') });
     p += 8;
   }
 
@@ -3855,7 +3890,7 @@ function level21($, bodyText, url, config) {
       fixComplexity: 'easy',
       fix: 'Add H1 tag with primary keyword'
     });
-    issues.push({ severity: 'warning', impact: 'medium', message: 'Missing H1 may reduce relevance signals. Revenue at risk: ~$' + Math.round(organicTraffic * conversionRate * avgOrderValue * 0.01) + '.', element: 'headings', fix: 'Add H1 tag describing page content.', link: url });
+    issues.push({ severity: 'warning', impact: 'medium', message: 'Missing H1 may reduce relevance signals. ' + revMoney(0.01) + '.', element: 'headings', fix: 'Add H1 tag describing page content.', link: url });
     p += 5;
   }
 
@@ -3871,7 +3906,7 @@ function level21($, bodyText, url, config) {
       fixComplexity: 'medium',
       fix: 'Fix JSON-LD syntax or add required fields per schema type'
     });
-    issues.push({ severity: 'warning', impact: 'high', message: 'Invalid structured data blocks rich result eligibility. Revenue at risk: ~$' + Math.round(organicTraffic * conversionRate * avgOrderValue * 0.08) + '.', element: 'schema', fix: 'Fix ' + invalidSchemas.length + ' schema validation errors.', link: url, evidence: invalidSchemas.map(s => s.type + ': ' + s.validation.errors.join('; ')).join(' | ') });
+    issues.push({ severity: 'warning', impact: 'high', message: 'Invalid structured data blocks rich result eligibility. ' + revMoney(0.08) + '.', element: 'schema', fix: 'Fix ' + invalidSchemas.length + ' schema validation errors.', link: url, evidence: invalidSchemas.map(s => s.type + ': ' + s.validation.errors.join('; ')).join(' | ') });
     p += 8;
   }
 
@@ -3886,7 +3921,7 @@ function level21($, bodyText, url, config) {
       fixComplexity: 'easy',
       fix: 'Fix or remove ' + internalLinks.deadFragments.length + ' broken anchor links pointing to non-existent IDs'
     });
-    issues.push({ severity: 'warning', impact: 'medium', message: internalLinks.deadFragments.length + ' dead anchor link(s) waste crawl budget and degrade UX. Revenue at risk: ~$' + Math.round(organicTraffic * conversionRate * avgOrderValue * 0.02) + '.', element: 'internal links', fix: 'Fix or remove broken fragment identifiers.', link: url, evidence: internalLinks.deadFragments.map(df => df.href + ' at ' + df.selector).join('; ') });
+    issues.push({ severity: 'warning', impact: 'medium', message: internalLinks.deadFragments.length + ' dead anchor link(s) waste crawl budget and degrade UX. ' + revMoney(0.02) + '.', element: 'internal links', fix: 'Fix or remove broken fragment identifiers.', link: url, evidence: internalLinks.deadFragments.map(df => df.href + ' at ' + df.selector).join('; ') });
     p += 5;
   }
 
@@ -3901,7 +3936,7 @@ function level21($, bodyText, url, config) {
       fixComplexity: 'easy',
       fix: 'Add contextual internal links to related content'
     });
-    issues.push({ severity: 'warning', impact: 'medium', message: 'Zero internal links found. Revenue at risk: ~$' + Math.round(organicTraffic * conversionRate * avgOrderValue * 0.02) + '.', element: 'internal linking', fix: 'Add contextual internal links to related pages.', link: url });
+    issues.push({ severity: 'warning', impact: 'medium', message: 'Zero internal links found. ' + revMoney(0.02) + '.', element: 'internal linking', fix: 'Add contextual internal links to related pages.', link: url });
     p += 4;
   }
 
@@ -3916,7 +3951,7 @@ function level21($, bodyText, url, config) {
       fixComplexity: 'hard',
       fix: 'Rewrite flagged sections with original research, personal experience, and data-driven analysis'
     });
-    issues.push({ severity: 'info', impact: 'medium', message: 'Synthetic content patterns detected (' + syntheticBehavior.totalFlags + ' flags). Revenue at risk: ~$' + Math.round(organicTraffic * conversionRate * avgOrderValue * 0.05) + '.', element: 'content', fix: 'Rewrite flagged sections with original analysis.', link: url, evidence: 'Verdict: ' + syntheticBehavior.verdict + ', Score: ' + syntheticBehavior.syntheticScore });
+    issues.push({ severity: 'info', impact: 'medium', message: 'Synthetic content patterns detected (' + syntheticBehavior.totalFlags + ' flags). ' + revMoney(0.05) + '.', element: 'content', fix: 'Rewrite flagged sections with original analysis.', link: url, evidence: 'Verdict: ' + syntheticBehavior.verdict + ', Score: ' + syntheticBehavior.syntheticScore });
     p += 4;
   }
 
@@ -3962,7 +3997,7 @@ function level21($, bodyText, url, config) {
         fixComplexity: 'easy',
         fix: 'Add width and height attributes to ' + missingDimensions + ' images'
       });
-      issues.push({ severity: 'warning', impact: 'medium', message: missingDimensions + ' images missing dimensions cause layout shift (CLS). Revenue at risk: ~$' + Math.round(organicTraffic * conversionRate * avgOrderValue * 0.04) + '.', element: 'images', fix: 'Add width/height to all images.', link: url });
+      issues.push({ severity: 'warning', impact: 'medium', message: missingDimensions + ' images missing dimensions cause layout shift (CLS). ' + revMoney(0.04) + '.', element: 'images', fix: 'Add width/height to all images.', link: url });
       p += 5;
     }
   }
@@ -3992,88 +4027,107 @@ function level21($, bodyText, url, config) {
     const hours = f.engineeringHours || 1;
     const costRate = 150;
     const fixCost = hours * costRate;
-    const annualRecovery = f.estimatedRevenueImpact * 12;
-    const roi = fixCost > 0 ? ((annualRecovery - fixCost) / fixCost) * 100 : 0;
+    const annualRecovery = hasRealFinancialInputs ? f.estimatedRevenueImpact * 12 : 0;
+    const roi = hasRealFinancialInputs && fixCost > 0 ? ((annualRecovery - fixCost) / fixCost) * 100 : null;
     const recoveryTimelineDays = f.fixComplexity === 'easy' ? 14 : f.fixComplexity === 'medium' ? 30 : 60;
     return {
       issue: f.name,
       category: f.category,
       severity: f.severity,
-      estimatedMonthlyRecovery: Math.round(f.estimatedRevenueImpact),
+      estimatedMonthlyRecovery: hasRealFinancialInputs ? Math.round(f.estimatedRevenueImpact) : 0,
       annualRecovery: Math.round(annualRecovery),
       fixComplexity: f.fixComplexity,
       engineeringHours: hours,
       fixCost: Math.round(fixCost),
       recoveryTimelineDays,
-      roi: Math.round(roi),
-      priority: roi > 500 ? 'immediate' : roi > 200 ? 'high' : roi > 50 ? 'medium' : 'low',
+      roi: roi === null ? null : Math.round(roi),
+      priority: hasRealFinancialInputs ? (roi > 500 ? 'immediate' : roi > 200 ? 'high' : roi > 50 ? 'medium' : 'low') : 'n/a (no traffic data)',
       fixDescription: f.fix
     };
   });
-  roiCalculations.sort((a, b) => b.roi - a.roi);
+  roiCalculations.sort((a, b) => (b.roi === null ? -1 : b.roi) - (a.roi === null ? -1 : a.roi));
   data.roiCalculations = roiCalculations;
 
-  const totalMonthlyRevenueAtRisk = findings.reduce((a, f) => a + f.estimatedRevenueImpact, 0);
+  const totalMonthlyRevenueAtRisk = hasRealFinancialInputs ? findings.reduce((a, f) => a + f.estimatedRevenueImpact, 0) : 0;
   const totalAnnualRevenueAtRisk = totalMonthlyRevenueAtRisk * 12;
   const totalFixCost = roiCalculations.reduce((a, r) => a + r.fixCost, 0);
   const totalAnnualRecovery = roiCalculations.reduce((a, r) => a + r.annualRecovery, 0);
-  const overallROI = totalFixCost > 0 ? Math.round(((totalAnnualRecovery - totalFixCost) / totalFixCost) * 100) : 0;
+  const overallROI = hasRealFinancialInputs && totalFixCost > 0 ? Math.round(((totalAnnualRecovery - totalFixCost) / totalFixCost) * 100) : null;
 
   data.financialSummary = {
+    hasRealFinancialInputs,
+    financialInputStatus: hasRealFinancialInputs
+      ? 'Monetary figures derived from user-supplied monthlyTraffic, avgOrderValue and conversionRate.'
+      : 'NO traffic data supplied — all monetary figures are 0. Provide monthlyTraffic, avgOrderValue and conversionRate to enable financial modeling.',
     totalMonthlyRevenueAtRisk: Math.round(totalMonthlyRevenueAtRisk),
     totalAnnualRevenueAtRisk: Math.round(totalAnnualRevenueAtRisk),
     totalFixCost: Math.round(totalFixCost),
     totalAnnualRecovery: Math.round(totalAnnualRecovery),
-    overallROI: overallROI + '%',
+    overallROI: overallROI === null ? 'not computed (no traffic data)' : overallROI + '%',
     currency: 'USD'
   };
+
+  const execMoney = (v) => hasRealFinancialInputs ? '$' + Math.round(v).toLocaleString() : 'not quantified (no traffic data)';
 
   const executiveSummary = {
     page: url,
     pageType: pageType,
     totalIssuesFound: findings.length,
-    totalMonthlyRevenueAtRisk: '$' + Math.round(totalMonthlyRevenueAtRisk).toLocaleString(),
-    totalAnnualRevenueAtRisk: '$' + Math.round(totalAnnualRevenueAtRisk).toLocaleString(),
+    hasRealFinancialInputs,
+    totalMonthlyRevenueAtRisk: execMoney(totalMonthlyRevenueAtRisk),
+    totalAnnualRevenueAtRisk: execMoney(totalAnnualRevenueAtRisk),
     totalFixInvestment: '$' + Math.round(totalFixCost).toLocaleString(),
-    annualRecoveryPotential: '$' + Math.round(totalAnnualRecovery).toLocaleString(),
-    roi: overallROI + '%',
-    urgency: totalAnnualRevenueAtRisk > 100000 ? 'critical' : totalAnnualRevenueAtRisk > 50000 ? 'high' : totalAnnualRevenueAtRisk > 10000 ? 'medium' : 'low',
+    annualRecoveryPotential: execMoney(totalAnnualRecovery),
+    roi: overallROI === null ? 'not computed (no traffic data)' : overallROI + '%',
+    urgency: hasRealFinancialInputs ? (totalAnnualRevenueAtRisk > 100000 ? 'critical' : totalAnnualRevenueAtRisk > 50000 ? 'high' : totalAnnualRevenueAtRisk > 10000 ? 'medium' : 'low') : 'n/a (no traffic data)',
     categoryBreakdown: Object.entries(issueCategories).map(([cat, data]) => ({
       category: cat,
       issueCount: data.count,
-      revenueImpact: '$' + Math.round(data.totalRevenueImpact * 12).toLocaleString(),
+      revenueImpact: execMoney(data.totalRevenueImpact * 12),
       issues: data.issues
     })),
     topActions: roiCalculations.slice(0, 5).map(r => ({
       issue: r.issue,
-      roi: r.roi + '%',
+      roi: r.roi === null ? 'n/a' : r.roi + '%',
       timeline: r.recoveryTimelineDays + ' days',
       complexity: r.fixComplexity,
-      monthlyRecovery: '$' + r.estimatedMonthlyRecovery
+      monthlyRecovery: execMoney(r.estimatedMonthlyRecovery)
     })),
     roadmap: {
       '30 Days (Quick Wins)': roiCalculations.filter(r => r.fixComplexity === 'easy' && r.priority !== 'low').map(r => r.issue),
       '60 Days (Medium Effort)': roiCalculations.filter(r => r.fixComplexity === 'medium').map(r => r.issue),
       '90 Days (Strategic)': roiCalculations.filter(r => r.fixComplexity === 'hard').map(r => r.issue)
     },
-    projectedRecovery: {
+    projectedRecovery: hasRealFinancialInputs ? {
       month1: '$' + Math.round(roiCalculations.filter(r => r.fixComplexity === 'easy').reduce((a, r) => a + r.estimatedMonthlyRecovery, 0)).toLocaleString(),
       month2: '$' + Math.round(roiCalculations.filter(r => r.fixComplexity === 'easy' || r.fixComplexity === 'medium').reduce((a, r) => a + r.estimatedMonthlyRecovery, 0) * 0.5).toLocaleString(),
       month3: '$' + Math.round(totalMonthlyRevenueAtRisk * 0.3).toLocaleString()
-    }
+    } : { note: 'Projections unavailable — no traffic data supplied.' }
   };
   data.executiveSummary = executiveSummary;
 
-  issues.push({
-    severity: 'info',
-    impact: 'medium',
-    message: 'Financial Impact Summary — Page type: ' + pageType.toUpperCase() + ', Revenue at risk: $' + Math.round(totalMonthlyRevenueAtRisk).toLocaleString() + '/month ($' + Math.round(totalAnnualRevenueAtRisk).toLocaleString() + '/year), Fix cost: $' + Math.round(totalFixCost).toLocaleString() + ', Projected ROI: ' + overallROI + '%. Top fix: "' + roiCalculations[0].issue + '" ($' + roiCalculations[0].estimatedMonthlyRecovery + '/month, ' + roiCalculations[0].recoveryTimelineDays + ' days).',
-    element: 'financial impact',
-    fix: 'Prioritize fixes by ROI: ' + roiCalculations.slice(0, 3).map(r => r.issue + ' (' + r.roi + '% ROI)').join(', ') + '.',
-    link: url,
-    evidence: 'Revenue at risk: $' + Math.round(totalMonthlyRevenueAtRisk).toLocaleString() + '/month, Fix cost: $' + Math.round(totalFixCost).toLocaleString() + ', ROI: ' + overallROI + '%',
-    recommendation: 'Address easy, high-ROI fixes within 30 days to recover ~$' + Math.round(roiCalculations.filter(r => r.fixComplexity === 'easy').reduce((a, r) => a + r.estimatedMonthlyRecovery, 0)).toLocaleString() + '/month'
-  });
+  if (hasRealFinancialInputs) {
+    issues.push({
+      severity: 'info',
+      impact: 'medium',
+      message: 'Financial Impact Summary — Page type: ' + pageType.toUpperCase() + ', Revenue at risk: $' + Math.round(totalMonthlyRevenueAtRisk).toLocaleString() + '/month ($' + Math.round(totalAnnualRevenueAtRisk).toLocaleString() + '/year), Fix cost: $' + Math.round(totalFixCost).toLocaleString() + ', Projected ROI: ' + overallROI + '%. Top fix: "' + (roiCalculations[0] ? roiCalculations[0].issue : '') + '" ($' + (roiCalculations[0] ? roiCalculations[0].estimatedMonthlyRecovery : 0) + '/month, ' + (roiCalculations[0] ? roiCalculations[0].recoveryTimelineDays : 0) + ' days).',
+      element: 'financial impact',
+      fix: 'Prioritize fixes by ROI: ' + roiCalculations.slice(0, 3).map(r => r.issue + ' (' + r.roi + '% ROI)').join(', ') + '.',
+      link: url,
+      evidence: 'Revenue at risk: $' + Math.round(totalMonthlyRevenueAtRisk).toLocaleString() + '/month, Fix cost: $' + Math.round(totalFixCost).toLocaleString() + ', ROI: ' + overallROI + '%',
+      recommendation: 'Address easy, high-ROI fixes within 30 days to recover ~$' + Math.round(roiCalculations.filter(r => r.fixComplexity === 'easy').reduce((a, r) => a + r.estimatedMonthlyRecovery, 0)).toLocaleString() + '/month'
+    });
+  } else {
+    issues.push({
+      severity: 'info',
+      impact: 'low',
+      message: 'Financial impact modeling is disabled — supply monthlyTraffic, avgOrderValue and conversionRate (GA4/analytics data) in the audit config to quantify revenue at risk, ROI and recovery timelines. On-page findings are still reported in full.',
+      element: 'financial impact',
+      fix: 'Re-run the audit with traffic data to enable the revenue attribution engine.',
+      link: url,
+      evidence: 'No financial inputs supplied; monetary figures left at 0.'
+    });
+  }
 
   return {
     level: 21,
