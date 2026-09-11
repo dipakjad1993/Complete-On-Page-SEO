@@ -1,0 +1,7 @@
+# Legacy monoliths: format when split (P1), not now — avoids 300KB diffs.
+helpers.js
+levels.js
+public/index.html
+package-lock.json
+screenshots/
+coverage/

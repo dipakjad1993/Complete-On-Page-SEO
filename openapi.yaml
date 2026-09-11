@@ -1,0 +1,160 @@
+openapi: 3.0.3
+info:
+  title: Complete On-Page SEO 2026 API
+  version: 1.2.0
+  description: >-
+    Production-grade 21-level on-page + AI-search (RAG/LLM) SEO audit engine.
+    Real measured data, no mocks. See GET /api/health for liveness.
+  contact:
+    name: Dipak Jadhav
+    url: https://github.com/dipakjad1993/Complete-On-Page-SEO
+servers:
+  - url: https://complete-on-page-seo.onrender.com
+    description: Render (public demo)
+  - url: http://localhost:3000
+    description: Local dev
+paths:
+  /api/health:
+    get:
+      summary: Liveness probe
+      responses:
+        '200':
+          description: ok
+  /api:
+    get:
+      summary: API index
+      responses:
+        '200':
+          description: endpoint list
+  /api/audit:
+    post:
+      summary: Run full 21-level audit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties:
+                url:
+                  type: string
+                  example: https://example.com
+                auditId:
+                  type: string
+                config:
+                  type: object
+                  properties:
+                    keywords:
+                      type: string
+                    brand:
+                      type: string
+                    viewportWidth:
+                      type: integer
+                      minimum: 320
+                      maximum: 3840
+                    viewportHeight:
+                      type: integer
+                      minimum: 320
+                      maximum: 2160
+                    monthlyTraffic:
+                      type: number
+                      minimum: 0
+                    avgOrderValue:
+                      type: number
+                      minimum: 0
+                    conversionRate:
+                      type: number
+                      minimum: 0
+                      maximum: 100
+      responses:
+        '200':
+          description: audit result (21 levels + summary)
+        '400':
+          description: invalid URL or blocked private host (SSRF guard)
+        '429':
+          description: engine busy, retry with Retry-After
+  /api/audit-progress/{auditId}:
+    get:
+      summary: SSE progress stream
+      parameters:
+        - in: path
+          name: auditId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: text/event-stream
+  /api/analyze-url:
+    post:
+      summary: Auto-fill config (brand, pageType, keywords, competitors, geo, currency)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties:
+                url:
+                  type: string
+      responses:
+        '200':
+          description: auto-fill result
+        '400':
+          description: invalid / private URL
+  /api/crawl:
+    post:
+      summary: Same-origin BFS crawl (max 10 pages, raw HTML)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [startUrl]
+              properties:
+                startUrl:
+                  type: string
+                maxPages:
+                  type: integer
+                  minimum: 1
+                  maximum: 10
+      responses:
+        '200':
+          description: crawled page list
+  /api/crux:
+    get:
+      summary: CrUX/PageSpeed field data (LCP, INP, CLS)
+      parameters:
+        - in: query
+          name: url
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: field metrics
+  /api/export-pdf:
+    post:
+      summary: Render HTML report to PDF (max 1MB HTML)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [html]
+              properties:
+                html:
+                  type: string
+      responses:
+        '200':
+          description: application/pdf
+  /api/cache-stats:
+    get:
+      summary: Cache + concurrency stats
+      responses:
+        '200':
+          description: stats
