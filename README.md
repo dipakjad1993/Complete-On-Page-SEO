@@ -1,15 +1,35 @@
 # Complete ON Page SEO 2026
 
-![Version](https://img.shields.io/badge/version-1.1.0-blue)
-![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)
-![License](https://img.shields.io/badge/license-ISC-blue)
+[![Live](https://img.shields.io/badge/demo-live-brightgreen)](https://complete-on-page-seo.onrender.com/)
+[![Build](https://github.com/dipakjad1993/Complete-On-Page-SEO/actions/workflows/ci.yml/badge.svg)](https://github.com/dipakjad1993/Complete-On-Page-SEO/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
+[![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](./.nvmrc)
+![Version](https://img.shields.io/badge/version-1.2.0-blue)
 ![Puppeteer](https://img.shields.io/badge/puppeteer-25.x-yellow)
 
-A production-grade **on-page SEO auditing engine** that runs a **21-level deep audit** on any public URL in ~60–120 seconds, then hands you **14 concrete, ready-to-use deliverables** — from technical health scoring to auto-generated GitHub pull requests, edge-worker patches, CI/CD gatekeeper configs and a dollar-valued revenue-at-risk dashboard.
+Production-grade **21-level on-page + AI-search (RAG/LLM) SEO auditor** with **14 dev-ready deliverables** — real measured data, no mocks. Node.js + Puppeteer + Express.
 
-Built with **Node.js + Express + Cheerio + Puppeteer**, featuring a Google Pixel–style UI (Google Sans / Roboto), dark & light themes, real-time progress streaming, and zero plugins required.
+- **Real data, no mocks** — unmeasurable numbers return `null`/`N/A` with a `dataSource` note (see guarantee below).
+- **21 levels incl. RAG + revenue** — SSR/CSR diff, schema audit, passage vectors, edge workers, revenue-at-risk.
+- **Full-stack** — Puppeteer rendering → Cheerio/Express SSE streaming → Pixel UI → Render/Docker deploy.
 
-**🔗 Live Tool:** [https://complete-on-page-seo.onrender.com/](https://complete-on-page-seo.onrender.com/)
+**🔗 Try live:** [https://complete-on-page-seo.onrender.com/](https://complete-on-page-seo.onrender.com/) · Health: [`/api/health`](https://complete-on-page-seo.onrender.com/api/health) · API docs: [`/openapi.yaml`](./openapi.yaml)
+
+> **Render free-tier note:** the demo sleeps when idle (first click can 503/wake ~50s). Keep-alive is a free 5-min [UptimeRobot](https://uptimerobot.com/) ping on `/api/health` (see `render.yaml:KEEP_ALIVE_URL`); or self-host with `fly.toml`/Docker below.
+
+```bash
+# 30-second quickstart
+git clone https://github.com/dipakjad1993/Complete-On-Page-SEO.git && cd Complete-On-Page-SEO
+npm ci && npx puppeteer browsers install chrome && npm start
+# open http://localhost:3000
+```
+
+```bash
+# curl quickstart
+curl -X POST https://complete-on-page-seo.onrender.com/api/audit \
+ -H "Content-Type: application/json" \
+ -d '{"url":"https://example.com","config":{"keywords":"seo audit"}}'
+```
 
 > **Data integrity guarantee:** every metric is computed from the real fetched/rendered page. No demo results, no hardcoded scores, and no synthetic values presented as measured facts. Where a number genuinely cannot be measured (e.g., Google's real crawl frequency, real CTR uplift, live LLM inference), the tool says so explicitly instead of inventing a value.
 
@@ -34,11 +54,13 @@ Built with **Node.js + Express + Cheerio + Puppeteer**, featuring a Google Pixel
 - [The 14 Executive Deliverables](#the-14-executive-deliverables)
 - [Inputs & Configuration](#inputs--configuration)
 - [API Reference](#api-reference)
+- [Comparison — Honest Positioning](#comparison--honest-positioning)
 - [Project Structure](#project-structure)
 - [Deployment](#deployment)
 - [Troubleshooting](#troubleshooting)
 - [FAQ](#faq)
 - [Roadmap](#roadmap)
+- [Author — Hire Me](#author--hire-me)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -54,7 +76,7 @@ Each level produces:
 - A **list of issues** with severity (critical / warning / info), impact, concrete fix instructions and recommendations.
 - A **structured data object** broken into named sub-functions, each containing granular metrics derived entirely from real page data — no synthetic or fabricated values.
 
-The system uses **Puppeteer** to render JavaScript-heavy pages (SPAs, React, Angular, Vue) so the analysis reflects what Googlebot *and* AI crawlers see after JS execution. It also compares server-side (raw) HTML against rendered HTML to detect SSR/CSR discrepancies.
+The system uses **Puppeteer** to render JavaScript-heavy pages (SPAs, React, Angular, Vue) so the analysis reflects what Googlebot _and_ AI crawlers see after JS execution. It also compares server-side (raw) HTML against rendered HTML to detect SSR/CSR discrepancies.
 
 ---
 
@@ -62,29 +84,33 @@ The system uses **Puppeteer** to render JavaScript-heavy pages (SPAs, React, Ang
 
 ### 🔬 21 Specialized Analysis Levels
 
-| # | Level Name | Focus Area |
-|---|-----------|-----------|
-| 1 | Core Hygiene & Technical Baseline | Title, meta, viewport, robots, canonical, headings, links |
-| 2 | DOM Reality, Rendering & Structural Diagnostics | SSR vs CSR diff, DOM depth, schema validation |
-| 3 | Semantic Architecture, Entities & Information Gain | Word count, readability, keyword density, AI detection |
-| 4 | Generative Search, LLM & RAG Visibility | RAG chunking, passage vectors, direct answer scoring |
-| 5 | Dev Automation & Auto-Fix Generation | Auto-generated patches, edge worker scripts, CI/CD hooks |
-| 6 | Edge Computing & Serverless Integration | Edge worker configs, security headers, CORS, caching |
-| 7 | Multi-Modal Content & Spatial Asset Auditing | Image alt text, video captions, SVG accessibility |
-| 8 | Predictive SERP Volatility & Algorithm Impact | SERP volatility scoring, ranking stability prediction |
-| 9 | SEO A/B Testing & Rollback Safety Guidance | Variant suggestions, statistical significance, rollback safety |
-| 10 | Bot Behavior Mapping & Log Config Templates | Bot detection, freshness signals, example log configs |
-| 11 | Synthetic Content & LLM Visibility Heuristics | LLM citation heuristics, passage retrievability, content flags |
-| 12 | Algorithmic Quality & Helpful-Content Classifier | Content freshness, E-E-A-T signals, quality thresholds |
-| 13 | Edge-Native Patching & CI/CD Gatekeeping | Pre-commit hooks, CI/CD rules, edge deployment |
-| 14 | Financial Attribution & Revenue Impact Engine | Revenue-at-risk per issue, ROI matrix, business impact |
-| 15 | Passage Vector & Cosine Similarity Profiler | Passage-level retrieval scoring, topic cluster detection |
-| 16 | Third-Party Consensus & Entity Alignment Scorer | Entity cross-referencing, brand mention analysis |
-| 17 | Autonomous Fix Generator & Red-Team Checks | Autonomous fix generation, red-team header/HTML checks |
-| 18 | Zero-Click & Agentic Commerce Visibility | Featured snippet readiness, product schema, commerce signals |
-| 19 | Edge Orchestration & Self-Correction Rules | Edge worker deployment, canary testing, self-healing scripts |
-| 20 | Adversarial Checks & Security Header Audit | Security testing, information disclosure, cloaking detection |
-| 21 | Financial Impact & Revenue Attribution Engine | Revenue-at-risk per issue, ROI matrix, executive summary |
+| #   | Level Name                                                | Focus Area                                                         |
+| --- | --------------------------------------------------------- | ------------------------------------------------------------------ |
+| 1   | Core Hygiene & Technical Baseline                         | Title, meta, viewport, robots, canonical, headings, links          |
+| 2   | DOM Reality, Rendering & Structural Diagnostics           | SSR vs CSR diff, DOM depth, schema validation                      |
+| 3   | Semantic Architecture, Entities & Information Gain        | Word count, readability, keyword density, AI detection             |
+| 4   | Generative Search, LLM & RAG Visibility                   | RAG chunking, passage vectors, direct answer scoring               |
+| 5   | Dev Automation & Auto-Fix Generation                      | Auto-generated patches, edge worker scripts, CI/CD hooks           |
+| 6   | Edge Computing & Serverless Integration                   | Edge worker configs, security headers, CORS, caching               |
+| 7   | Multi-Modal Content & Spatial Asset Auditing              | Image alt text, video captions, SVG accessibility                  |
+| 8   | Predictive SERP Volatility & Algorithm Impact             | SERP volatility scoring, ranking stability prediction              |
+| 9   | SEO A/B Testing & Rollback Safety Guidance                | Variant suggestions, statistical significance, rollback safety     |
+| 10  | Bot Behavior Mapping & Log Config Templates               | Bot detection, freshness signals, example log configs              |
+| 11  | Synthetic Content & LLM Visibility Heuristics             | LLM citation heuristics, passage retrievability, content flags     |
+| 12  | Algorithmic Quality & Helpful-Content Classifier          | Content freshness, E-E-A-T signals, quality thresholds             |
+| 13  | Edge-Native Patching & CI/CD Gatekeeping                  | Pre-commit hooks, CI/CD rules, edge deployment                     |
+| 14  | Financial Attribution – Single-Page ROI                   | Revenue-at-risk per issue, ROI matrix, business impact (THIS page) |
+| 15  | Passage Vector & Cosine Similarity Profiler               | Passage-level retrieval scoring, topic cluster detection           |
+| 16  | Third-Party Consensus & Entity Alignment Scorer           | Entity cross-referencing, brand mention analysis                   |
+| 17  | Autonomous Fix Generator & Red-Team Checks                | Autonomous fix generation, red-team header/HTML checks             |
+| 18  | Zero-Click & Agentic Commerce Visibility                  | Featured snippet readiness, product schema, commerce signals       |
+| 19  | Edge Orchestration & Self-Correction Rules                | Edge worker deployment, canary testing, self-healing scripts       |
+| 20  | Adversarial Checks & Security Header Audit                | Security testing, information disclosure, cloaking detection       |
+| 21  | Site-Wide Risk Aggregation & Executive Rollup (Portfolio) | Cross-signal rollup + executive risk summary (PORTFOLIO view)      |
+
+> **L14 vs L21 — same math, different scope (by design):** L14 monetizes _this URL's_ issues from your GA4 inputs (`monthlyTraffic`, `avgOrderValue`, `conversionRate`); L21 re-checks title/canonical/headings/schema/links and aggregates them into a portfolio-style executive rollup. Without traffic inputs both return `$0` with an explicit note.
+>
+> **Why L5 / L13 / L17 / L19 all touch "fixes":** L5 generates dev PR diffs, L13 enforces CI gates that block bad merges, L17 red-teams the fixes (headers/HTML abuse cases), L19 rolls them out safely (canary + self-healing edge). Dev-PR vs CI-gate vs red-team vs orchestration.
 
 ### 📦 14 Concrete Executive Deliverables
 
@@ -146,14 +172,14 @@ Each auto-filled field shows a green **AUTO** badge so you can review and adjust
 
 ### 🚀 Production-Ready
 
-- Rate limiting (200 req/15 min).
-- Helmet security headers.
-- CORS enabled.
+- Rate limiting (200 req/15 min) + max 2 concurrent audits (`429` + `Retry-After`) + 1h result cache (`GET /api/cache-stats`).
+- Helmet CSP security headers, CORS via `ALLOWED_ORIGINS`, 1MB JSON body cap, 5MB raw-HTML cap.
+- SSRF guard on every user-supplied URL (private/loopback/link-local/metadata + DNS-rebind blocked) + zod input validation.
 - Compression (gzip/brotli).
-- Request body size limits.
 - Graceful error handling at every level — a failure in one level never crashes the full audit.
-- Unified logging with rotation support.
-- **Render.com** deployment ready (dynamic Chrome path, `render.yaml`).
+- Structured `GET /api/health` (version/uptime/memory), `GET /api`, `GET /openapi.yaml`.
+- CI: Node 18+20, typecheck, `npm audit`, vitest (24 tests), prettier check.
+- **Render.com** deployment ready (`render.yaml` + `healthCheckPath: /api/health` + UptimeRobot keep-alive) + `fly.toml` + `Dockerfile` alternatives.
 
 ---
 
@@ -191,70 +217,133 @@ The report page renders the overall score, **14 concrete deliverables**, the **5
 
 ### Per-Module Analysis (all 21 levels)
 
-Each module below is shown expanded with its **0–100 score**, its **findings** (critical / warning / info) and its **full measured data sections** — all from the same live Wikipedia audit.
+Each module below is shown expanded with its **0–100 score**, its **findings** (critical / warning / info) and its **full measured data sections** — all from the same live Wikipedia audit. Collapsed by default to keep this page scannable.
 
-#### Level 1 — Core Hygiene & Technical Baseline
+<details><summary><strong>Level 1 — Core Hygiene & Technical Baseline</strong></summary>
+
 ![Level 1 — Core Hygiene & Technical Baseline](screenshots/modules/01-core-hygiene.png)
 
-#### Level 2 — DOM Reality, Rendering & Structural Diagnostics
+</details>
+
+<details><summary><strong>Level 2 — DOM Reality, Rendering & Structural Diagnostics</strong></summary>
+
 ![Level 2 — DOM Reality, Rendering & Structural Diagnostics](screenshots/modules/02-dom-rendering.png)
 
-#### Level 3 — Semantic Architecture, Entities & Information Gain
+</details>
+
+<details><summary><strong>Level 3 — Semantic Architecture, Entities & Information Gain</strong></summary>
+
 ![Level 3 — Semantic Architecture, Entities & Information Gain](screenshots/modules/03-semantic-entities.png)
 
-#### Level 4 — Generative Search, LLM & RAG Visibility
+</details>
+
+<details><summary><strong>Level 4 — Generative Search, LLM & RAG Visibility</strong></summary>
+
 ![Level 4 — Generative Search, LLM & RAG Visibility](screenshots/modules/04-llm-rag.png)
 
-#### Level 5 — Dev Automation & Auto-Fix Generation
+</details>
+
+<details><summary><strong>Level 5 — Dev Automation & Auto-Fix Generation</strong></summary>
+
 ![Level 5 — Dev Automation & Auto-Fix Generation](screenshots/modules/05-dev-automation.png)
 
-#### Level 6 — Edge Computing & Serverless Integration
+</details>
+
+<details><summary><strong>Level 6 — Edge Computing & Serverless Integration</strong></summary>
+
 ![Level 6 — Edge Computing & Serverless Integration](screenshots/modules/06-edge-computing.png)
 
-#### Level 7 — Multi-Modal Content & Spatial Asset Auditing
+</details>
+
+<details><summary><strong>Level 7 — Multi-Modal Content & Spatial Asset Auditing</strong></summary>
+
 ![Level 7 — Multi-Modal Content & Spatial Asset Auditing](screenshots/modules/07-multimodal.png)
 
-#### Level 8 — Predictive SERP Volatility & Algorithm Impact
+</details>
+
+<details><summary><strong>Level 8 — Predictive SERP Volatility & Algorithm Impact</strong></summary>
+
 ![Level 8 — Predictive SERP Volatility & Algorithm Impact](screenshots/modules/08-serp-volatility.png)
 
-#### Level 9 — SEO A/B Testing & Rollback Safety Guidance
+</details>
+
+<details><summary><strong>Level 9 — SEO A/B Testing & Rollback Safety Guidance</strong></summary>
+
 ![Level 9 — SEO A/B Testing & Rollback Safety Guidance](screenshots/modules/09-ab-testing.png)
 
-#### Level 10 — Bot Behavior Mapping & Log Config Templates
+</details>
+
+<details><summary><strong>Level 10 — Bot Behavior Mapping & Log Config Templates</strong></summary>
+
 ![Level 10 — Bot Behavior Mapping & Log Config Templates](screenshots/modules/10-bot-behavior.png)
 
-#### Level 11 — Synthetic Content & LLM Visibility Heuristics
+</details>
+
+<details><summary><strong>Level 11 — Synthetic Content & LLM Visibility Heuristics</strong></summary>
+
 ![Level 11 — Synthetic Content & LLM Visibility Heuristics](screenshots/modules/11-synthetic-content.png)
 
-#### Level 12 — Algorithmic Quality & Helpful-Content Classifier
+</details>
+
+<details><summary><strong>Level 12 — Algorithmic Quality & Helpful-Content Classifier</strong></summary>
+
 ![Level 12 — Algorithmic Quality & Helpful-Content Classifier](screenshots/modules/12-quality-classifier.png)
 
-#### Level 13 — Edge-Native Patching & CI/CD Gatekeeping
+</details>
+
+<details><summary><strong>Level 13 — Edge-Native Patching & CI/CD Gatekeeping</strong></summary>
+
 ![Level 13 — Edge-Native Patching & CI/CD Gatekeeping](screenshots/modules/13-edge-patching.png)
 
-#### Level 14 — Financial Attribution & Revenue Impact Engine
-![Level 14 — Financial Attribution & Revenue Impact Engine](screenshots/modules/14-financial.png)
+</details>
 
-#### Level 15 — Passage Vector & Cosine Similarity Profiler
+<details><summary><strong>Level 14 — Financial Attribution – Single-Page ROI</strong></summary>
+
+![Level 14 — Financial Attribution – Single-Page ROI](screenshots/modules/14-financial.png)
+
+</details>
+
+<details><summary><strong>Level 15 — Passage Vector & Cosine Similarity Profiler</strong></summary>
+
 ![Level 15 — Passage Vector & Cosine Similarity Profiler](screenshots/modules/15-passage-vector.png)
 
-#### Level 16 — Third-Party Consensus & Entity Alignment Scorer
+</details>
+
+<details><summary><strong>Level 16 — Third-Party Consensus & Entity Alignment Scorer</strong></summary>
+
 ![Level 16 — Third-Party Consensus & Entity Alignment Scorer](screenshots/modules/16-entity-consensus.png)
 
-#### Level 17 — Autonomous Fix Generator & Red-Team Checks
+</details>
+
+<details><summary><strong>Level 17 — Autonomous Fix Generator & Red-Team Checks</strong></summary>
+
 ![Level 17 — Autonomous Fix Generator & Red-Team Checks](screenshots/modules/17-autofix-redteam.png)
 
-#### Level 18 — Zero-Click & Agentic Commerce Visibility
+</details>
+
+<details><summary><strong>Level 18 — Zero-Click & Agentic Commerce Visibility</strong></summary>
+
 ![Level 18 — Zero-Click & Agentic Commerce Visibility](screenshots/modules/18-zero-click.png)
 
-#### Level 19 — Edge Orchestration & Self-Correction Rules
+</details>
+
+<details><summary><strong>Level 19 — Edge Orchestration & Self-Correction Rules</strong></summary>
+
 ![Level 19 — Edge Orchestration & Self-Correction Rules](screenshots/modules/19-edge-orchestration.png)
 
-#### Level 20 — Adversarial Checks & Security Header Audit
+</details>
+
+<details><summary><strong>Level 20 — Adversarial Checks & Security Header Audit</strong></summary>
+
 ![Level 20 — Adversarial Checks & Security Header Audit](screenshots/modules/20-adversarial.png)
 
-#### Level 21 — Financial Impact & Revenue Attribution Engine
-![Level 21 — Financial Impact & Revenue Attribution Engine](screenshots/modules/21-financial-impact.png)
+</details>
+
+<details><summary><strong>Level 21 — Site-Wide Risk Aggregation & Executive Rollup (Portfolio)</strong></summary>
+
+![Level 21 — Site-Wide Risk Aggregation & Executive Rollup (Portfolio)](screenshots/modules/21-financial-impact.png)
+
+</details>
 
 ---
 
@@ -343,12 +432,15 @@ npm start
 
 ### Environment Variables (Optional)
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PORT` | `3000` | Server port |
-| `CHROME_PATH` | internal Puppeteer path | Custom Chrome/Chromium executable |
-| `RATE_LIMIT_WINDOW_MS` | `900000` (15 min) | Rate limit window |
-| `RATE_LIMIT_MAX` | `200` | Max requests per window |
+Copy [`.env.example`](./.env.example) to `.env`. Never commit `.env`.
+
+| Variable            | Default                      | Description                                                              |
+| ------------------- | ---------------------------- | ------------------------------------------------------------------------ |
+| `PORT`              | `3000`                       | Server port                                                              |
+| `CHROME_PATH`       | Puppeteer default            | Custom Chrome/Chromium executable (Docker sets `/usr/bin/chromium`)      |
+| `ALLOWED_ORIGINS`   | `` (allow all — public demo) | Comma-separated browser CORS origins for production                      |
+| `KEEP_ALIVE_URL`    | Render health URL            | UptimeRobot 5-min ping target (`/api/health`) to prevent free-tier sleep |
+| `PAGESPEED_API_KEY` | `` (works without)           | Higher quota for `GET /api/crux`                                         |
 
 ---
 
@@ -398,88 +490,109 @@ Watch all 21 modules execute with a live progress bar and per-level status text.
 ## The 21 Analysis Levels
 
 ### Level 1: Core Hygiene & Technical Baseline
+
 Title length/truncation/pixel width, meta description, viewport, robots meta + X-Robots-Tag header, canonical integrity, heading hierarchy (H1 count, skipped levels), image alt text & formats, HTTP headers, internal link quality, link density.
 
 ### Level 2: DOM Reality, Rendering & Structural Diagnostics
+
 SSR vs CSR diff (raw HTML vs rendered DOM), DOM node count / max depth / child distribution, schema.org validation (valid/invalid, missing required, circular refs, warnings).
 
 ### Level 3: Semantic Architecture, Entities & Information Gain
+
 Word count, Flesch-Kincaid readability, keyword density, bigrams, transition words, content structure, information-gain delta (KL-divergence, novel terms), entity extraction.
 
 ### Level 4: Generative Search, LLM & RAG Visibility
+
 RAG chunk simulation with per-chunk retrievability scores, passage vectors, direct answer scoring, LLM citation worthiness, redundant phrasing, section entropy.
 
 ### Level 5: Dev Automation & Auto-Fix Generation
+
 Auto-generated patches (schema JSON-LD, heading hierarchy, canonical fixes) with regression test code, diagnostic workflow, rollback plans.
 
 ### Level 6: Edge Computing & Serverless Integration
+
 Edge worker code generation, security headers, cache policy, CORS, cookie attributes, mixed-content detection.
 
 ### Level 7: Multi-Modal Content & Spatial Asset Auditing
+
 Image analysis (alt text, dimensions, lazy loading, srcset, modern formats), video captions/posters, audio transcripts, SVG accessibility.
 
 ### Level 8: Predictive SERP Volatility & Algorithm Impact
+
 SERP volatility from real page structure, quality thresholds, SERP feature readiness (AI Overview, featured snippet, PAA, local, shopping, knowledge panel), thin content, E-E-A-T signals, algorithm resilience.
 
 ### Level 9: SEO A/B Testing & Rollback Safety Guidance
+
 Baseline extraction, testability assessment, title/meta variant suggestions, rollback safety, statistical significance guidance, sample size estimation. CTR uplift percentages are **not** claimed — no A/B test is run, so variants are labeled "not measured (no A/B test run)".
 
 ### Level 10: Bot Behavior Mapping & Log Config Templates
+
 Status code & redirect chain (per-hop latency reported as "not measured"), crawl budget estimation, bot behavior / freshness signals, and **example** log config templates (Cloudflare, CloudWatch, Datadog) — the tool does not connect to your logging infrastructure.
 
 ### Level 11: Synthetic Content & LLM Visibility Heuristics
+
 Synthetic agent behavior, RAG chunk simulation, agentic readiness (CTA parsability, form accessibility, JS dependency), direct-answer & LLM-citation **structural heuristics** (labeled as such — no real LLM inference is performed).
 
 ### Level 12: Algorithmic Quality & Helpful-Content Classifier
+
 Content freshness, E-E-A-T signals, quality thresholds, quality flags, helpful-content alignment.
 
 ### Level 13: Edge-Native Patching & CI/CD Gatekeeping
+
 Pre-commit hooks, GitHub Actions workflow, GitLab CI config, Cloudflare Worker / Vercel Edge code, self-healing rules.
 
-### Level 14: Financial Attribution & Revenue Impact Engine
-Revenue-at-risk per issue, ROI analysis, quarterly projections, priority action plan, traffic estimates, competitive loss, cost-benefit summary, issue registry.
+### Level 14: Financial Attribution – Single-Page ROI
+
+Revenue-at-risk per issue, ROI analysis, quarterly projections, priority action plan, traffic estimates, competitive loss, cost-benefit summary, issue registry — scoped to **this page**.
 
 ### Level 15: Passage Vector & Cosine Similarity Profiler
+
 Passage-level retrieval scoring, entity flow tracking, heading drift, content clustering, document distance.
 
 ### Level 16: Third-Party Consensus & Entity Alignment Scorer
+
 Entity consensus, citation quality, knowledge panel readiness, factual claims, trust-level scoring.
 
 ### Level 17: Autonomous Fix Generator & Red-Team Checks
+
 Schema/heading/canonical auto-fixes with validation tests, diagnostic workflow, fix validation, red-team header/HTML checks (with clear "Not measured" notes on post-fix targets).
 
 ### Level 18: Zero-Click & Agentic Commerce Visibility
+
 AI Overview readiness, featured snippet optimization, zero-click CTR estimation, agentic commerce audit, brand mention share, entity prominence.
 
 ### Level 19: Edge Orchestration & Self-Correction Rules
+
 Edge worker deployment, canary (progressive rollout), rollback triggers, error budget monitoring, self-correction rules with honest deploy-time estimates.
 
 ### Level 20: Adversarial Checks & Security Header Audit
+
 Security header analysis, information disclosure, cloaking detection, and robustness checks (rate limiting / UA cloaking / open redirect / parameter pollution are honestly reported as skipped where not measurable).
 
-### Level 21: Financial Impact & Revenue Attribution Engine
-Revenue-at-risk per issue, ROI analysis, quarterly projections, priority action plan — all gated on real user-supplied traffic data. Without `monthlyTraffic`, `avgOrderValue` and `conversionRate`, every dollar figure is `0` with a clear explanation.
+### Level 21: Site-Wide Risk Aggregation & Executive Rollup (Portfolio)
+
+Cross-signal rollup (title/canonical/headings/schema/links/quality) into an executive risk summary — scoped as a **portfolio view**. Revenue-at-risk per issue, ROI analysis, quarterly projections, priority action plan — all gated on real user-supplied traffic data. Without `monthlyTraffic`, `avgOrderValue` and `conversionRate`, every dollar figure is `0` with a clear explanation.
 
 ---
 
 ## The 14 Executive Deliverables
 
-| # | Deliverable | Output Type | Data Source |
-|---|-------------|-------------|-------------|
-| 1 | SSR vs. CSR Diff Report | Visual split-view + JSON diff | Level 2 `ssrVsCsr` |
-| 2 | DOM Tree Health Score | Metrics + bucket histograms | Level 2 `domDepth` |
-| 3 | Schema Validation Audit | Schema.org compliance report | Level 2 `schemaValidation` |
-| 4 | RAG Chunking Simulator | Sliding-window retrievability | Level 4 `ragChunks` |
-| 5 | Information Gain Delta | KL-divergence profile | Level 3 `informationGain` |
-| 6 | Entity Mapping Grid | KG + NLP entity chips | Levels 3 & 16 |
-| 7 | Automated Engineering PRs | Branch + files + tests | Level 17 `pullRequests` |
-| 8 | Self-Healing Edge Workers | Deploy-ready code | Levels 6, 13, 19 |
-| 9 | CI/CD Build Gatekeeper Logs | Workflow + hook + pipeline | Level 13 |
-| 10 | Bot Behavior Maps & Log Config Templates | Freshness signals + example log configs | Level 10 |
-| 11 | Algorithmic Quality Threshold Alerts | Flag + threshold watch | Levels 8, 12, 20 |
-| 12 | Multi-Modal Asset Diagnostics | Image/video/audio compliance | Level 7 |
-| 13 | Revenue-at-Risk Dashboard | Monetized financial model | Level 14 |
-| 14 | Effort-to-Impact Prioritization Matrix | Ranked remediation queue | Levels 14 & 21 |
+| #   | Deliverable                              | Output Type                             | Data Source                |
+| --- | ---------------------------------------- | --------------------------------------- | -------------------------- |
+| 1   | SSR vs. CSR Diff Report                  | Visual split-view + JSON diff           | Level 2 `ssrVsCsr`         |
+| 2   | DOM Tree Health Score                    | Metrics + bucket histograms             | Level 2 `domDepth`         |
+| 3   | Schema Validation Audit                  | Schema.org compliance report            | Level 2 `schemaValidation` |
+| 4   | RAG Chunking Simulator                   | Sliding-window retrievability           | Level 4 `ragChunks`        |
+| 5   | Information Gain Delta                   | KL-divergence profile                   | Level 3 `informationGain`  |
+| 6   | Entity Mapping Grid                      | KG + NLP entity chips                   | Levels 3 & 16              |
+| 7   | Automated Engineering PRs                | Branch + files + tests                  | Level 17 `pullRequests`    |
+| 8   | Self-Healing Edge Workers                | Deploy-ready code                       | Levels 6, 13, 19           |
+| 9   | CI/CD Build Gatekeeper Logs              | Workflow + hook + pipeline              | Level 13                   |
+| 10  | Bot Behavior Maps & Log Config Templates | Freshness signals + example log configs | Level 10                   |
+| 11  | Algorithmic Quality Threshold Alerts     | Flag + threshold watch                  | Levels 8, 12, 20           |
+| 12  | Multi-Modal Asset Diagnostics            | Image/video/audio compliance            | Level 7                    |
+| 13  | Revenue-at-Risk Dashboard                | Monetized financial model               | Level 14                   |
+| 14  | Effort-to-Impact Prioritization Matrix   | Ranked remediation queue                | Levels 14 & 21             |
 
 ---
 
@@ -487,23 +600,23 @@ Revenue-at-risk per issue, ROI analysis, quarterly projections, priority action 
 
 ### Audit Config (client → `POST /api/audit`)
 
-| Field | Type | Default | Purpose |
-|-------|------|---------|---------|
-| `url` | string | — | Target URL to audit (required) |
-| `config.userAgent` | string | `chrome-desktop` | Crawl as Chrome / Googlebot / GPTBot / PerplexityBot / Applebot |
-| `config.customUA` | string | — | Custom user-agent string |
-| `config.viewportWidth` | number | `1920` | Rendering viewport width |
-| `config.viewportHeight` | number | `1080` | Rendering viewport height |
-| `config.geo` | string | — | Geo-location (e.g., `US`, `GB`, `DE`, `IN`) |
-| `config.keywords` | string | — | Comma-separated target keywords |
-| `config.competitors` | array | — | Competitor URLs (or auto-discovered) |
-| `config.sitemap` | string | — | XML sitemap URL |
-| `config.brand` | string | — | Brand / entity name |
-| `config.pageType` | string | `auto` | Homepage / product / category / article / landing / local / FAQ / documentation |
-| `config.monthlyTraffic` | number | `0` | GA4 organic sessions/month (powers revenue-at-risk) |
-| `config.avgOrderValue` | number | `0` | GA4 average order value |
-| `config.conversionRate` | number | `0` | Conversion rate % |
-| `config.currency` | string | `USD` | Reporting currency |
+| Field                   | Type   | Default          | Purpose                                                                         |
+| ----------------------- | ------ | ---------------- | ------------------------------------------------------------------------------- |
+| `url`                   | string | —                | Target URL to audit (required)                                                  |
+| `config.userAgent`      | string | `chrome-desktop` | Crawl as Chrome / Googlebot / GPTBot / PerplexityBot / Applebot                 |
+| `config.customUA`       | string | —                | Custom user-agent string                                                        |
+| `config.viewportWidth`  | number | `1920`           | Rendering viewport width                                                        |
+| `config.viewportHeight` | number | `1080`           | Rendering viewport height                                                       |
+| `config.geo`            | string | —                | Geo-location (e.g., `US`, `GB`, `DE`, `IN`)                                     |
+| `config.keywords`       | string | —                | Comma-separated target keywords                                                 |
+| `config.competitors`    | array  | —                | Competitor URLs (or auto-discovered)                                            |
+| `config.sitemap`        | string | —                | XML sitemap URL                                                                 |
+| `config.brand`          | string | —                | Brand / entity name                                                             |
+| `config.pageType`       | string | `auto`           | Homepage / product / category / article / landing / local / FAQ / documentation |
+| `config.monthlyTraffic` | number | `0`              | GA4 organic sessions/month (powers revenue-at-risk)                             |
+| `config.avgOrderValue`  | number | `0`              | GA4 average order value                                                         |
+| `config.conversionRate` | number | `0`              | Conversion rate %                                                               |
+| `config.currency`       | string | `USD`            | Reporting currency                                                              |
 
 ---
 
@@ -514,6 +627,7 @@ Revenue-at-risk per issue, ROI analysis, quarterly projections, priority action 
 Runs a full 21-level audit on a URL.
 
 **Request Body:**
+
 ```json
 {
   "url": "https://example.com",
@@ -554,9 +668,38 @@ Generates a PDF from audit result HTML.
 
 ### `GET /api/health`
 
-Health check endpoint.
+Health check endpoint (also the Render `healthCheckPath` + UptimeRobot keep-alive target).
 
-**Response:** `{ "status": "ok", "timestamp": "..." }`
+**Response:** `{ "status": "ok", "version": "1.2.0", "uptime": 123, "node": "v20.x", "memory": {...}, "activeAudits": 0, "cacheSize": 3, "timestamp": "..." }`
+
+### `GET /api/crux?url=https://example.com`
+
+Real CrUX/PageSpeed field data (LCP/INP/CLS) — closes the lab-timings-only gap. No API key needed at low quota.
+
+### `POST /api/crawl`
+
+Same-origin BFS crawl, max 10 pages (raw HTML, no per-page Puppeteer). Run `POST /api/audit` per URL for full 21-level depth.
+
+**Request Body:** `{ "startUrl": "https://example.com", "maxPages": 10 }`
+
+### `GET /api/cache-stats` · `GET /api` · `GET /openapi.yaml`
+
+Cache/concurrency stats, API index, and the full OpenAPI 3.0 spec (see [`openapi.yaml`](./openapi.yaml)).
+
+## Comparison — Honest Positioning
+
+| Signal          | This repo (v1.2.0)                                                                            | open-seo (16k★) / Seonaut / FreeCrawl     |
+| --------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| License         | MIT                                                                                           | MIT                                       |
+| Live demo       | Render (sleeps; UptimeRobot keep-alive documented)                                            | Always-on hosted                          |
+| Crawl scope     | Single URL deep audit + 10-page BFS crawl + sitemap detect                                    | Full site crawl, backlinks, rank tracking |
+| AI-search       | RAG chunk sim, passage vectors, LLM-citation heuristics (honestly labeled, no fake inference) | AI visibility dashboards / Claude skill   |
+| Revenue         | Revenue-at-risk from YOUR GA4 inputs (`0` + note without them)                                | Mostly absent                             |
+| Export          | JSON/CSV/PDF                                                                                  | XLSX/Sheets/API                           |
+| CI/tests/Docker | CI green, 24 vitest tests, Dockerfile, OpenAPI                                                | CI + releases + installers                |
+| Data honesty    | `null`/`N/A` + `dataSource` notes instead of invented numbers                                 | Varies                                    |
+
+Use this tool when you want one URL's deepest honest audit (technical + AI-search + dollars); use a site crawler when you need 1M-URL breadth.
 
 ---
 
@@ -565,11 +708,19 @@ Health check endpoint.
 ```
 Complete-On-Page-SEO/
 ├── README.md                       # This file
-├── .gitignore
-├── render.yaml                     # Render.com deployment config (app at repo root)
+├── LICENSE                         # MIT
+├── CHANGELOG.md                    # Release notes
+├── CONTRIBUTING.md / SECURITY.md   # PR + security policy
+├── openapi.yaml                    # OpenAPI 3.0 spec (served at /openapi.yaml)
+├── Dockerfile / .dockerignore      # Self-host
+├── fly.toml                        # Fly.io alternative (no sleep)
+├── render.yaml                     # Render.com deployment (health check + keep-alive)
+├── .env.example / .nvmrc           # Env template / Node 20 pin
+├── .github/workflows/ci.yml        # CI: Node 18+20, audit, tests, prettier
+├── tests/                          # vitest: helpers.test.js + api.test.js (24 tests)
 ├── package.json                    # Dependencies & scripts
 ├── package-lock.json
-├── server.js                       # Express server, Puppeteer orchestration, API routes
+├── server.js                       # Express server, SSRF guard, Puppeteer orchestration, API routes
 ├── helpers.js                      # 60+ analysis helper functions
 ├── levels.js                       # 21 level analysis functions
 └── public/
@@ -582,12 +733,27 @@ Complete-On-Page-SEO/
 
 ### Render.com
 
-A `render.yaml` blueprint is included:
+A `render.yaml` blueprint is included (`healthCheckPath: /api/health`):
 
 - **root directory**: repo root (leave Root Directory empty if creating via the Render dashboard)
-- **build**: `npm install && npx puppeteer browsers install chrome`
+- **build**: `npm run render-build` (= `npm install && npx puppeteer browsers install chrome`)
 - **start**: `npm start`
-- Chrome path is resolved dynamically at runtime.
+- Chrome path is resolved dynamically at runtime (`CHROME_PATH` or Puppeteer default).
+- **Stop the sleep→503:** create a free [UptimeRobot](https://uptimerobot.com/) monitor (HTTP(s), 5-min interval) on `https://<your-app>.onrender.com/api/health`. The `KEEP_ALIVE_URL` env var in `render.yaml` documents the target.
+
+### Docker (self-host, no sleep)
+
+```bash
+docker build -t complete-on-page-seo .
+docker run -p 3000:3000 complete-on-page-seo
+# health: http://localhost:3000/api/health
+```
+
+### Fly.io alternative (persistent Chrome)
+
+```bash
+fly launch && fly deploy   # uses fly.toml + Dockerfile; /api/health checks included
+```
 
 ```yaml
 services:
@@ -613,12 +779,15 @@ npm start
 ### Puppeteer/Chrome issues
 
 **Chrome not found:**
+
 ```bash
 npx puppeteer browsers install chrome
 ```
+
 Or set a custom `CHROME_PATH` in `server.js`.
 
 **Chrome crashes on low-memory systems:**
+
 ```bash
 # In server.js, add to puppeteer args:
 '--disable-dev-shm-usage',
@@ -628,12 +797,14 @@ Or set a custom `CHROME_PATH` in `server.js`.
 ### Server won't start
 
 **Port 3000 in use:**
+
 ```bash
 # Set a different port
 $env:PORT=3001; npm start
 ```
 
 **Missing dependencies:**
+
 ```bash
 rm -rf node_modules && npm install
 ```
@@ -657,8 +828,8 @@ A: Yes. Puppeteer renders JavaScript before analysis. Level 2 specifically compa
 **Q: Are the scores comparable across different pages?**  
 A: Yes. Each level uses a consistent 0–100 scoring methodology. The overall score is the average of all 21 levels.
 
-**Q: Can I run this on localhost/staging URLs?**  
-A: Yes, as long as the server running the audit can reach the target URL.
+**Q: Can I run this on localhost/staging URLs?**
+A: The public demo blocks private targets (SSRF guard: `localhost`, `10/8`, `192.168/16`, `172.16/12`, `127/8`, `169.254.169.254`, DNS-rebinds → `400`). Self-host (Docker/VPS) and audit staging from inside your network instead.
 
 **Q: Does it store audit results?**  
 A: No. This is a real-time analysis tool. Results are returned in the API response and rendered in the browser. No database is used.
@@ -681,19 +852,36 @@ A: Enter your monthly organic traffic, average order value and conversion rate o
 - [x] **14 concrete executive deliverables**
 - [x] **5-phase executive deep-dive**
 - [x] **Google Pixel UI with help guide**
-- [ ] **Multi-page crawling** — spider entire sites with configurable depth
+- [x] **Real data, no fabrication** (null/N/A + dataSource notes)
+- [x] **SSRF guard + zod validation + CI + tests + Docker + OpenAPI**
+- [x] **CrUX field data (`GET /api/crux`) + 10-page BFS crawl (`POST /api/crawl`)**
+- [ ] **Multi-page crawling** — spider entire sites with configurable depth (P1: extend `/api/crawl` beyond 10 pages + sitemap parser)
 - [ ] **Historical tracking** — store results and track score changes over time
 - [ ] **Scheduled audits** — cron-based periodic analysis with email reports
+- [ ] **MCP server** — `audit_url` / `get_level` tools for Claude/Cursor (2026 hiring keyword)
+- [ ] **CLI** — `bin/seo-audit.js --json --fail-on critical` for CI gatekeeping
 - [ ] **API client libraries** — JavaScript, Python, and Go SDKs
-- [ ] **Integration plugins** — WordPress, Shopify, Webflow, Contentful
-- [ ] **Real-time WebSocket streaming** — live audit progress
 - [ ] **AI-powered fix generation** — optional LLM integration for automated remediation (currently the fix generator uses rule-based templates, honestly labeled)
+
+---
+
+## Author — Hire Me
+
+**Dipak Jadhav** — Full-Stack Node.js Engineer building AI-ready SEO tooling (Puppeteer, Cheerio, RAG, Edge Workers).
+
+- GitHub: [dipakjad1993](https://github.com/dipakjad1993) · Live demo: [complete-on-page-seo.onrender.com](https://complete-on-page-seo.onrender.com/)
+- 21-level audit engine · ~8,200 LOC · 60+ helpers · 29 real screenshots · real-data guarantee
+- **Open to:** Full-stack / Backend (Node.js) / Technical SEO / AI-search engineering roles.
+
+Suggested repo topics: `javascript, nodejs, expressjs, puppeteer, cheerio, seo, technical-seo, on-page-seo, ai-seo, rag, llm, core-web-vitals, edge-computing, seo-tools, site-audit`.
 
 ---
 
 ## Contributing
 
-Contributions are welcome! Here's how:
+Contributions are welcome! See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for the quick start, PR rules, and `good first issue` pointers. Security reports: see [`SECURITY.md`](./SECURITY.md) (SSRF boundaries documented there).
+
+Here's how:
 
 1. **Fork** the repository.
 2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
@@ -709,30 +897,16 @@ Contributions are welcome! Here's how:
 - Each level must include a **scoring penalty system** (`p` variable, `sc(p)` normalization).
 - **Handle errors gracefully** — use try/catch, return a structured error result, never crash the audit.
 - Add new helper functions to `helpers.js` and import them in `levels.js`.
-- Run `node -c helpers.js && node -c levels.js && node -c server.js` to verify syntax.
+- Run `npm test && npm run lint && npx prettier --check .` before pushing (see CONTRIBUTING.md).
 
 ---
 
 ## License
 
-This project is licensed under the **ISC License**.
+This project is licensed under the **MIT License** — see [`LICENSE`](./LICENSE).
 
 ```
-ISC License
-
-Copyright (c) 2026, dipakjad1993
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted, provided that the above
-copyright notice and this permission notice appear in all copies.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+MIT License — Copyright (c) 2026 Dipak Jadhav
 ```
 
 ---
