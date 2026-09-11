@@ -1,27 +1,56 @@
 {
   "name": "complete-on-page-seo-2026",
-  "version": "1.1.0",
-  "description": "Complete ON Page SEO 2026 - 21-Level On-Page SEO Audit & Fix Generator with 14 concrete deliverables",
+  "version": "1.2.0",
+  "description": "Production-grade 21-level on-page + AI-search (RAG/LLM) SEO auditor with 14 dev-ready deliverables - real measured data, no mocks. Node.js + Puppeteer + Express.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
+    "start:prod": "NODE_ENV=production node server.js",
     "dev": "nodemon server.js",
     "watch": "nodemon --watch . -e js,json,html server.js",
     "render-build": "npm install && npx puppeteer browsers install chrome",
-    "postinstall": "node -e \"try { require('puppeteer').executablePath(); } catch(e) { console.log('Puppeteer Chrome will be downloaded on first run or via render-build'); }\""
+    "postinstall": "node -e \"try { require('puppeteer').executablePath(); } catch(e) { console.log('Puppeteer Chrome will be downloaded on first run or via render-build'); }\"",
+    "test": "vitest run",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "audit": "npm audit --omit=dev --audit-level=high",
+    "typecheck": "node --check server.js && node --check helpers.js && node --check levels.js"
   },
   "keywords": [
     "seo",
     "audit",
     "on-page",
-    "analysis"
+    "on-page-seo",
+    "technical-seo",
+    "ai-seo",
+    "rag",
+    "llm",
+    "puppeteer",
+    "cheerio",
+    "expressjs",
+    "core-web-vitals",
+    "edge-computing",
+    "seo-tools",
+    "site-audit",
+    "javascript",
+    "nodejs"
   ],
-  "author": "",
-  "license": "ISC",
+  "author": "Dipak Jadhav (https://github.com/dipakjad1993)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dipakjad1993/Complete-On-Page-SEO.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dipakjad1993/Complete-On-Page-SEO/issues"
+  },
+  "homepage": "https://complete-on-page-seo.onrender.com/",
   "type": "commonjs",
   "engines": {
     "node": ">=18.0.0"
   },
+  "packageManager": "npm@10.0.0",
   "dependencies": {
     "axios": "^1.18.1",
     "cheerio": "^1.2.0",
@@ -37,9 +66,14 @@
     "schema-dts": "^2.0.0",
     "terser": "^5.49.0",
     "uuid": "^14.0.1",
-    "winston": "^3.19.0"
+    "winston": "^3.19.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.14",
+    "vitest": "^2.1.8",
+    "supertest": "^7.0.0",
+    "eslint": "^9.18.0",
+    "prettier": "^3.4.2"
   }
 }
