@@ -1,12 +1,26 @@
 services:
   - type: web
-    name: seo-deep-audit-360
+    name: complete-on-page-seo
     env: node
     region: oregon
+    plan: free
     buildCommand: npm run render-build
     startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
     envVars:
       - key: NODE_VERSION
         value: 20
+      - key: NODE_ENV
+        value: production
       - key: PUPPETEER_SKIP_DOWNLOAD
         value: false
+      # Restrict browser CORS in production (comma-separated). Empty = public demo.
+      - key: ALLOWED_ORIGINS
+        value: ''
+      # Set this after creating a free UptimeRobot monitor (5-min ping) to
+      # prevent Render free-tier sleep -> 503 on first recruiter click.
+      # UptimeRobot monitor URL: https://uptimerobot.com/ -> HTTP(s) ->
+      # https://complete-on-page-seo.onrender.com/api/health
+      - key: KEEP_ALIVE_URL
+        value: https://complete-on-page-seo.onrender.com/api/health

@@ -6,31 +6,214 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
+const dns = require('node:dns').promises;
+const net = require('node:net');
+const { z } = require('zod');
 
-process.on('uncaughtException', (err) => { console.error('Uncaught:', err.message); });
-process.on('unhandledRejection', (err) => { console.error('Unhandled:', err?.message || err); });
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught:', err.message);
+});
+process.on('unhandledRejection', (err) => {
+  console.error('Unhandled:', err?.message || err);
+});
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const APP_VERSION = require('./package.json').version || '1.2.0';
+const STARTED_AT = Date.now();
 
 app.use(compression());
-app.use(cors());
-app.use(helmet({ contentSecurityPolicy: false }));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.static(path.join(__dirname, 'public'), { maxAge: 0, etag: false, lastModified: false }));
-app.use('/api/', rateLimit({ windowMs: 15 * 60 * 1000, max: 200 }));
+// CORS: restrict in production via ALLOWED_ORIGINS (comma-separated).
+// Public demo default allows all origins so the SPA + curl work out of the box.
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+app.use(cors(ALLOWED_ORIGINS.length ? { origin: ALLOWED_ORIGINS } : {}));
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+        fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", 'data:', 'https:'],
+        connectSrc: ["'self'", 'https:']
+      }
+    }
+  })
+);
+app.use(express.json({ limit: '1mb' }));
+app.use(express.static(path.join(__dirname, 'public'), { maxAge: '1h', etag: true, lastModified: true }));
+app.use('/api/', rateLimit({ windowMs: 15 * 60 * 1000, max: 200, standardHeaders: true, legacyHeaders: false }));
+
+/* ===================== SSRF GUARD ===================== */
+// Blocks server-side request forgery: private / loopback / link-local /
+// cloud-metadata targets. Applied to every user-supplied URL before fetch
+// or Puppeteer navigation.
+function isPrivateHostname(hostname) {
+  const h = String(hostname || '')
+    .toLowerCase()
+    .replace(/\.$/, '');
+  if (!h) return true;
+  if (h === 'localhost' || h.endsWith('.local') || h === 'metadata.google.internal') return true;
+  if (net.isIP(h)) {
+    if (net.isIPv4(h)) {
+      if (h.startsWith('10.') || h.startsWith('192.168.') || h === '0.0.0.0') return true;
+      if (h.startsWith('127.') || h.startsWith('169.254.')) return true;
+      const m = h.match(/^172\.(\d+)\./);
+      if (m) {
+        const n = parseInt(m[1], 10);
+        if (n >= 16 && n <= 31) return true;
+      }
+    } else {
+      // IPv6: loopback, unspecified, unique-local (fc00::/7), link-local (fe80::/10)
+      if (h === '::1' || h === '::' || h.startsWith('fc') || h.startsWith('fd') || h.startsWith('fe80')) return true;
+    }
+  }
+  // Hostname patterns that can never be public audit targets
+  if (/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|127\.|0\.0\.0\.0)/.test(h)) return true;
+  return false;
+}
+
+async function assertPublicUrl(rawUrl) {
+  let u;
+  try {
+    u = new URL(rawUrl);
+  } catch {
+    const e = new Error('Invalid URL');
+    e.status = 400;
+    throw e;
+  }
+  if (!/^https?:$/.test(u.protocol)) {
+    const e = new Error('Only http(s) URLs are allowed');
+    e.status = 400;
+    throw e;
+  }
+  if (isPrivateHostname(u.hostname)) {
+    const e = new Error('Blocked: private/internal hosts cannot be audited (SSRF protection)');
+    e.status = 400;
+    throw e;
+  }
+  try {
+    const addrs = await dns.lookup(u.hostname, { all: true });
+    for (const a of addrs || []) {
+      if (isPrivateHostname(a.address)) {
+        const e = new Error('Blocked: hostname resolves to a private IP (SSRF protection)');
+        e.status = 400;
+        throw e;
+      }
+    }
+  } catch (e) {
+    if (e.status === 400) throw e;
+    // DNS failure: let fetch produce the user-facing error (don't leak resolver details)
+  }
+  return u.href;
+}
+
+// Normalizes user input WITHOUT masking a non-http scheme:
+// "example.com" -> "https://example.com", but "ftp://x" stays and 400s.
+function normaliseUserUrl(input) {
+  const raw = String(input || '').trim();
+  if (!raw) {
+    const e = new Error('URL is required');
+    e.status = 400;
+    throw e;
+  }
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(raw) && !/^https?:\/\//i.test(raw)) {
+    const e = new Error('Only http(s) URLs are allowed');
+    e.status = 400;
+    throw e;
+  }
+  return /^https?:\/\//i.test(raw) ? raw : 'https://' + raw;
+}
+
+// Input validation (zod) — keeps oversized / malformed payloads out of Puppeteer.
+const configSchema = z
+  .object({
+    keywords: z.string().max(500).optional(),
+    brand: z.string().max(120).optional(),
+    pageType: z.string().max(40).optional(),
+    userAgent: z.string().max(40).optional(),
+    customUA: z.string().max(300).optional(),
+    viewportWidth: z.number().int().min(320).max(3840).optional(),
+    viewportHeight: z.number().int().min(320).max(2160).optional(),
+    monthlyTraffic: z.number().min(0).max(1e12).optional(),
+    avgOrderValue: z.number().min(0).max(1e9).optional(),
+    conversionRate: z.number().min(0).max(100).optional(),
+    sitemap: z.string().max(500).optional(),
+    competitors: z.string().max(2000).optional(),
+    geo: z.string().max(4).optional(),
+    currency: z.string().max(4).optional()
+  })
+  .passthrough();
+const auditBodySchema = z.object({
+  url: z.string().min(4).max(2000),
+  config: configSchema.optional(),
+  auditId: z.string().max(80).optional()
+});
+const urlOnlySchema = z.object({ url: z.string().min(4).max(2000) });
+
+function parseBody(schema, body) {
+  const r = schema.safeParse(body || {});
+  if (!r.success) {
+    const e = new Error(
+      'Invalid request: ' +
+        r.error.issues
+          .slice(0, 3)
+          .map((i) => i.path.join('.') + ' ' + i.message)
+          .join('; ')
+    );
+    e.status = 400;
+    throw e;
+  }
+  return r.data;
+}
 
 const {
-  sc, byteLen, pxWidth, sel, syllables, fleschKincaid,
-  extractSchemas, chunkText, analyzeSchema, detectAIPatterns,
-  analyzeImage, analyzeLink, analyzeHeading, analyzeAccessibility,
-  countWords, extractEntities, analyzeReadability, analyzeKeywordDensity
+  sc,
+  byteLen,
+  pxWidth,
+  sel,
+  syllables,
+  fleschKincaid,
+  extractSchemas,
+  chunkText,
+  analyzeSchema,
+  detectAIPatterns,
+  analyzeImage,
+  analyzeLink,
+  analyzeHeading,
+  analyzeAccessibility,
+  countWords,
+  extractEntities,
+  analyzeReadability,
+  analyzeKeywordDensity
 } = require('./helpers');
 
 const {
-  level1, level2, level3, level4, level5, level6, level7, level8,
-  level9, level10, level11, level12, level13, level14, level15,
-  level16, level17, level18, level19, level20, level21
+  level1,
+  level2,
+  level3,
+  level4,
+  level5,
+  level6,
+  level7,
+  level8,
+  level9,
+  level10,
+  level11,
+  level12,
+  level13,
+  level14,
+  level15,
+  level16,
+  level17,
+  level18,
+  level19,
+  level20,
+  level21
 } = require('./levels');
 
 const CHROME_PATH = process.env.CHROME_PATH || null;
@@ -39,6 +222,9 @@ async function launchBrowser() {
   const opts = {
     headless: 'new',
     args: [
+      // --no-sandbox is required on Render's rootless containers (no user
+      // namespaces). Avoid it for local dev running as root; prefer a
+      // dedicated non-root chrome user with the default sandbox there.
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-dev-shm-usage',
@@ -58,16 +244,18 @@ async function launchBrowser() {
   return puppeteer.launch(opts);
 }
 
+const MAX_HTML_BYTES = 5 * 1024 * 1024; // 5MB cap on raw HTML (OOM + slow-client protection)
+
 async function fetchRawHtml(url, userAgent) {
   const ua = userAgent || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36';
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 20000);
+  const timeout = setTimeout(() => controller.abort(), 25000);
   try {
     const resp = await fetch(url, {
       signal: controller.signal,
       headers: {
         'User-Agent': ua,
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.9',
         'Accept-Encoding': 'gzip, deflate, br',
         'Cache-Control': 'no-cache',
@@ -81,11 +269,17 @@ async function fetchRawHtml(url, userAgent) {
     });
     clearTimeout(timeout);
     const headers = {};
-    resp.headers.forEach((value, key) => { headers[key] = value; });
+    resp.headers.forEach((value, key) => {
+      headers[key] = value;
+    });
+    const len = parseInt(resp.headers.get('content-length') || '0', 10);
+    if (len > MAX_HTML_BYTES) throw new Error('Page too large (>5MB), refusing to buffer');
+    const html = await resp.text();
+    if (Buffer.byteLength(html, 'utf8') > MAX_HTML_BYTES) throw new Error('Page too large (>5MB), refusing to buffer');
     return {
-      html: await resp.text(),
+      html,
       status: resp.status,
-      headers: headers,
+      headers,
       url: resp.url
     };
   } catch (e) {
@@ -97,10 +291,18 @@ async function fetchRawHtml(url, userAgent) {
 function isBlockedPage(html, $) {
   const title = ($ ? $('title').first().text() : '').trim().toLowerCase();
   const bodyText = ($ ? $('body').text() : '').trim().toLowerCase().substring(0, 500);
-  return title.includes('access denied') || title.includes('blocked') || title.includes('forbidden') ||
-    title.includes('captcha') || title.includes('security check') || title.includes('please verify') ||
-    bodyText.includes('access denied') || bodyText.includes('you have been blocked') ||
-    bodyText.includes('verify you are human') || bodyText.includes('security check');
+  return (
+    title.includes('access denied') ||
+    title.includes('blocked') ||
+    title.includes('forbidden') ||
+    title.includes('captcha') ||
+    title.includes('security check') ||
+    title.includes('please verify') ||
+    bodyText.includes('access denied') ||
+    bodyText.includes('you have been blocked') ||
+    bodyText.includes('verify you are human') ||
+    bodyText.includes('security check')
+  );
 }
 
 /* ===================== REAL-TIME COMPETITOR DISCOVERY ===================== */
@@ -109,46 +311,208 @@ const COMP_SEARCH_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/53
 
 // Domains that are never real on-page competitors (infra / social / search / docs / SEO tools / aggregators)
 const COMP_SKIP_HOSTS = new Set([
-  'google.com', 'google.co.in', 'google.co.uk', 'google.de', 'google.ca', 'google.com.au', 'googleapis.com',
-  'youtube.com', 'gmail.com', 'facebook.com', 'instagram.com', 'twitter.com', 'x.com', 'linkedin.com',
-  'pinterest.com', 'reddit.com', 'tumblr.com', 'tiktok.com', 'snapchat.com', 'whatsapp.com', 'telegram.org',
-  'wikipedia.org', 'wikimedia.org', 'wikidata.org', 'archive.org', 'github.com', 'gitlab.com', 'bitbucket.org',
-  'cloudflare.com', 'wordpress.org', 'blogger.com', 'medium.com', 'w3.org', 'mozilla.org', 'schema.org',
-  'stackoverflow.com', 'quora.com', 'imdb.com', 'bing.com', 'duckduckgo.com', 'yahoo.com', 'baidu.com',
-  'yandex.com', 'adobe.com', 'microsoft.com', 'apple.com', 'netflix.com', 'spotify.com', 'twitch.tv',
-  'aliexpress.com', 'alibaba.com', 'etsy.com', 'craigslist.org', 'indeed.com', 'monster.com', 'glassdoor.com',
+  'google.com',
+  'google.co.in',
+  'google.co.uk',
+  'google.de',
+  'google.ca',
+  'google.com.au',
+  'googleapis.com',
+  'youtube.com',
+  'gmail.com',
+  'facebook.com',
+  'instagram.com',
+  'twitter.com',
+  'x.com',
+  'linkedin.com',
+  'pinterest.com',
+  'reddit.com',
+  'tumblr.com',
+  'tiktok.com',
+  'snapchat.com',
+  'whatsapp.com',
+  'telegram.org',
+  'wikipedia.org',
+  'wikimedia.org',
+  'wikidata.org',
+  'archive.org',
+  'github.com',
+  'gitlab.com',
+  'bitbucket.org',
+  'cloudflare.com',
+  'wordpress.org',
+  'blogger.com',
+  'medium.com',
+  'w3.org',
+  'mozilla.org',
+  'schema.org',
+  'stackoverflow.com',
+  'quora.com',
+  'imdb.com',
+  'bing.com',
+  'duckduckgo.com',
+  'yahoo.com',
+  'baidu.com',
+  'yandex.com',
+  'adobe.com',
+  'microsoft.com',
+  'apple.com',
+  'netflix.com',
+  'spotify.com',
+  'twitch.tv',
+  'aliexpress.com',
+  'alibaba.com',
+  'etsy.com',
+  'craigslist.org',
+  'indeed.com',
+  'monster.com',
+  'glassdoor.com',
   // SEO tools, competitor-lookup, software-review and listicle sites — never true competitors
-  'semrush.com', 'ahrefs.com', 'similarweb.com', 'cbinsights.com', 'spyfu.com', 'serpstat.com', 'moz.com',
-  'seo.com', 'saasdiscovery.com', 'parasiterank.com', 'distillintelligence.com', 'g2.com', 'g2crowd.com',
-  'softwareadvice.com', 'sitejabber.com', 'trustpilot.com', 'capterra.com', 'producthunt.com',
-  'crunchbase.com', 'owler.com', 'comparably.com', 'glassdoor.com', 'craft.co', 'zapier.com',
-  'alternativeto.net', 'siteslike.com', 'sitelike.org', 'similar-sites.com', 'topalternatives.com',
-  'ahrefstop.com', 'wappalyzer.com', 'builtwith.com', 'thetopwebsites.com', 'rankwatch.com'
+  'semrush.com',
+  'ahrefs.com',
+  'similarweb.com',
+  'cbinsights.com',
+  'spyfu.com',
+  'serpstat.com',
+  'moz.com',
+  'seo.com',
+  'saasdiscovery.com',
+  'parasiterank.com',
+  'distillintelligence.com',
+  'g2.com',
+  'g2crowd.com',
+  'softwareadvice.com',
+  'sitejabber.com',
+  'trustpilot.com',
+  'capterra.com',
+  'producthunt.com',
+  'crunchbase.com',
+  'owler.com',
+  'comparably.com',
+  'glassdoor.com',
+  'craft.co',
+  'zapier.com',
+  'alternativeto.net',
+  'siteslike.com',
+  'sitelike.org',
+  'similar-sites.com',
+  'topalternatives.com',
+  'ahrefstop.com',
+  'wappalyzer.com',
+  'builtwith.com',
+  'thetopwebsites.com',
+  'rankwatch.com'
 ]);
 
 // Title patterns that indicate a "competitor list / alternatives" article, not a real competing site
-const COMP_LIST_TITLE_RE = /(top\s*\d+|best\s*\d+)?\s*(competitors?|alternatives?|similar\s*sites?|sites\s*like|vs\.?|versus|compared?|marketplace|ranking|list\s*of)/i;
+const COMP_LIST_TITLE_RE =
+  /(top\s*\d+|best\s*\d+)?\s*(competitors?|alternatives?|similar\s*sites?|sites\s*like|vs\.?|versus|compared?|marketplace|ranking|list\s*of)/i;
 
 // Common brand-extension words that distinguish a sister site from a real competitor
 const COMP_SISTER_SUFFIXES = new Set([
-  'profit', 'channel', 'news', 'india', 'global', 'international', 'world', '24x7', 'live', 'tv',
-  'online', 'official', 'careers', 'jobs', 'hindi', 'english', 'marathi', 'bengali', 'tamil',
-  'telugu', 'malayalam', 'shop', 'store', 'money', 'markets', 'business', 'games', 'health',
-  'entertainment', 'tech', 'auto', 'sports', 'photo', 'video', 'app', 'prime', 'plus', 'edge', 'pro'
+  'profit',
+  'channel',
+  'news',
+  'india',
+  'global',
+  'international',
+  'world',
+  '24x7',
+  'live',
+  'tv',
+  'online',
+  'official',
+  'careers',
+  'jobs',
+  'hindi',
+  'english',
+  'marathi',
+  'bengali',
+  'tamil',
+  'telugu',
+  'malayalam',
+  'shop',
+  'store',
+  'money',
+  'markets',
+  'business',
+  'games',
+  'health',
+  'entertainment',
+  'tech',
+  'auto',
+  'sports',
+  'photo',
+  'video',
+  'app',
+  'prime',
+  'plus',
+  'edge',
+  'pro'
 ]);
 
 // Two-part public suffixes so we can compute the true registrable domain
 const COMP_TWO_PART_TLDS = new Set([
-  'co.uk', 'org.uk', 'ac.uk', 'gov.uk', 'com.au', 'net.au', 'org.au', 'co.in', 'net.in', 'org.in',
-  'co.nz', 'com.br', 'com.cn', 'com.sg', 'com.hk', 'com.mx', 'co.jp', 'co.kr', 'co.za', 'com.tr',
-  'co.il', 'com.ae', 'com.sa', 'com.my', 'com.ph', 'co.id', 'com.eg', 'com.pk', 'com.bd', 'com.lk',
-  'com.np', 'com.ng', 'co.ke', 'com.gh', 'com.tz', 'com.ua', 'co.pl', 'com.pl', 'com.ru', 'co.th',
-  'com.vn', 'com.tw', 'com.ar', 'com.co', 'com.pe', 'com.cl', 'com.ec', 'com.uy', 'com.bo', 'com.py',
-  'com.ua', 'co.ao', 'co.mz'
+  'co.uk',
+  'org.uk',
+  'ac.uk',
+  'gov.uk',
+  'com.au',
+  'net.au',
+  'org.au',
+  'co.in',
+  'net.in',
+  'org.in',
+  'co.nz',
+  'com.br',
+  'com.cn',
+  'com.sg',
+  'com.hk',
+  'com.mx',
+  'co.jp',
+  'co.kr',
+  'co.za',
+  'com.tr',
+  'co.il',
+  'com.ae',
+  'com.sa',
+  'com.my',
+  'com.ph',
+  'co.id',
+  'com.eg',
+  'com.pk',
+  'com.bd',
+  'com.lk',
+  'com.np',
+  'com.ng',
+  'co.ke',
+  'com.gh',
+  'com.tz',
+  'com.ua',
+  'co.pl',
+  'com.pl',
+  'com.ru',
+  'co.th',
+  'com.vn',
+  'com.tw',
+  'com.ar',
+  'com.co',
+  'com.pe',
+  'com.cl',
+  'com.ec',
+  'com.uy',
+  'com.bo',
+  'com.py',
+  'com.ua',
+  'co.ao',
+  'co.mz'
 ]);
 
 function compNormalizeHost(h) {
-  return String(h || '').toLowerCase().replace(/^www\./, '').replace(/^m\./, '');
+  return String(h || '')
+    .toLowerCase()
+    .replace(/^www\./, '')
+    .replace(/^m\./, '');
 }
 
 // Registrable domain (e.g. "www.sports.ndtv.com" -> "ndtv.com", "ndtv.in" -> "ndtv.in")
@@ -188,7 +552,7 @@ async function compSearch(query, limit) {
   try {
     const r = await fetch('https://html.duckduckgo.com/html/?q=' + encodeURIComponent(query), {
       signal: AbortSignal.timeout(12000),
-      headers: { 'User-Agent': COMP_SEARCH_UA, 'Accept': 'text/html' },
+      headers: { 'User-Agent': COMP_SEARCH_UA, Accept: 'text/html' },
       redirect: 'follow'
     });
     if (!r.ok) return out;
@@ -219,7 +583,7 @@ async function compVerify(url, keywords, targetHost, brandToken) {
       redirect: 'follow',
       headers: {
         'User-Agent': COMP_SEARCH_UA,
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.9'
       }
     });
@@ -261,9 +625,35 @@ async function compVerify(url, keywords, targetHost, brandToken) {
 async function discoverCompetitors(opts) {
   const { finalUrl, domain, brand, keywords, pageTitle, geo } = opts;
   const targetHost = compNormalizeHost(domain);
-  const brandToken = String(brand || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-  const kwList = (Array.isArray(keywords) ? keywords : []).filter(function (k) { return k && k.length > 2; }).slice(0, 8);
-  const geoTerm = geo && geo !== 'US' ? { IN: 'india', GB: 'uk', DE: 'germany', FR: 'france', ES: 'spain', IT: 'italy', AU: 'australia', BR: 'brazil', CA: 'canada', JP: 'japan', NL: 'netherlands', SE: 'sweden', SG: 'singapore', AE: 'uae', ZA: 'south africa', NG: 'nigeria' }[geo] : '';
+  const brandToken = String(brand || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+  const kwList = (Array.isArray(keywords) ? keywords : [])
+    .filter(function (k) {
+      return k && k.length > 2;
+    })
+    .slice(0, 8);
+  const geoTerm =
+    geo && geo !== 'US'
+      ? {
+          IN: 'india',
+          GB: 'uk',
+          DE: 'germany',
+          FR: 'france',
+          ES: 'spain',
+          IT: 'italy',
+          AU: 'australia',
+          BR: 'brazil',
+          CA: 'canada',
+          JP: 'japan',
+          NL: 'netherlands',
+          SE: 'sweden',
+          SG: 'singapore',
+          AE: 'uae',
+          ZA: 'south africa',
+          NG: 'nigeria'
+        }[geo]
+      : '';
 
   // Build a diverse set of queries from real topical signals on the target page.
   // Topical queries (the site's own subject matter) surface real competing sites;
@@ -285,10 +675,16 @@ async function discoverCompetitors(opts) {
   }
 
   const uniqueQueries = [];
-  queries.forEach(function (q) { if (q && uniqueQueries.indexOf(q) === -1 && uniqueQueries.length < 8) uniqueQueries.push(q); });
+  queries.forEach(function (q) {
+    if (q && uniqueQueries.indexOf(q) === -1 && uniqueQueries.length < 8) uniqueQueries.push(q);
+  });
 
   // Run all searches in parallel
-  const searchResults = await Promise.all(uniqueQueries.map(function (q) { return compSearch(q, 15); }));
+  const searchResults = await Promise.all(
+    uniqueQueries.map(function (q) {
+      return compSearch(q, 15);
+    })
+  );
 
   const hostMap = {}; // host -> { url, count, title }
   searchResults.forEach(function (urls, qi) {
@@ -306,10 +702,22 @@ async function discoverCompetitors(opts) {
   });
 
   // Rank by how many independent queries surfaced the domain, then verify live
-  const ranked = Object.values(hostMap).sort(function (a, b) { return b.count - a.count; }).slice(0, 16);
-  const verified = (await Promise.all(ranked.map(function (c) { return compVerify(c.url, kwList, targetHost, brandToken); })))
+  const ranked = Object.values(hostMap)
+    .sort(function (a, b) {
+      return b.count - a.count;
+    })
+    .slice(0, 16);
+  const verified = (
+    await Promise.all(
+      ranked.map(function (c) {
+        return compVerify(c.url, kwList, targetHost, brandToken);
+      })
+    )
+  )
     .filter(Boolean)
-    .sort(function (a, b) { return b.score - a.score || b.count - a.count; });
+    .sort(function (a, b) {
+      return b.score - a.score || b.count - a.count;
+    });
 
   return verified.slice(0, 12);
 }
@@ -328,14 +736,18 @@ const LEVEL_NAMES = [
   'Synthetic Content & LLM Visibility Heuristics',
   'Algorithmic Quality & Helpful-Content Classifier',
   'Edge-Native Patching & CI/CD Gatekeeping',
-  'Financial Attribution & Revenue Impact Engine',
+  // L14 = single-page ROI: monetizes THIS url's issues from user-supplied
+  // traffic/AOV/CVR. L21 = portfolio rollup: re-checks title/canonical/
+  // headings/schema/links across the site and aggregates executive risk.
+  // They share revenue math on purpose; scopes differ (page vs portfolio).
+  'Financial Attribution - Single-Page ROI',
   'Passage Vector & Cosine Similarity Profiler',
   'Third-Party Consensus & Entity Alignment Scorer',
   'Autonomous Fix Generator & Red-Team Checks',
   'Zero-Click & Agentic Commerce Visibility Metrics',
   'Edge Orchestration & Canary Deployment Safety',
   'Adversarial Checks & Security Header Audit',
-  'Site-Wide Risk Aggregation & Executive Dashboard'
+  'Site-Wide Risk Aggregation & Executive Rollup (Portfolio)'
 ];
 
 async function auditUrl(url, onProgress, config) {
@@ -375,14 +787,17 @@ async function auditUrl(url, onProgress, config) {
 
     const uaMap = {
       'googlebot-desktop': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
-      'googlebot-mobile': 'Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
-      'gptbot': 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; GPTBot/1.0; +https://openai.com/gptbot)',
-      'perplexitybot': 'Mozilla/5.0 (compatible; PerplexityBot/1.0; +https://perplexity.ai)',
-      'applebot': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/600.2.5 (KHTML, like Gecko) Version/8.0.2 Safari/600.2.5 (Applebot/0.1)',
+      'googlebot-mobile':
+        'Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+      gptbot: 'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; GPTBot/1.0; +https://openai.com/gptbot)',
+      perplexitybot: 'Mozilla/5.0 (compatible; PerplexityBot/1.0; +https://perplexity.ai)',
+      applebot:
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/600.2.5 (KHTML, like Gecko) Version/8.0.2 Safari/600.2.5 (Applebot/0.1)',
       'chrome-desktop': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'chrome-mobile': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'
+      'chrome-mobile':
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'
     };
-    const selectedUA = cfg.userAgent === 'custom' && cfg.customUA ? cfg.customUA : (uaMap[cfg.userAgent] || uaMap['chrome-desktop']);
+    const selectedUA = cfg.userAgent === 'custom' && cfg.customUA ? cfg.customUA : uaMap[cfg.userAgent] || uaMap['chrome-desktop'];
     await page.setUserAgent(selectedUA);
     await page.setViewport({ width: cfg.viewportWidth || 1920, height: cfg.viewportHeight || 1080 });
 
@@ -423,7 +838,7 @@ async function auditUrl(url, onProgress, config) {
     try {
       const req = response.request();
       if (req && req.redirectChain) {
-        redirectChain = req.redirectChain().map(r => r.url());
+        redirectChain = req.redirectChain().map((r) => r.url());
       }
     } catch {}
 
@@ -433,7 +848,9 @@ async function auditUrl(url, onProgress, config) {
     sendProgress(0, 'puppeteer-error', 'Puppeteer error: ' + e.message + '. Using raw HTML for analysis.');
   } finally {
     if (browser) {
-      try { await browser.close(); } catch {}
+      try {
+        await browser.close();
+      } catch {}
     }
   }
 
@@ -474,7 +891,11 @@ async function auditUrl(url, onProgress, config) {
       const result = lf.fn(...lf.args);
       result.name = result.name || LEVEL_NAMES[lf.num - 1] || 'Level ' + lf.num;
       levelResults.push(result);
-      sendProgress(lf.num, 'complete', 'Level ' + lf.num + ' complete — Score: ' + result.score + '/100, Issues: ' + (result.issues ? result.issues.length : 0));
+      sendProgress(
+        lf.num,
+        'complete',
+        'Level ' + lf.num + ' complete — Score: ' + result.score + '/100, Issues: ' + (result.issues ? result.issues.length : 0)
+      );
     } catch (err) {
       console.error('Level ' + lf.num + ' error:', err.message);
       sendProgress(lf.num, 'error', 'Level ' + lf.num + ' failed: ' + err.message);
@@ -482,14 +903,16 @@ async function auditUrl(url, onProgress, config) {
         level: lf.num,
         name: LEVEL_NAMES[lf.num - 1] || 'Level ' + lf.num,
         score: 0,
-        issues: [{
-          severity: 'critical',
-          impact: 'high',
-          message: 'Level ' + lf.num + ' analysis failed: ' + err.message,
-          element: 'analysis-engine',
-          fix: 'Check server logs for details. This may indicate a parsing error with the page HTML.',
-          evidence: err.stack || err.message
-        }],
+        issues: [
+          {
+            severity: 'critical',
+            impact: 'high',
+            message: 'Level ' + lf.num + ' analysis failed: ' + err.message,
+            element: 'analysis-engine',
+            fix: 'Check server logs for details. This may indicate a parsing error with the page HTML.',
+            evidence: err.stack || err.message
+          }
+        ],
         data: { error: err.message }
       });
     }
@@ -499,12 +922,14 @@ async function auditUrl(url, onProgress, config) {
 
   let totalScore = 0;
   let totalIssues = 0;
-  let critical = 0, warnings = 0, info = 0;
+  let critical = 0,
+    warnings = 0,
+    info = 0;
 
-  levelResults.forEach(l => {
+  levelResults.forEach((l) => {
     totalScore += l.score || 0;
     if (l.issues) {
-      l.issues.forEach(i => {
+      l.issues.forEach((i) => {
         totalIssues++;
         if (i.severity === 'critical') critical++;
         else if (i.severity === 'warning') warnings++;
@@ -547,7 +972,7 @@ app.get('/api/audit-progress/:auditId', (req, res) => {
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
-    'Connection': 'keep-alive',
+    Connection: 'keep-alive',
     'X-Accel-Buffering': 'no'
   });
 
@@ -560,35 +985,72 @@ app.get('/api/audit-progress/:auditId', (req, res) => {
   });
 });
 
+// Simple audit cache (1h TTL by URL+config hash) + concurrency guard so 5
+// simultaneous recruiter clicks don't OOM the Render free instance.
+const auditCache = new Map();
+const CACHE_TTL_MS = 60 * 60 * 1000;
+let activeAudits = 0;
+const MAX_CONCURRENT_AUDITS = 2;
+function cacheKey(url, config) {
+  return url + '|' + JSON.stringify(config || {});
+}
+function cacheGet(k) {
+  const e = auditCache.get(k);
+  if (!e) return null;
+  if (Date.now() - e.at > CACHE_TTL_MS) {
+    auditCache.delete(k);
+    return null;
+  }
+  return e.result;
+}
+
 // Main audit endpoint
 app.post('/api/audit', async (req, res) => {
   if (req.headersSent) return;
   try {
-    let { url, config, auditId: clientAuditId } = req.body;
-    if (!url) return res.status(400).json({ error: 'URL is required' });
-    if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
-    try { new URL(url); } catch { return res.status(400).json({ error: 'Invalid URL' }); }
+    const parsed = parseBody(auditBodySchema, req.body);
+    let { url, config, auditId: clientAuditId } = parsed;
+    url = await assertPublicUrl(normaliseUserUrl(url));
+
+    if (activeAudits >= MAX_CONCURRENT_AUDITS) {
+      res.setHeader('Retry-After', '30');
+      return res.status(429).json({ error: 'Audit engine busy (max 2 concurrent). Retry in ~30s.', retryAfter: 30 });
+    }
+
+    const key = cacheKey(url, config);
+    const cached = cacheGet(key);
+    if (cached) {
+      return res.json({ ...cached, cached: true });
+    }
 
     const auditId = clientAuditId || Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
-
     console.log('Starting audit for:', url, '| ID:', auditId);
 
     const sendProgress = (level, status, detail) => {
       const data = JSON.stringify({ auditId, level, status, detail });
       const client = progressClients.get(auditId);
       if (client) {
-        try { client.write('data: ' + data + '\n\n'); } catch {}
+        try {
+          client.write('data: ' + data + '\n\n');
+        } catch {}
       }
     };
 
-    const result = await auditUrl(url, sendProgress, config);
+    activeAudits++;
+    let result;
+    try {
+      result = await auditUrl(url, sendProgress, config);
+    } finally {
+      activeAudits--;
+    }
+    auditCache.set(key, { at: Date.now(), result });
 
     console.log('Audit complete:', result.overallScore, '/ 100 —', result.duration + 's');
     res.json(result);
   } catch (err) {
     console.error('Audit error:', err.message);
     if (!res.headersSent) {
-      res.status(500).json({ error: 'Audit failed: ' + err.message });
+      res.status(err.status || 500).json({ error: 'Audit failed: ' + err.message });
     }
   }
 });
@@ -597,8 +1059,9 @@ app.post('/api/export-pdf', async (req, res) => {
   if (req.headersSent) return;
   let browser;
   try {
-    const { html } = req.body;
-    if (!html) return res.status(400).json({ error: 'HTML content required' });
+    const { html } = req.body || {};
+    if (!html || typeof html !== 'string') return res.status(400).json({ error: 'HTML content required' });
+    if (Buffer.byteLength(html, 'utf8') > 1024 * 1024) return res.status(400).json({ error: 'HTML too large (max 1MB)' });
 
     browser = await launchBrowser();
     const page = await browser.newPage();
@@ -617,23 +1080,145 @@ app.post('/api/export-pdf', async (req, res) => {
       res.status(500).json({ error: 'PDF generation failed' });
     }
   } finally {
-    if (browser) try { await browser.close(); } catch {}
+    if (browser)
+      try {
+        await browser.close();
+      } catch {}
   }
 });
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({
+    status: 'ok',
+    version: APP_VERSION,
+    uptime: Math.round((Date.now() - STARTED_AT) / 1000),
+    timestamp: new Date().toISOString(),
+    node: process.version,
+    memory: process.memoryUsage(),
+    activeAudits,
+    cacheSize: auditCache.size
+  });
 });
 
+// API index — keeps the root deploy verifiable without opening the SPA.
+app.get('/api', (req, res) => {
+  res.json({
+    name: 'complete-on-page-seo-2026',
+    version: APP_VERSION,
+    description: '21-level on-page + AI-search SEO audit engine. Real measured data, no mocks.',
+    endpoints: [
+      'POST /api/audit',
+      'GET /api/audit-progress/:id',
+      'POST /api/analyze-url',
+      'POST /api/crawl',
+      'GET /api/crux?url=',
+      'POST /api/export-pdf',
+      'GET /api/health',
+      'GET /api/cache-stats',
+      'GET /openapi.yaml'
+    ],
+    docs: '/openapi.yaml'
+  });
+});
+
+app.get('/api/cache-stats', (req, res) => {
+  res.json({ size: auditCache.size, ttlMs: CACHE_TTL_MS, activeAudits, maxConcurrent: MAX_CONCURRENT_AUDITS });
+});
+
+// CrUX + PageSpeed field data (free Google API, no key at low quota).
+// Closes the "lab-timings only" gap: reports real LCP/INP/CLS field data.
+app.get('/api/crux', async (req, res) => {
+  try {
+    let { url } = req.query;
+    if (!url) return res.status(400).json({ error: 'url query param required' });
+    url = await assertPublicUrl(normaliseUserUrl(url));
+    const api =
+      'https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=' + encodeURIComponent(url) + '&strategy=mobile&category=performance';
+    const r = await fetch(api, { signal: AbortSignal.timeout(25000) });
+    if (!r.ok) return res.status(502).json({ error: 'PageSpeed API error: ' + r.status });
+    const j = await r.json();
+    const audits = (j.lighthouseResult && j.lighthouseResult.audits) || {};
+    const pick = (k) =>
+      audits[k] ? { score: audits[k].score ?? null, value: audits[k].displayValue || audits[k].numericValue || null } : null;
+    res.json({
+      url,
+      dataSource: 'Google PageSpeed Insights (CrUX field + lab). Not measured locally.',
+      metrics: {
+        LCP: pick('largest-contentful-paint'),
+        INP: pick('interaction-to-next-paint'),
+        CLS: pick('cumulative-layout-shift'),
+        TTFB: pick('server-response-time'),
+        FCP: pick('first-contentful-paint'),
+        speedIndex: pick('speed-index')
+      },
+      performanceScore: j.lighthouseResult?.categories?.performance?.score ?? null
+    });
+  } catch (err) {
+    res.status(err.status || 500).json({ error: 'CrUX lookup failed: ' + err.message });
+  }
+});
+
+// Multi-URL sitemap/BFS crawl (max 10 pages, same-origin). Answers the
+// "single-URL only" objection without a full site-crawler rewrite.
+app.post('/api/crawl', async (req, res) => {
+  try {
+    const schema = z.object({ startUrl: z.string().min(4).max(2000), maxPages: z.number().int().min(1).max(10).optional() });
+    const parsed = parseBody(schema, req.body);
+    let startUrl = parsed.startUrl;
+    startUrl = await assertPublicUrl(normaliseUserUrl(startUrl));
+    const maxPages = parsed.maxPages || 10;
+    const origin = new URL(startUrl).origin;
+    const seen = new Set([startUrl]);
+    const queue = [startUrl];
+    const pages = [];
+    while (queue.length && pages.length < maxPages) {
+      const u = queue.shift();
+      try {
+        const r = await fetchRawHtml(u);
+        const $ = cheerio.load(r.html);
+        pages.push({
+          url: u,
+          status: r.status,
+          title: $('title').first().text().trim().slice(0, 120),
+          words: ($('body').text() || '').split(/\s+/).length
+        });
+        if (pages.length >= maxPages) break;
+        $('a[href]').each((_, el) => {
+          try {
+            const href = new URL($(el).attr('href'), u).href.split('#')[0];
+            if (href.startsWith(origin) && !seen.has(href) && queue.length + pages.length < maxPages) {
+              seen.add(href);
+              queue.push(href);
+            }
+          } catch {}
+        });
+      } catch (e) {
+        pages.push({ url: u, error: e.message });
+      }
+    }
+    res.json({
+      startUrl,
+      origin,
+      pagesCrawled: pages.length,
+      pages,
+      note: 'Same-origin BFS crawl, raw-HTML only (no Puppeteer per page). Run POST /api/audit per URL for full 21-level depth.'
+    });
+  } catch (err) {
+    res.status(err.status || 500).json({ error: 'Crawl failed: ' + err.message });
+  }
+});
+
+app.get('/openapi.yaml', (req, res) => {
+  res.sendFile(path.join(__dirname, 'openapi.yaml'));
+});
 
 // Deep URL analysis endpoint - auto-fills all config fields
 app.post('/api/analyze-url', async (req, res) => {
   if (req.headersSent) return;
   try {
-    let { url } = req.body;
-    if (!url) return res.status(400).json({ error: 'URL is required' });
-    if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
-    try { new URL(url); } catch { return res.status(400).json({ error: 'Invalid URL' }); }
+    const parsed = parseBody(urlOnlySchema, req.body);
+    let { url } = parsed;
+    url = await assertPublicUrl(normaliseUserUrl(url));
     console.log('Analyzing URL for auto-fill:', url);
 
     let rawHtml = '';
@@ -661,7 +1246,9 @@ app.post('/api/analyze-url', async (req, res) => {
       try {
         browser = await launchBrowser();
         const page = await browser.newPage();
-        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36');
+        await page.setUserAgent(
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'
+        );
         await page.setViewport({ width: 1920, height: 1080 });
         const resp = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 25000 });
         if (resp) finalUrl = page.url();
@@ -671,7 +1258,10 @@ app.post('/api/analyze-url', async (req, res) => {
         console.error('Puppeteer fallback failed:', e.message);
         if (!rawHtml) return res.status(500).json({ error: 'Could not fetch URL: site may be blocking automated access' });
       } finally {
-        if (browser) try { await browser.close(); } catch {}
+        if (browser)
+          try {
+            await browser.close();
+          } catch {}
       }
     }
 
@@ -688,13 +1278,26 @@ app.post('/api/analyze-url', async (req, res) => {
     let brand = '';
     if (!blocked) {
       brand = $('meta[property="og:site_name"]').attr('content') || '';
-      if (!brand) { const tw = $('meta[name="twitter:site"]').attr('content') || ''; brand = tw.replace(/^@/, ''); }
       if (!brand) {
-        $('script[type="application/ld+json"]').each(function() {
+        const tw = $('meta[name="twitter:site"]').attr('content') || '';
+        brand = tw.replace(/^@/, '');
+      }
+      if (!brand) {
+        $('script[type="application/ld+json"]').each(function () {
           try {
             const d = JSON.parse($(this).html());
-            if (d['@type'] === 'Organization' && d.name) { brand = d.name; return false; }
-            if (d['@graph']) { for (const item of d['@graph']) { if (item['@type'] === 'Organization' && item.name) { brand = item.name; break; } } }
+            if (d['@type'] === 'Organization' && d.name) {
+              brand = d.name;
+              return false;
+            }
+            if (d['@graph']) {
+              for (const item of d['@graph']) {
+                if (item['@type'] === 'Organization' && item.name) {
+                  brand = item.name;
+                  break;
+                }
+              }
+            }
           } catch {}
         });
       }
@@ -704,9 +1307,15 @@ app.post('/api/analyze-url', async (req, res) => {
           const parts = pageTitle.split(sep);
           if (parts.length >= 2) {
             const last = parts[parts.length - 1].trim();
-            if (last.length > 0 && last.length <= 30 && !/^(home|welcome|page|article|blog|news)/i.test(last)) { brand = last; break; }
+            if (last.length > 0 && last.length <= 30 && !/^(home|welcome|page|article|blog|news)/i.test(last)) {
+              brand = last;
+              break;
+            }
             const first = parts[0].trim();
-            if (first.length > 0 && first.length <= 30) { brand = first; break; }
+            if (first.length > 0 && first.length <= 30) {
+              brand = first;
+              break;
+            }
           }
         }
       }
@@ -714,20 +1323,36 @@ app.post('/api/analyze-url', async (req, res) => {
     if (!brand) {
       brand = domain.replace(/^www\./, '').split('.')[0];
       // Preserve known uppercase brand names
-      const upperBrands = { 'ndtv': 'NDTV', 'bbc': 'BBC', 'cnn': 'CNN', 'espn': 'ESPN', 'nasa': 'NASA', 'nba': 'NBA', 'nfl': 'NFL', 'mit': 'MIT', 'ibm': 'IBM', 'hp': 'HP', 'aws': 'AWS', 'faq': 'FAQ' };
+      const upperBrands = {
+        ndtv: 'NDTV',
+        bbc: 'BBC',
+        cnn: 'CNN',
+        espn: 'ESPN',
+        nasa: 'NASA',
+        nba: 'NBA',
+        nfl: 'NFL',
+        mit: 'MIT',
+        ibm: 'IBM',
+        hp: 'HP',
+        aws: 'AWS',
+        faq: 'FAQ'
+      };
       const lower = brand.toLowerCase();
-      brand = upperBrands[lower] || (brand.charAt(0).toUpperCase() + brand.slice(1));
+      brand = upperBrands[lower] || brand.charAt(0).toUpperCase() + brand.slice(1);
     }
 
     // ===== 2. PAGE TYPE =====
     let pageType = 'auto';
     const schemaTypes = [];
     if (!blocked) {
-      $('script[type="application/ld+json"]').each(function() {
+      $('script[type="application/ld+json"]').each(function () {
         try {
           const d = JSON.parse($(this).html());
           if (d['@type']) schemaTypes.push(d['@type'].toLowerCase());
-          if (d['@graph']) d['@graph'].forEach(function(item) { if (item['@type']) schemaTypes.push(item['@type'].toLowerCase()); });
+          if (d['@graph'])
+            d['@graph'].forEach(function (item) {
+              if (item['@type']) schemaTypes.push(item['@type'].toLowerCase());
+            });
         } catch {}
       });
       const schemaStr = schemaTypes.join(' ');
@@ -764,50 +1389,137 @@ app.post('/api/analyze-url', async (req, res) => {
       for (const p of ['/sitemap.xml', '/sitemap_index.xml', '/sitemap-index.xml', '/wp-sitemap.xml']) {
         try {
           const cr = await fetch(origin + p, { signal: AbortSignal.timeout(3000), method: 'HEAD', headers: { 'User-Agent': fetchUA } });
-          if (cr.ok) { sitemapUrl = origin + p; break; }
+          if (cr.ok) {
+            sitemapUrl = origin + p;
+            break;
+          }
         } catch {}
       }
     }
 
     // ===== 4. VIEWPORT =====
-    let viewportWidth = 1920, viewportHeight = 1080;
+    let viewportWidth = 1920,
+      viewportHeight = 1080;
     if (!blocked) {
       const vpMeta = $('meta[name="viewport"]').attr('content') || '';
-      if (vpMeta) { const m = vpMeta.match(/width=(\d+)/); if (m) viewportWidth = parseInt(m[1]); if (viewportWidth <= 500 || /mobile/i.test(vpMeta)) { viewportWidth = 412; viewportHeight = 915; } }
+      if (vpMeta) {
+        const m = vpMeta.match(/width=(\d+)/);
+        if (m) viewportWidth = parseInt(m[1]);
+        if (viewportWidth <= 500 || /mobile/i.test(vpMeta)) {
+          viewportWidth = 412;
+          viewportHeight = 915;
+        }
+      }
     }
 
     // ===== 5. GEO-LOCATION =====
     let geo = '';
     if (!blocked) {
       const hreflang = $('link[hreflang]').first().attr('hreflang') || '';
-      if (hreflang) { const lp = hreflang.split('-'); geo = lp[lp.length - 1].toUpperCase(); }
+      if (hreflang) {
+        const lp = hreflang.split('-');
+        geo = lp[lp.length - 1].toUpperCase();
+      }
       if (!geo) {
         const ogL = $('meta[property="og:locale"]').attr('content') || '';
-        if (ogL) { const m = { 'en_us': 'US', 'en_gb': 'GB', 'en_au': 'AU', 'de_de': 'DE', 'fr_fr': 'FR', 'es_es': 'ES', 'pt_br': 'BR', 'ja_jp': 'JP', 'zh_cn': 'CN', 'hi_in': 'IN', 'it_it': 'IT', 'ko_kr': 'KR', 'ru_ru': 'RU', 'nl_nl': 'NL', 'pl_pl': 'PL' }; geo = m[ogL.toLowerCase()] || ''; }
+        if (ogL) {
+          const m = {
+            en_us: 'US',
+            en_gb: 'GB',
+            en_au: 'AU',
+            de_de: 'DE',
+            fr_fr: 'FR',
+            es_es: 'ES',
+            pt_br: 'BR',
+            ja_jp: 'JP',
+            zh_cn: 'CN',
+            hi_in: 'IN',
+            it_it: 'IT',
+            ko_kr: 'KR',
+            ru_ru: 'RU',
+            nl_nl: 'NL',
+            pl_pl: 'PL'
+          };
+          geo = m[ogL.toLowerCase()] || '';
+        }
       }
     }
-    if (!geo) { const t = { '.co.uk': 'GB', '.co.in': 'IN', '.com.au': 'AU', '.de': 'DE', '.fr': 'FR', '.es': 'ES', '.it': 'IT', '.br': 'BR', '.jp': 'JP', '.cn': 'CN', '.ru': 'RU', '.nl': 'NL', '.pl': 'PL' }; for (const [k, v] of Object.entries(t)) { if (domain.endsWith(k)) { geo = v; break; } } }
-    const lang = blocked ? '' : ($('html').attr('lang') || '');
-    if (!geo && lang) { const lg = { 'de': 'DE', 'fr': 'FR', 'es': 'ES', 'ja': 'JP', 'zh': 'CN', 'hi': 'IN', 'pt': 'BR', 'ko': 'KR', 'ru': 'RU', 'nl': 'NL', 'it': 'IT', 'pl': 'PL' }; for (const [p, c] of Object.entries(lg)) { if (lang.startsWith(p)) { geo = c; break; } } }
+    if (!geo) {
+      const t = {
+        '.co.uk': 'GB',
+        '.co.in': 'IN',
+        '.com.au': 'AU',
+        '.de': 'DE',
+        '.fr': 'FR',
+        '.es': 'ES',
+        '.it': 'IT',
+        '.br': 'BR',
+        '.jp': 'JP',
+        '.cn': 'CN',
+        '.ru': 'RU',
+        '.nl': 'NL',
+        '.pl': 'PL'
+      };
+      for (const [k, v] of Object.entries(t)) {
+        if (domain.endsWith(k)) {
+          geo = v;
+          break;
+        }
+      }
+    }
+    const lang = blocked ? '' : $('html').attr('lang') || '';
+    if (!geo && lang) {
+      const lg = { de: 'DE', fr: 'FR', es: 'ES', ja: 'JP', zh: 'CN', hi: 'IN', pt: 'BR', ko: 'KR', ru: 'RU', nl: 'NL', it: 'IT', pl: 'PL' };
+      for (const [p, c] of Object.entries(lg)) {
+        if (lang.startsWith(p)) {
+          geo = c;
+          break;
+        }
+      }
+    }
     // Detect from domain TLD for Indian sites
     if (!geo && (domain.includes('.in') || domain.endsWith('.co.in'))) geo = 'IN';
 
     // ===== 6. CURRENCY =====
     let currency = 'USD';
     if (!blocked) {
-      $('script[type="application/ld+json"]').each(function() { try { const d = JSON.parse($(this).html()); if (d.priceCurrency) { currency = d.priceCurrency; return false; } } catch {} });
-      if (currency === 'USD') { const ogP = $('meta[property="product:price:currency"]').attr('content'); if (ogP) currency = ogP; }
+      $('script[type="application/ld+json"]').each(function () {
+        try {
+          const d = JSON.parse($(this).html());
+          if (d.priceCurrency) {
+            currency = d.priceCurrency;
+            return false;
+          }
+        } catch {}
+      });
+      if (currency === 'USD') {
+        const ogP = $('meta[property="product:price:currency"]').attr('content');
+        if (ogP) currency = ogP;
+      }
       // Detect from body text currency symbols
       if (currency === 'USD') {
         const bodyT = $('body').text();
         const currFreq = {};
-        const currMap = { '\u20B9': 'INR', '\u00A3': 'GBP', '\u20AC': 'EUR', '\u00A5': 'JPY', '\u20A9': 'KRW', 'Rs.': 'INR', 'Rs ': 'INR', 'INR': 'INR', 'EUR': 'EUR', 'GBP': 'GBP' };
+        const currMap = {
+          '\u20B9': 'INR',
+          '\u00A3': 'GBP',
+          '\u20AC': 'EUR',
+          '\u00A5': 'JPY',
+          '\u20A9': 'KRW',
+          'Rs.': 'INR',
+          'Rs ': 'INR',
+          INR: 'INR',
+          EUR: 'EUR',
+          GBP: 'GBP'
+        };
         for (const [sym, code] of Object.entries(currMap)) {
           const regex = new RegExp(sym.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g');
           const matches = bodyT.match(regex);
           currFreq[code] = matches ? matches.length : 0;
         }
-        const top = Object.entries(currFreq).sort(function(a, b) { return b[1] - a[1]; })[0];
+        const top = Object.entries(currFreq).sort(function (a, b) {
+          return b[1] - a[1];
+        })[0];
         if (top && top[1] > 0) currency = top[0];
       }
     }
@@ -818,45 +1530,255 @@ app.post('/api/analyze-url', async (req, res) => {
     const keywords = [];
     if (!blocked) {
       const metaKw = $('meta[name="keywords"]').attr('content') || '';
-      if (metaKw) { metaKw.split(',').forEach(function(kw) { const t = kw.trim().toLowerCase(); if (t && t.length > 1 && t.length < 100) keywords.push(t); }); }
+      if (metaKw) {
+        metaKw.split(',').forEach(function (kw) {
+          const t = kw.trim().toLowerCase();
+          if (t && t.length > 1 && t.length < 100) keywords.push(t);
+        });
+      }
       const titleText = $('title').first().text().trim().toLowerCase();
-      const h1Text = $('h1').map(function() { return $(this).text().trim().toLowerCase(); }).get().join(' ');
-      const h2Text = $('h2').map(function() { return $(this).text().trim().toLowerCase(); }).get().join(' ');
+      const h1Text = $('h1')
+        .map(function () {
+          return $(this).text().trim().toLowerCase();
+        })
+        .get()
+        .join(' ');
+      const h2Text = $('h2')
+        .map(function () {
+          return $(this).text().trim().toLowerCase();
+        })
+        .get()
+        .join(' ');
       const metaDesc = ($('meta[name="description"]').attr('content') || '').toLowerCase();
       const allH = titleText + ' ' + h1Text + ' ' + h2Text;
-      const stopW = new Set(['the','a','an','and','or','but','in','on','at','to','for','of','with','by','from','as','is','was','are','were','been','be','have','has','had','do','does','did','will','would','could','should','may','might','shall','can','this','that','these','those','it','its','they','them','their','we','our','you','your','he','she','his','her','not','no','nor','so','if','than','too','very','just','about','above','after','again','all','also','am','any','because','before','between','both','each','few','more','most','other','over','own','same','some','such','only','into','up','out','here','there','where','when','how','what','which','who','whom','why','while','during','through','until','within','without','being','doing','having','down','off','under','around','further','then','once','new','one','two','first','last','read','more','click','here','home','news','latest','today','india','world']);
+      const stopW = new Set([
+        'the',
+        'a',
+        'an',
+        'and',
+        'or',
+        'but',
+        'in',
+        'on',
+        'at',
+        'to',
+        'for',
+        'of',
+        'with',
+        'by',
+        'from',
+        'as',
+        'is',
+        'was',
+        'are',
+        'were',
+        'been',
+        'be',
+        'have',
+        'has',
+        'had',
+        'do',
+        'does',
+        'did',
+        'will',
+        'would',
+        'could',
+        'should',
+        'may',
+        'might',
+        'shall',
+        'can',
+        'this',
+        'that',
+        'these',
+        'those',
+        'it',
+        'its',
+        'they',
+        'them',
+        'their',
+        'we',
+        'our',
+        'you',
+        'your',
+        'he',
+        'she',
+        'his',
+        'her',
+        'not',
+        'no',
+        'nor',
+        'so',
+        'if',
+        'than',
+        'too',
+        'very',
+        'just',
+        'about',
+        'above',
+        'after',
+        'again',
+        'all',
+        'also',
+        'am',
+        'any',
+        'because',
+        'before',
+        'between',
+        'both',
+        'each',
+        'few',
+        'more',
+        'most',
+        'other',
+        'over',
+        'own',
+        'same',
+        'some',
+        'such',
+        'only',
+        'into',
+        'up',
+        'out',
+        'here',
+        'there',
+        'where',
+        'when',
+        'how',
+        'what',
+        'which',
+        'who',
+        'whom',
+        'why',
+        'while',
+        'during',
+        'through',
+        'until',
+        'within',
+        'without',
+        'being',
+        'doing',
+        'having',
+        'down',
+        'off',
+        'under',
+        'around',
+        'further',
+        'then',
+        'once',
+        'new',
+        'one',
+        'two',
+        'first',
+        'last',
+        'read',
+        'more',
+        'click',
+        'here',
+        'home',
+        'news',
+        'latest',
+        'today',
+        'india',
+        'world'
+      ]);
       function extPh(text) {
-        const words = text.replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(function(w) { return w.length > 2 && !stopW.has(w); });
+        const words = text
+          .replace(/[^a-z0-9\s]/g, ' ')
+          .split(/\s+/)
+          .filter(function (w) {
+            return w.length > 2 && !stopW.has(w);
+          });
         const ph = {};
-        words.forEach(function(w) { ph[w] = (ph[w] || 0) + 1; });
-        for (let i = 0; i < words.length - 1; i++) { const p = words[i] + ' ' + words[i + 1]; ph[p] = (ph[p] || 0) + 1; }
-        for (let i = 0; i < words.length - 2; i++) { const p = words[i] + ' ' + words[i + 1] + ' ' + words[i + 2]; ph[p] = (ph[p] || 0) + 1; }
+        words.forEach(function (w) {
+          ph[w] = (ph[w] || 0) + 1;
+        });
+        for (let i = 0; i < words.length - 1; i++) {
+          const p = words[i] + ' ' + words[i + 1];
+          ph[p] = (ph[p] || 0) + 1;
+        }
+        for (let i = 0; i < words.length - 2; i++) {
+          const p = words[i] + ' ' + words[i + 1] + ' ' + words[i + 2];
+          ph[p] = (ph[p] || 0) + 1;
+        }
         return ph;
       }
-      const hPh = extPh(allH), dPh = extPh(metaDesc), bPh = extPh($('body').text().substring(0, 15000));
+      const hPh = extPh(allH),
+        dPh = extPh(metaDesc),
+        bPh = extPh($('body').text().substring(0, 15000));
       const sc = {};
-      Object.entries(hPh).forEach(function(e) { if (e[0].split(' ').length >= 2) sc[e[0]] = (sc[e[0]] || 0) + e[1] * 10 + 5; });
-      Object.entries(dPh).forEach(function(e) { if (e[0].split(' ').length >= 2) sc[e[0]] = (sc[e[0]] || 0) + e[1] * 5 + 3; });
-      Object.entries(bPh).forEach(function(e) { if (sc[e[0]] && e[0].split(' ').length >= 2) sc[e[0]] += e[1] * 2; });
-      Object.entries(sc).sort(function(a, b) { return b[1] - a[1]; }).slice(0, 8).forEach(function(e) { if (!keywords.includes(e[0])) keywords.push(e[0]); });
+      Object.entries(hPh).forEach(function (e) {
+        if (e[0].split(' ').length >= 2) sc[e[0]] = (sc[e[0]] || 0) + e[1] * 10 + 5;
+      });
+      Object.entries(dPh).forEach(function (e) {
+        if (e[0].split(' ').length >= 2) sc[e[0]] = (sc[e[0]] || 0) + e[1] * 5 + 3;
+      });
+      Object.entries(bPh).forEach(function (e) {
+        if (sc[e[0]] && e[0].split(' ').length >= 2) sc[e[0]] += e[1] * 2;
+      });
+      Object.entries(sc)
+        .sort(function (a, b) {
+          return b[1] - a[1];
+        })
+        .slice(0, 8)
+        .forEach(function (e) {
+          if (!keywords.includes(e[0])) keywords.push(e[0]);
+        });
       if (keywords.length === 0 && titleText && !titleText.includes('access denied')) {
-        const tw = titleText.replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(function(w) { return w.length > 2 && !stopW.has(w); });
+        const tw = titleText
+          .replace(/[^a-z0-9\s]/g, ' ')
+          .split(/\s+/)
+          .filter(function (w) {
+            return w.length > 2 && !stopW.has(w);
+          });
         if (tw.length >= 2) keywords.push(tw.slice(0, 3).join(' '));
-        tw.forEach(function(w) { if (!keywords.includes(w) && keywords.length < 5) keywords.push(w); });
+        tw.forEach(function (w) {
+          if (!keywords.includes(w) && keywords.length < 5) keywords.push(w);
+        });
       }
     }
 
     // ===== 8. COMPETITORS (real-time, verified) =====
     const competitors = [];
     const extLinks = [];
-    const socialDomains = ['google','facebook','twitter','instagram','youtube','linkedin','pinterest','tiktok','whatsapp','telegram','reddit','threads'];
-    const adDomains = ['googlesyndication','googleadservices','doubleclick','googletagmanager','facebook.net','analytics','track','pixel','cdn','cloudflare','amazonaws','akamai','bootstrapcdn','jsdelivr','unpkg','jquery'];
+    const socialDomains = [
+      'google',
+      'facebook',
+      'twitter',
+      'instagram',
+      'youtube',
+      'linkedin',
+      'pinterest',
+      'tiktok',
+      'whatsapp',
+      'telegram',
+      'reddit',
+      'threads'
+    ];
+    const adDomains = [
+      'googlesyndication',
+      'googleadservices',
+      'doubleclick',
+      'googletagmanager',
+      'facebook.net',
+      'analytics',
+      'track',
+      'pixel',
+      'cdn',
+      'cloudflare',
+      'amazonaws',
+      'akamai',
+      'bootstrapcdn',
+      'jsdelivr',
+      'unpkg',
+      'jquery'
+    ];
     // Get root domain (e.g., ndtv.com from sports.ndtv.com)
     const domainParts = domain.replace(/^www\./, '').split('.');
     const rootDomain = domainParts.length >= 2 ? domainParts.slice(-2).join('.') : domain;
 
     if (!blocked) {
-      $('a[href]').each(function() {
+      $('a[href]').each(function () {
         try {
           const href = $(this).attr('href');
           if (!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('mailto:')) return;
@@ -864,15 +1786,45 @@ app.post('/api/analyze-url', async (req, res) => {
           if (!lt || lt.length < 3 || lt.length > 100) return;
           // Skip nav/footer link text patterns
           const lowerText = lt.toLowerCase();
-          if (['home','menu','search','login','sign up','subscribe','follow','share','tweet','pin','comment','advertisement','sponsored','read more','click here','loading'].includes(lowerText)) return;
+          if (
+            [
+              'home',
+              'menu',
+              'search',
+              'login',
+              'sign up',
+              'subscribe',
+              'follow',
+              'share',
+              'tweet',
+              'pin',
+              'comment',
+              'advertisement',
+              'sponsored',
+              'read more',
+              'click here',
+              'loading'
+            ].includes(lowerText)
+          )
+            return;
           const lu = new URL(href, finalUrl);
           const linkHost = lu.hostname.replace(/^www\./, '');
           const linkRoot = linkHost.split('.').slice(-2).join('.');
           // Skip same domain and all subdomains of same root
           if (linkRoot === rootDomain) return;
           // Skip social, ad, CDN domains
-          if (socialDomains.some(function(s) { return linkHost.includes(s); })) return;
-          if (adDomains.some(function(s) { return linkHost.includes(s); })) return;
+          if (
+            socialDomains.some(function (s) {
+              return linkHost.includes(s);
+            })
+          )
+            return;
+          if (
+            adDomains.some(function (s) {
+              return linkHost.includes(s);
+            })
+          )
+            return;
           // Skip same-brand sister sites (common patterns: brand + keyword domains)
           const brandLower = brand.toLowerCase().replace(/[^a-z]/g, '');
           if (linkHost.replace(/[^a-z]/g, '').includes(brandLower) && linkHost !== domain) return;
@@ -883,17 +1835,23 @@ app.post('/api/analyze-url', async (req, res) => {
       });
       // Find truly external industry domains - prioritize by link frequency from editorial content
       const dc = {};
-      extLinks.forEach(function(l) {
+      extLinks.forEach(function (l) {
         if (!dc[l.domain]) dc[l.domain] = { count: 0, url: l.url, sampleTexts: [] };
         dc[l.domain].count++;
         if (dc[l.domain].sampleTexts.length < 3) dc[l.domain].sampleTexts.push(l.text);
       });
       // Sort by frequency (more links = more relevant as competitor/reference)
       Object.values(dc)
-        .filter(function(d) { return d.count >= 1; })
-        .sort(function(a, b) { return b.count - a.count; })
+        .filter(function (d) {
+          return d.count >= 1;
+        })
+        .sort(function (a, b) {
+          return b.count - a.count;
+        })
         .slice(0, 10)
-        .forEach(function(d) { if (competitors.length < 10) competitors.push(d.url); });
+        .forEach(function (d) {
+          if (competitors.length < 10) competitors.push(d.url);
+        });
     }
 
     // Real-time verified competitor discovery (DuckDuckGo live search + live page verification)
@@ -906,45 +1864,89 @@ app.post('/api/analyze-url', async (req, res) => {
     // Merge: discovered (verified, ranked) first, then link-based fallbacks as fillers
     const merged = [];
     const seenComp = new Set();
-    discoveredCompetitors.forEach(function(c) {
-      if (!seenComp.has(c.host)) { seenComp.add(c.host); merged.push(c.url); }
+    discoveredCompetitors.forEach(function (c) {
+      if (!seenComp.has(c.host)) {
+        seenComp.add(c.host);
+        merged.push(c.url);
+      }
     });
-    competitors.forEach(function(u) {
+    competitors.forEach(function (u) {
       try {
         const h = compNormalizeHost(new URL(u).hostname);
-        if (!seenComp.has(h)) { seenComp.add(h); merged.push(u); }
+        if (!seenComp.has(h)) {
+          seenComp.add(h);
+          merged.push(u);
+        }
       } catch {}
     });
     // Respect the 12-item cap, but ensure at least 10 candidates were attempted
     const finalCompetitors = merged.slice(0, 12);
-    const competitorDetails = discoveredCompetitors.map(function(c) { return { url: c.url, host: c.host, title: c.title, score: c.score }; });
+    const competitorDetails = discoveredCompetitors.map(function (c) {
+      return { url: c.url, host: c.host, title: c.title, score: c.score };
+    });
 
     // ===== 9. RECOMMENDED USER AGENT =====
     let rUA = 'chrome-desktop';
     if (pageType === 'product' || pageType === 'category') rUA = 'googlebot-mobile';
 
     const result = {
-      url: finalUrl, brand, pageType, sitemap: sitemapUrl,
+      url: finalUrl,
+      brand,
+      pageType,
+      sitemap: sitemapUrl,
       keywords: keywords.slice(0, 8).join(', '),
       competitors: finalCompetitors.join('\n'),
-      viewportWidth, viewportHeight, geo: geo || 'US', currency, userAgent: rUA,
+      viewportWidth,
+      viewportHeight,
+      geo: geo || 'US',
+      currency,
+      userAgent: rUA,
       blocked,
-      meta: { title: pageTitle, description: ($('meta[name="description"]').attr('content') || '').substring(0, 200), lang, schemaTypes: schemaTypes.slice(0, 5), externalLinksCount: extLinks.length, h1Count: $('h1').length, h2Count: $('h2').length, usedPuppeteer, competitorDetails }
+      meta: {
+        title: pageTitle,
+        description: ($('meta[name="description"]').attr('content') || '').substring(0, 200),
+        lang,
+        schemaTypes: schemaTypes.slice(0, 5),
+        externalLinksCount: extLinks.length,
+        h1Count: $('h1').length,
+        h2Count: $('h2').length,
+        usedPuppeteer,
+        competitorDetails
+      }
     };
 
-    console.log('Auto-fill complete:', brand, '|', pageType, '| keywords:', keywords.length, '| competitors:', finalCompetitors.length, '| discovered:', discoveredCompetitors.length, '| blocked:', blocked);
+    console.log(
+      'Auto-fill complete:',
+      brand,
+      '|',
+      pageType,
+      '| keywords:',
+      keywords.length,
+      '| competitors:',
+      finalCompetitors.length,
+      '| discovered:',
+      discoveredCompetitors.length,
+      '| blocked:',
+      blocked
+    );
     res.json(result);
   } catch (err) {
     console.error('Analyze URL error:', err.message);
-    if (!res.headersSent) res.status(500).json({ error: 'Analysis failed: ' + err.message });
+    if (!res.headersSent) res.status(err.status || 500).json({ error: 'Analysis failed: ' + err.message });
   }
 });
 
 app.use((err, req, res, next) => {
   console.error('Express error:', err.message);
-  if (!res.headersSent) { res.status(500).json({ error: 'Internal server error' }); }
+  if (!res.headersSent) {
+    res.status(err.status || 500).json({ error: 'Internal server error' });
+  }
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`SEO Audit Tool running on http://localhost:${PORT}`);
-});
+module.exports = app;
+
+if (require.main === module) {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`SEO Audit Tool running on http://localhost:${PORT}`);
+  });
+}
