@@ -2556,8 +2556,8 @@ function level14($, bodyText, url, config) {
   // Merge subfunctions into data and return
   Object.assign(data, subfunctions);
 
-  return { level: 14, name: 'Financial Attribution & Revenue Impact Engine', score: sc(p), issues, data };
-  } catch (e) { return { level: 14, name: 'Financial Attribution & Revenue Impact Engine', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 14 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
+  return { level: 14, name: 'Financial Attribution - Single-Page ROI', score: sc(p), issues, data };
+  } catch (e) { return { level: 14, name: 'Financial Attribution - Single-Page ROI', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 14 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
 }
 
 function level15($, bodyText, config) {
@@ -4131,12 +4131,12 @@ function level21($, bodyText, url, config) {
 
   return {
     level: 21,
-    name: 'Financial Impact & Revenue Attribution Engine',
+    name: 'Site-Wide Risk Aggregation & Executive Rollup (Portfolio)',
     score: sc(p),
     issues,
     data
   };
-  } catch (e) { return { level: 21, name: 'Financial Impact & Revenue Attribution Engine', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 21 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
+  } catch (e) { return { level: 21, name: 'Site-Wide Risk Aggregation & Executive Rollup (Portfolio)', score: 0, issues: [{ severity: 'critical', impact: 'critical', message: 'Level 21 analysis failed: ' + e.message, element: 'system' }], data: { error: e.message } }; }
 }
 
 module.exports = { level1, level2, level3, level4, level5, level6, level7, level8, level9, level10, level11, level12, level13, level14, level15, level16, level17, level18, level19, level20, level21 };
