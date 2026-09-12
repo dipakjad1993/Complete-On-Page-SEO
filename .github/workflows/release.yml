@@ -28,11 +28,15 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
-      - name: Publish to npm (if token set)
-        if: ${{ secrets.NPM_TOKEN != '' }}
-        run: npm publish --access public
+      - name: Publish to npm (skips cleanly when NPM_TOKEN secret is absent)
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then
+            echo "NPM_TOKEN secret not set — skipping npm publish."
+            exit 0
+          fi
+          npm publish --access public
       - name: Build + push Docker to GHCR
         env:
           RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
