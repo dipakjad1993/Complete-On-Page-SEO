@@ -6,23 +6,32 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
-const dns = require('node:dns').promises;
-const net = require('node:net');
 const { z } = require('zod');
+const logger = require('./src/logger');
+const { LruCache } = require('./src/cache');
+const history = require('./src/history');
+const { fetchCrux } = require('./src/lib/crux');
+const { fetchText } = require('./src/lib/netfetch');
+const { parseSitemapXml, isSitemapIndex } = require('./src/lib/sitemap');
+const { requestId, notFound, errorHandler } = require('./src/middleware/errors');
+// Single source of truth lives in src/middleware/ssrf.js (re-exported here
+// so existing imports/tests keep working while routes share one guard).
+const { isPrivateHostname, assertPublicUrl, normaliseUserUrl } = require('./src/middleware/ssrf');
 
 process.on('uncaughtException', (err) => {
-  console.error('Uncaught:', err.message);
+  logger.error('Uncaught exception', { message: err && err.message, stack: err && err.stack });
 });
 process.on('unhandledRejection', (err) => {
-  console.error('Unhandled:', err?.message || err);
+  logger.error('Unhandled rejection', { message: (err && err.message) || String(err) });
 });
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const APP_VERSION = require('./package.json').version || '1.2.0';
+const APP_VERSION = require('./package.json').version || '1.3.0';
 const STARTED_AT = Date.now();
 
 app.use(compression());
+app.use(requestId);
 // CORS: restrict in production via ALLOWED_ORIGINS (comma-separated).
 // Public demo default allows all origins so the SPA + curl work out of the box.
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
@@ -41,7 +50,11 @@ app.use(
         imgSrc: ["'self'", 'data:', 'https:'],
         connectSrc: ["'self'", 'https:']
       }
-    }
+    },
+    // Extra hardening beyond the SPA CSP (1.3.0):
+    hsts: { maxAge: 31536000, includeSubDomains: true },
+    noSniff: true,
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
   })
 );
 app.use(express.json({ limit: '1mb' }));
@@ -49,85 +62,8 @@ app.use(express.static(path.join(__dirname, 'public'), { maxAge: '1h', etag: tru
 app.use('/api/', rateLimit({ windowMs: 15 * 60 * 1000, max: 200, standardHeaders: true, legacyHeaders: false }));
 
 /* ===================== SSRF GUARD ===================== */
-// Blocks server-side request forgery: private / loopback / link-local /
-// cloud-metadata targets. Applied to every user-supplied URL before fetch
-// or Puppeteer navigation.
-function isPrivateHostname(hostname) {
-  const h = String(hostname || '')
-    .toLowerCase()
-    .replace(/\.$/, '');
-  if (!h) return true;
-  if (h === 'localhost' || h.endsWith('.local') || h === 'metadata.google.internal') return true;
-  if (net.isIP(h)) {
-    if (net.isIPv4(h)) {
-      if (h.startsWith('10.') || h.startsWith('192.168.') || h === '0.0.0.0') return true;
-      if (h.startsWith('127.') || h.startsWith('169.254.')) return true;
-      const m = h.match(/^172\.(\d+)\./);
-      if (m) {
-        const n = parseInt(m[1], 10);
-        if (n >= 16 && n <= 31) return true;
-      }
-    } else {
-      // IPv6: loopback, unspecified, unique-local (fc00::/7), link-local (fe80::/10)
-      if (h === '::1' || h === '::' || h.startsWith('fc') || h.startsWith('fd') || h.startsWith('fe80')) return true;
-    }
-  }
-  // Hostname patterns that can never be public audit targets
-  if (/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|127\.|0\.0\.0\.0)/.test(h)) return true;
-  return false;
-}
-
-async function assertPublicUrl(rawUrl) {
-  let u;
-  try {
-    u = new URL(rawUrl);
-  } catch {
-    const e = new Error('Invalid URL');
-    e.status = 400;
-    throw e;
-  }
-  if (!/^https?:$/.test(u.protocol)) {
-    const e = new Error('Only http(s) URLs are allowed');
-    e.status = 400;
-    throw e;
-  }
-  if (isPrivateHostname(u.hostname)) {
-    const e = new Error('Blocked: private/internal hosts cannot be audited (SSRF protection)');
-    e.status = 400;
-    throw e;
-  }
-  try {
-    const addrs = await dns.lookup(u.hostname, { all: true });
-    for (const a of addrs || []) {
-      if (isPrivateHostname(a.address)) {
-        const e = new Error('Blocked: hostname resolves to a private IP (SSRF protection)');
-        e.status = 400;
-        throw e;
-      }
-    }
-  } catch (e) {
-    if (e.status === 400) throw e;
-    // DNS failure: let fetch produce the user-facing error (don't leak resolver details)
-  }
-  return u.href;
-}
-
-// Normalizes user input WITHOUT masking a non-http scheme:
-// "example.com" -> "https://example.com", but "ftp://x" stays and 400s.
-function normaliseUserUrl(input) {
-  const raw = String(input || '').trim();
-  if (!raw) {
-    const e = new Error('URL is required');
-    e.status = 400;
-    throw e;
-  }
-  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(raw) && !/^https?:\/\//i.test(raw)) {
-    const e = new Error('Only http(s) URLs are allowed');
-    e.status = 400;
-    throw e;
-  }
-  return /^https?:\/\//i.test(raw) ? raw : 'https://' + raw;
-}
+// Single source of truth: src/middleware/ssrf.js (imported above; re-exported for tests).
+// Hardened in 1.3.0: CGNAT/TEST-NET blocks, decimal/octal IP tricks, credentialed-URL rejection.
 
 // Input validation (zod) — keeps oversized / malformed payloads out of Puppeteer.
 const configSchema = z
@@ -214,7 +150,8 @@ const {
   level19,
   level20,
   level21
-} = require('./levels');
+} = require('./src/levels');
+const { level22 } = require('./src/levels/level22');
 
 const CHROME_PATH = process.env.CHROME_PATH || null;
 
@@ -570,7 +507,7 @@ async function compSearch(query, limit) {
       } catch {}
     });
   } catch (e) {
-    console.log('Competitor search failed for query:', query, e.message);
+    logger.warn('Competitor search failed', { query, message: e.message });
   }
   return out.slice(0, limit || 15);
 }
@@ -747,7 +684,8 @@ const LEVEL_NAMES = [
   'Zero-Click & Agentic Commerce Visibility Metrics',
   'Edge Orchestration & Canary Deployment Safety',
   'Adversarial Checks & Security Header Audit',
-  'Site-Wide Risk Aggregation & Executive Rollup (Portfolio)'
+  'Site-Wide Risk Aggregation & Executive Rollup (Portfolio)',
+  'AI-Search Readiness: llms.txt, Robots-AI & Citation Surface'
 ];
 
 async function auditUrl(url, onProgress, config) {
@@ -755,7 +693,7 @@ async function auditUrl(url, onProgress, config) {
   const cfg = config || {};
 
   const sendProgress = (level, status, detail) => {
-    if (onProgress) onProgress({ level, status, detail, totalLevels: 21 });
+    if (onProgress) onProgress({ level, status, detail, totalLevels: 22 });
   };
 
   sendProgress(0, 'starting', 'Initializing audit engine...');
@@ -844,7 +782,7 @@ async function auditUrl(url, onProgress, config) {
 
     renderedHtml = await page.content();
   } catch (e) {
-    console.error('Puppeteer error:', e.message);
+    logger.warn('Puppeteer error, continuing with raw HTML', { message: e.message });
     sendProgress(0, 'puppeteer-error', 'Puppeteer error: ' + e.message + '. Using raw HTML for analysis.');
   } finally {
     if (browser) {
@@ -857,7 +795,7 @@ async function auditUrl(url, onProgress, config) {
   const $ = cheerio.load(renderedHtml);
   const bodyText = $('body').text().replace(/\s+/g, ' ').trim();
 
-  sendProgress(0, 'parsed', 'HTML parsed with Cheerio. Starting 21-level deep analysis...');
+  sendProgress(0, 'parsed', 'HTML parsed with Cheerio. Starting 22-level deep analysis...');
 
   const levelFns = [
     { fn: level1, args: [$, finalUrl, responseHeaders, rawHtml, cfg], num: 1 },
@@ -897,7 +835,7 @@ async function auditUrl(url, onProgress, config) {
         'Level ' + lf.num + ' complete — Score: ' + result.score + '/100, Issues: ' + (result.issues ? result.issues.length : 0)
       );
     } catch (err) {
-      console.error('Level ' + lf.num + ' error:', err.message);
+      logger.error('Level failed', { level: lf.num, message: err.message });
       sendProgress(lf.num, 'error', 'Level ' + lf.num + ' failed: ' + err.message);
       levelResults.push({
         level: lf.num,
@@ -918,7 +856,40 @@ async function auditUrl(url, onProgress, config) {
     }
   }
 
-  sendProgress(21, 'aggregating', 'Aggregating results from all 21 levels...');
+  // L22 probes are SSRF-safe, best-effort, never fatal (8s caps).
+  sendProgress(22, 'analyzing', 'Running Level 22: ' + LEVEL_NAMES[21]);
+  try {
+    const origin = new URL(finalUrl).origin;
+    const [robotsRes, llmsRes] = await Promise.all([
+      fetchText(origin + '/robots.txt', { timeoutMs: 8000, accept: 'text/plain' }),
+      fetchText(origin + '/llms.txt', { timeoutMs: 8000, accept: 'text/plain,text/markdown' })
+    ]);
+    const robotsTxt = robotsRes.status === 200 ? robotsRes.text : '';
+    const llmsTxt = llmsRes.status === 200 ? { status: 200, text: llmsRes.text } : { status: llmsRes.status || 404, text: '' };
+    const l22 = level22($, finalUrl, cfg, { responseHeaders, robotsTxt, llmsTxt, sitemapUrls: [] });
+    levelResults.push(l22);
+    sendProgress(22, 'complete', 'Level 22 complete \u2014 Score: ' + l22.score + '/100, Issues: ' + l22.issues.length);
+  } catch (err) {
+    logger.error('Level failed', { level: 22, message: err.message });
+    levelResults.push({
+      level: 22,
+      name: LEVEL_NAMES[21],
+      score: 0,
+      issues: [
+        {
+          severity: 'critical',
+          impact: 'high',
+          message: 'Level 22 analysis failed: ' + err.message,
+          element: 'analysis-engine',
+          fix: 'Check server logs.',
+          evidence: err.message
+        }
+      ],
+      data: { error: err.message }
+    });
+  }
+
+  sendProgress(22, 'aggregating', 'Aggregating results from all 22 levels...');
 
   let totalScore = 0;
   let totalIssues = 0;
@@ -941,7 +912,7 @@ async function auditUrl(url, onProgress, config) {
   const overallScore = levelResults.length > 0 ? Math.round(totalScore / levelResults.length) : 0;
   const duration = ((Date.now() - startTime) / 1000).toFixed(1);
 
-  sendProgress(21, 'complete', 'Audit complete! Score: ' + overallScore + '/100 in ' + duration + 's');
+  sendProgress(22, 'complete', 'Audit complete! Score: ' + overallScore + '/100 in ' + duration + 's');
 
   return {
     url: finalUrl,
@@ -979,29 +950,29 @@ app.get('/api/audit-progress/:auditId', (req, res) => {
   res.write('data: {"status":"connected"}\n\n');
 
   progressClients.set(auditId, res);
+  const hb = setInterval(() => {
+    try {
+      res.write(': heartbeat\n\n');
+    } catch {}
+  }, 20000);
 
   req.on('close', () => {
+    clearInterval(hb);
     progressClients.delete(auditId);
   });
 });
 
-// Simple audit cache (1h TTL by URL+config hash) + concurrency guard so 5
-// simultaneous recruiter clicks don't OOM the Render free instance.
-const auditCache = new Map();
+// LRU audit cache (500 keys, 1h TTL) + concurrency guard so traffic spikes
+// don't OOM the instance. Stats at GET /api/cache-stats.
+const auditCache = new LruCache({ max: 500, ttlMs: 60 * 60 * 1000 });
 const CACHE_TTL_MS = 60 * 60 * 1000;
 let activeAudits = 0;
 const MAX_CONCURRENT_AUDITS = 2;
 function cacheKey(url, config) {
-  return url + '|' + JSON.stringify(config || {});
+  return auditCache.key(url, config);
 }
 function cacheGet(k) {
-  const e = auditCache.get(k);
-  if (!e) return null;
-  if (Date.now() - e.at > CACHE_TTL_MS) {
-    auditCache.delete(k);
-    return null;
-  }
-  return e.result;
+  return auditCache.get(k); // null on miss/expiry (LRU tracks hits/misses/evictions)
 }
 
 // Main audit endpoint
@@ -1024,7 +995,7 @@ app.post('/api/audit', async (req, res) => {
     }
 
     const auditId = clientAuditId || Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
-    console.log('Starting audit for:', url, '| ID:', auditId);
+    logger.info('Starting audit', { url, auditId });
 
     const sendProgress = (level, status, detail) => {
       const data = JSON.stringify({ auditId, level, status, detail });
@@ -1043,12 +1014,14 @@ app.post('/api/audit', async (req, res) => {
     } finally {
       activeAudits--;
     }
-    auditCache.set(key, { at: Date.now(), result });
+    auditCache.set(key, result);
 
-    console.log('Audit complete:', result.overallScore, '/ 100 —', result.duration + 's');
+    result.meta = { ...result.meta, auditId };
+    history.record(result);
+    logger.info('Audit complete', { auditId, score: result.overallScore, duration: result.duration });
     res.json(result);
   } catch (err) {
-    console.error('Audit error:', err.message);
+    logger.error('Audit error', { message: err.message });
     if (!res.headersSent) {
       res.status(err.status || 500).json({ error: 'Audit failed: ' + err.message });
     }
@@ -1075,7 +1048,7 @@ app.post('/api/export-pdf', async (req, res) => {
     res.setHeader('Content-Disposition', 'attachment; filename=seo-audit-report.pdf');
     res.send(pdfBuffer);
   } catch (err) {
-    console.error('PDF error:', err.message);
+    logger.error('PDF error', { message: err.message });
     if (!res.headersSent) {
       res.status(500).json({ error: 'PDF generation failed' });
     }
@@ -1091,12 +1064,15 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
     version: APP_VERSION,
+    levels: 22,
     uptime: Math.round((Date.now() - STARTED_AT) / 1000),
     timestamp: new Date().toISOString(),
     node: process.version,
     memory: process.memoryUsage(),
     activeAudits,
-    cacheSize: auditCache.size
+    maxConcurrent: MAX_CONCURRENT_AUDITS,
+    cache: auditCache.stats(),
+    historyEntries: history.load().length
   });
 });
 
@@ -1105,13 +1081,15 @@ app.get('/api', (req, res) => {
   res.json({
     name: 'complete-on-page-seo-2026',
     version: APP_VERSION,
-    description: '21-level on-page + AI-search SEO audit engine. Real measured data, no mocks.',
+    description: '22-level on-page + AI-search SEO audit engine. Real measured data, no mocks.',
     endpoints: [
       'POST /api/audit',
       'GET /api/audit-progress/:id',
       'POST /api/analyze-url',
       'POST /api/crawl',
       'GET /api/crux?url=',
+      'GET /api/history?url=',
+      'GET /api/diff?url=&from=&to=',
       'POST /api/export-pdf',
       'GET /api/health',
       'GET /api/cache-stats',
@@ -1122,55 +1100,75 @@ app.get('/api', (req, res) => {
 });
 
 app.get('/api/cache-stats', (req, res) => {
-  res.json({ size: auditCache.size, ttlMs: CACHE_TTL_MS, activeAudits, maxConcurrent: MAX_CONCURRENT_AUDITS });
+  res.json({ ...auditCache.stats(), activeAudits, maxConcurrent: MAX_CONCURRENT_AUDITS });
 });
 
-// CrUX + PageSpeed field data (free Google API, no key at low quota).
-// Closes the "lab-timings only" gap: reports real LCP/INP/CLS field data.
+// CrUX + PageSpeed field data via src/lib/crux (PAGESPEED_API_KEY wired, honest unmeasured fallback).
 app.get('/api/crux', async (req, res) => {
   try {
     let { url } = req.query;
     if (!url) return res.status(400).json({ error: 'url query param required' });
     url = await assertPublicUrl(normaliseUserUrl(url));
-    const api =
-      'https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=' + encodeURIComponent(url) + '&strategy=mobile&category=performance';
-    const r = await fetch(api, { signal: AbortSignal.timeout(25000) });
-    if (!r.ok) return res.status(502).json({ error: 'PageSpeed API error: ' + r.status });
-    const j = await r.json();
-    const audits = (j.lighthouseResult && j.lighthouseResult.audits) || {};
-    const pick = (k) =>
-      audits[k] ? { score: audits[k].score ?? null, value: audits[k].displayValue || audits[k].numericValue || null } : null;
-    res.json({
-      url,
-      dataSource: 'Google PageSpeed Insights (CrUX field + lab). Not measured locally.',
-      metrics: {
-        LCP: pick('largest-contentful-paint'),
-        INP: pick('interaction-to-next-paint'),
-        CLS: pick('cumulative-layout-shift'),
-        TTFB: pick('server-response-time'),
-        FCP: pick('first-contentful-paint'),
-        speedIndex: pick('speed-index')
-      },
-      performanceScore: j.lighthouseResult?.categories?.performance?.score ?? null
-    });
+    const out = await fetchCrux(url);
+    if (out.unmeasured && out.reason && /quota/i.test(out.reason)) res.status(429);
+    res.json(out);
   } catch (err) {
     res.status(err.status || 500).json({ error: 'CrUX lookup failed: ' + err.message });
   }
 });
 
-// Multi-URL sitemap/BFS crawl (max 10 pages, same-origin). Answers the
-// "single-URL only" objection without a full site-crawler rewrite.
+// Multi-URL sitemap/BFS crawl (max 25 pages, same-origin + sitemap expansion).
 app.post('/api/crawl', async (req, res) => {
   try {
-    const schema = z.object({ startUrl: z.string().min(4).max(2000), maxPages: z.number().int().min(1).max(10).optional() });
+    const schema = z.object({
+      startUrl: z.string().min(4).max(2000),
+      maxPages: z.number().int().min(1).max(25).optional(),
+      includeSitemap: z.boolean().optional()
+    });
     const parsed = parseBody(schema, req.body);
     let startUrl = parsed.startUrl;
     startUrl = await assertPublicUrl(normaliseUserUrl(startUrl));
     const maxPages = parsed.maxPages || 10;
+    const includeSitemap = parsed.includeSitemap !== false;
     const origin = new URL(startUrl).origin;
     const seen = new Set([startUrl]);
     const queue = [startUrl];
     const pages = [];
+    // Sitemap expansion first: seed the queue with real URLs, not just link-graph.
+    if (includeSitemap) {
+      try {
+        const robotsRes = await fetchText(origin + '/robots.txt', { timeoutMs: 8000, accept: 'text/plain' });
+        const { parseRobots } = require('./src/lib/sitemap');
+        const smUrls =
+          robotsRes.status === 200 ? parseRobots(robotsRes.text).sitemaps : [origin + '/sitemap.xml', origin + '/sitemap_index.xml'];
+        for (const sm of smUrls.slice(0, 3)) {
+          try {
+            const smUrl = await assertPublicUrl(sm);
+            const xml = await fetchText(smUrl, { timeoutMs: 8000, accept: 'application/xml,text/xml' });
+            if (xml.status !== 200) continue;
+            let locs = parseSitemapXml(xml.text, 100);
+            if (isSitemapIndex(xml.text)) {
+              for (const child of locs.slice(0, 3)) {
+                try {
+                  const childXml = await fetchText(await assertPublicUrl(child), { timeoutMs: 8000, accept: 'application/xml' });
+                  if (childXml.status === 200) locs = locs.concat(parseSitemapXml(childXml.text, 100));
+                } catch {}
+              }
+              locs = locs.filter((u) => !/sitemap.*\.xml/i.test(u));
+            }
+            for (const u of locs) {
+              try {
+                const abs = new URL(u, origin).href.split('#')[0];
+                if (abs.startsWith(origin) && !seen.has(abs) && queue.length < maxPages) {
+                  seen.add(abs);
+                  queue.push(abs);
+                }
+              } catch {}
+            }
+          } catch {}
+        }
+      } catch {}
+    }
     while (queue.length && pages.length < maxPages) {
       const u = queue.shift();
       try {
@@ -1201,7 +1199,7 @@ app.post('/api/crawl', async (req, res) => {
       origin,
       pagesCrawled: pages.length,
       pages,
-      note: 'Same-origin BFS crawl, raw-HTML only (no Puppeteer per page). Run POST /api/audit per URL for full 21-level depth.'
+      note: 'Same-origin BFS crawl (sitemap-seeded when includeSitemap), raw-HTML only (no Puppeteer per page). Run POST /api/audit per URL for full 22-level depth.'
     });
   } catch (err) {
     res.status(err.status || 500).json({ error: 'Crawl failed: ' + err.message });
@@ -1212,6 +1210,36 @@ app.get('/openapi.yaml', (req, res) => {
   res.sendFile(path.join(__dirname, 'openapi.yaml'));
 });
 
+// Audit history (file-backed, last 200 summaries) + score diffing.
+app.get('/api/history', (req, res) => {
+  try {
+    const { url, limit } = req.query;
+    const lim = Math.min(50, Math.max(1, parseInt(limit || '20', 10) || 20));
+    const all = url ? history.byUrl(String(url), lim) : history.load().slice(0, lim);
+    res.json({ count: all.length, entries: all });
+  } catch (err) {
+    res.status(500).json({ error: 'History lookup failed: ' + err.message });
+  }
+});
+
+app.get('/api/diff', (req, res) => {
+  try {
+    const { url, from, to } = req.query;
+    if (!url || !from || !to)
+      return res.status(400).json({ error: 'url, from and to query params required (from/to = history timestamps)' });
+    const entries = history.byUrl(String(url), 200);
+    const a = entries.find((e) => e.timestamp === String(from));
+    const b = entries.find((e) => e.timestamp === String(to));
+    if (!a || !b)
+      return res
+        .status(404)
+        .json({ error: 'History entries not found for those timestamps', hint: 'GET /api/history?url=... to list timestamps' });
+    res.json(history.diff(a, b));
+  } catch (err) {
+    res.status(500).json({ error: 'Diff failed: ' + err.message });
+  }
+});
+
 // Deep URL analysis endpoint - auto-fills all config fields
 app.post('/api/analyze-url', async (req, res) => {
   if (req.headersSent) return;
@@ -1219,7 +1247,7 @@ app.post('/api/analyze-url', async (req, res) => {
     const parsed = parseBody(urlOnlySchema, req.body);
     let { url } = parsed;
     url = await assertPublicUrl(normaliseUserUrl(url));
-    console.log('Analyzing URL for auto-fill:', url);
+    logger.info('Analyzing URL for auto-fill', { url });
 
     let rawHtml = '';
     let finalUrl = url;
@@ -1232,11 +1260,11 @@ app.post('/api/analyze-url', async (req, res) => {
       finalUrl = rawResult.url;
       const test$ = cheerio.load(rawHtml);
       if (isBlockedPage(rawHtml, test$)) {
-        console.log('Fetch blocked, trying Puppeteer fallback...');
+        logger.info('Fetch blocked, trying Puppeteer fallback');
         rawHtml = '';
       }
     } catch (e) {
-      console.log('Fetch failed, trying Puppeteer fallback:', e.message);
+      logger.info('Fetch failed, trying Puppeteer fallback', { message: e.message });
       rawHtml = '';
     }
 
@@ -1255,7 +1283,7 @@ app.post('/api/analyze-url', async (req, res) => {
         rawHtml = await page.content();
         usedPuppeteer = true;
       } catch (e) {
-        console.error('Puppeteer fallback failed:', e.message);
+        logger.error('Puppeteer fallback failed', { message: e.message });
         if (!rawHtml) return res.status(500).json({ error: 'Could not fetch URL: site may be blocking automated access' });
       } finally {
         if (browser)
@@ -1859,7 +1887,7 @@ app.post('/api/analyze-url', async (req, res) => {
     try {
       discoveredCompetitors = await discoverCompetitors({ finalUrl, domain, brand, keywords, pageTitle, geo });
     } catch (e) {
-      console.error('Competitor discovery error:', e.message);
+      logger.error('Competitor discovery error', { message: e.message });
     }
     // Merge: discovered (verified, ranked) first, then link-based fallbacks as fillers
     const merged = [];
@@ -1915,38 +1943,41 @@ app.post('/api/analyze-url', async (req, res) => {
       }
     };
 
-    console.log(
-      'Auto-fill complete:',
+    logger.info('Auto-fill complete', {
       brand,
-      '|',
       pageType,
-      '| keywords:',
-      keywords.length,
-      '| competitors:',
-      finalCompetitors.length,
-      '| discovered:',
-      discoveredCompetitors.length,
-      '| blocked:',
+      keywords: keywords.length,
+      competitors: finalCompetitors.length,
+      discovered: discoveredCompetitors.length,
       blocked
-    );
+    });
     res.json(result);
   } catch (err) {
-    console.error('Analyze URL error:', err.message);
+    logger.error('Analyze URL error', { message: err.message });
     if (!res.headersSent) res.status(err.status || 500).json({ error: 'Analysis failed: ' + err.message });
   }
 });
 
-app.use((err, req, res, next) => {
-  console.error('Express error:', err.message);
-  if (!res.headersSent) {
-    res.status(err.status || 500).json({ error: 'Internal server error' });
-  }
-});
+app.use(notFound);
+app.use(errorHandler);
 
 module.exports = app;
+// Re-exported for tests + routes sharing one guard (single source: src/middleware/ssrf.js).
+module.exports.isPrivateHostname = isPrivateHostname;
+module.exports.assertPublicUrl = assertPublicUrl;
+module.exports.normaliseUserUrl = normaliseUserUrl;
+module.exports.auditCache = auditCache;
+module.exports.LEVEL_NAMES = LEVEL_NAMES;
 
 if (require.main === module) {
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`SEO Audit Tool running on http://localhost:${PORT}`);
+  const server = app.listen(PORT, '0.0.0.0', () => {
+    logger.info(`SEO Audit Tool running on http://localhost:${PORT}`);
   });
+  const shutdown = (sig) => {
+    logger.info('Shutting down', { sig, activeAudits });
+    server.close(() => process.exit(0));
+    setTimeout(() => process.exit(0), 10000).unref();
+  };
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 }

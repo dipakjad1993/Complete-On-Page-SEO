@@ -2,6 +2,26 @@
 
 All notable changes follow Keep a Changelog + SemVer.
 
+## [1.3.0] - 2026-09-12
+
+### Added
+
+- **Level 22 — AI-Search Readiness** (`src/levels/level22.js`): live `llms.txt` presence/quality probe, `robots.txt` AI-bot rules (GPTBot, PerplexityBot, ClaudeBot, CCBot, Bytespider, Google-Extended, Applebot…), canonical/title/description/JSON-LD citation surface, definitional-lead heuristic. Engine is now 22 levels; overall = mean(L1..L22).
+- `POST /api/crawl` raised **max 10 → 25** + `includeSitemap` (default true): robots `Sitemap:` discovery, sitemap-index expansion (3 children), same-origin BFS seeding.
+- `GET /api/history?url=&limit=` + `GET /api/diff?url=&from=&to=` — file-backed last-200 summaries (`data/history.json`, atomic writes) with `improved/regressed/stable` verdicts.
+- `bin/seo-audit.js` CLI (`npx complete-on-page-seo <url> --json --fail-on critical|warning --config '{}' --api <base>`) for CI gating; `package.json` `bin` + `npm run cli`.
+- `mcp-server.js` — zero-dep MCP stdio server (5 tools: `audit_url`, `get_level_info`, `check_ai_readiness`, `get_crux`, `crawl_site`); `npm run mcp`.
+- `src/` modular seam: `logger.js` (winston), `cache.js` (LRU 500/1h + hitRate), `history.js`, `middleware/ssrf.js` (single source of truth), `middleware/errors.js` (requestId/404/handler), `lib/netfetch.js`, `lib/sitemap.js` (robots AI-bot + sitemap XML), `lib/crux.js` (API-key + honest fallback), `levels/index.js` (22-name registry).
+- Packaging: `ARCHITECTURE.md`, `ROADMAP.md`, `docs/{levels,api,deploy,faq,BUDGET}.md`, `CODEOWNERS`, `.github/dependabot.yml`, `.github/workflows/release.yml` (npm + GHCR on `v*`), `README` cut 918 → ~100-line executive.
+- Tests: 24 → **56** (`tests/levels.test.js` 11 pure-level inc. L22, `tests/unit.test.js` 9 SSRF/LRU/sitemap/diff, `tests/api-extended.test.js` 12 SSE/cache/history/diff/crawl/PDF/CrUX/404). CI matrix now Node 18/20/22 + `npm run lint` gate.
+
+### Changed
+
+- `server.js` is now a composition root: winston replaces `console.*`, LRU replaces unbounded `Map`, HSTS/noSniff/referrer hardening, SSE heartbeat (20 s), graceful SIGTERM/SIGINT shutdown, `GET /api/health` exposes `levels/cache/historyEntries`, `GET /api/cache-stats` exposes LRU stats.
+- SSRF guard hardened: CGNAT (`100.64/10`), TEST-NET (`192.0.2/24`, `198.51.100/24`, `203.0.113/24`, `198.18/15`), decimal/octal/hex IP tricks, credentialed-URL rejection.
+- `GET /api/crux` honors `PAGESPEED_API_KEY` (higher quota) and returns structured `unmeasured` on 429/5xx instead of flat 502.
+- ESLint strict (`no-unused-vars:error`, `eqeqeq`, `curly`, `no-eval`, `prefer-const`), vitest v8 coverage config, `typecheck` covers new entry points.
+
 ## [1.2.0] - 2026-09-11
 
 ### Added

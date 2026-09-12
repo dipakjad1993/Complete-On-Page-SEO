@@ -7,3 +7,5 @@ error.txt
 out.txt
 output.txt
 server_log.txt
+data/history.json
+coverage/
