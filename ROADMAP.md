@@ -6,7 +6,7 @@ Shipped (1.0 → 1.3.0):
 - [x] SSRF guard + zod + Helmet CSP + rate-limit + 429 concurrency guard + LRU cache
 - [x] SSE progress, Pixel UI, JSON/CSV/PDF export, 29 evidence screenshots
 - [x] CrUX field data (`GET /api/crux`), BFS crawl, sitemap/robots discovery
-- [x] CI (Node 20/22) + vitest + ESLint strict + Prettier + npm audit gate
+- [x] CI (Node 22/24) + vitest + ESLint strict + Prettier + npm audit gate
 - [x] Docker + Fly + Render blueprints, OpenAPI 3.0, MIT, SECURITY, CONTRIBUTING
 - [x] **1.3.0:** L22 AI-search readiness (llms.txt/robots-ai/citation), crawl 25 + sitemap expansion, history + diff, CLI `--fail-on`, MCP server (5 tools), winston logging, docs/ split
 
