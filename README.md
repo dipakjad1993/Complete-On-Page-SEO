@@ -1,6 +1,6 @@
 # Complete ON Page SEO 2026 — 22-Level + AI-Search Auditor
 
-[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://complete-on-page-seo.onrender.com/)
+[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://complete-on-page-seo-1.onrender.com/)
 [![CI](https://github.com/dipakjad1993/Complete-On-Page-SEO/actions/workflows/ci.yml/badge.svg)](https://github.com/dipakjad1993/Complete-On-Page-SEO/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D22-brightgreen)](./.nvmrc)
@@ -18,7 +18,7 @@ Production-grade **22-level on-page + AI-search (RAG/LLM) SEO auditor** with **1
 - **Full-stack** — Puppeteer rendering → Cheerio/Express SSE streaming → Pixel UI → Render/Docker/Fly deploy.
 - **Machine-consumable** — REST API (11 endpoints) + OpenAPI 3.0 + CLI (`--fail-on`) + MCP server (5 tools for Claude/Cursor).
 
-**🔗 Try live:** [https://complete-on-page-seo.onrender.com/](https://complete-on-page-seo.onrender.com/) · Health: [`/api/health`](https://complete-on-page-seo.onrender.com/api/health) · API docs: [`/openapi.yaml`](./openapi.yaml)
+**🔗 Try live:** [https://complete-on-page-seo-1.onrender.com/](https://complete-on-page-seo-1.onrender.com/) · Health: [`/api/health`](https://complete-on-page-seo-1.onrender.com/api/health) · API docs: [`/openapi.yaml`](./openapi.yaml)
 
 > **Render free-tier note:** the demo sleeps when idle (first click can 503/wake ~50s). Keep-alive is a free 5-min [UptimeRobot](https://uptimerobot.com/) ping on `/api/health` (see `render.yaml:KEEP_ALIVE_URL`); or self-host with zero sleep: `docker run -p 3000:3000 ghcr.io/dipakjad1993/complete-on-page-seo` or `fly deploy` (see [`docs/deploy.md`](./docs/deploy.md)).
 
@@ -1117,7 +1117,7 @@ Shipped (1.0 → 1.3.0) and scoped next steps with honest non-goals: [`ROADMAP.m
 
 **Dipak Jadhav** — Full-Stack Node.js Engineer building AI-ready SEO tooling (Puppeteer, Cheerio, RAG, Edge Workers, MCP).
 
-- GitHub: [dipakjad1993](https://github.com/dipakjad1993) · Live demo: [complete-on-page-seo.onrender.com](https://complete-on-page-seo.onrender.com/)
+- GitHub: [dipakjad1993](https://github.com/dipakjad1993) · Live demo: [complete-on-page-seo-1.onrender.com](https://complete-on-page-seo-1.onrender.com/)
 - 22-level audit engine · ~10.2k LOC · 70 helpers · 56 tests (CI Node 22/24) · Docker/GHCR/Render/Fly · OpenAPI · SSE · CLI + MCP · SSRF/zod/Helmet hardened
 - **Open to:** Full-stack / Backend (Node.js) / Technical SEO / AI-search engineering roles.
 
