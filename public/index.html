@@ -1347,7 +1347,7 @@ function renderReport(data){
   h+='<div class="export-bar">';
   h+='<button class="export-btn" onclick="exportJSON()">&#128190; Export JSON</button>';
   h+='<button class="export-btn" onclick="exportCSV()">&#128196; Export CSV</button>';
-  h+='<button class="export-btn" onclick="window.print()">&#128424; Print Report</button>';
+  h+='<button class="export-btn" onclick="downloadPDF()">&#128424; Download PDF</button>';
   h+='</div>';
 
   /* Report TOC */
@@ -1501,6 +1501,30 @@ function exportCSV(){
   var csv=rows.map(function(r){return r.map(function(c){return'"'+String(c).replace(/"/g,'""')+'"'}).join(',')}).join('\n');
   var blob=new Blob([csv],{type:'text/csv'});
   var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='seo-audit-issues.csv';a.click();
+}
+/* Real server-rendered PDF — no print dialog. POSTs a standalone light-theme
+   snapshot of the report to /api/export-pdf and downloads the binary. */
+async function downloadPDF(btn){
+  if(!AD){alert('Run an audit first.');return}
+  var b=btn||(typeof event!=='undefined'&&event.target?event.target:null);
+  var oldTxt='';
+  if(b&&b.classList&&b.classList.contains('export-btn')){oldTxt=b.innerHTML;b.innerHTML='&#9203; Building PDF...';b.disabled=true;}
+  try{
+    var css='';
+    document.querySelectorAll('style').forEach(function(s){css+=s.innerHTML+'\n'});
+    css+='\n.export-bar,.copy-btn,.step-btn,.help-overlay,.topnav{display:none!important}\n.report-page{max-width:1000px;margin:0 auto;padding:24px}\n.details-body{display:block!important}';
+    var doc='<!DOCTYPE html><html data-theme="light"><head><meta charset="utf-8"><title>SEO Audit Report — '+esc(AD.url||'')+'</title><style>'+css+'</style></head><body><div class="report-page"><h1 style="font-size:1.4rem;margin:0 0 4px">Complete ON Page SEO 2026 — Audit Report</h1><p style="color:#5f6368;font-size:.8rem">'+esc(AD.url||'')+' &mdash; score '+(AD.overallScore||0)+'/100 &mdash; '+esc(AD.meta&&AD.meta.timestamp?AD.meta.timestamp:'')+'</p>'+document.getElementById('report-content').innerHTML+'</div></body></html>';
+    var r=await fetch('/api/export-pdf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({html:doc})});
+    if(!r.ok){var ej=await r.json().catch(function(){return{}});throw new Error((ej&&ej.error)||('Server returned '+r.status));}
+    var blob=await r.blob();
+    var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    a.download='seo-audit-'+(AD.url||'report').replace(/[^a-z0-9]/gi,'_')+'.pdf';a.click();
+    setTimeout(function(){URL.revokeObjectURL(a.href)},5000);
+  }catch(e){
+    alert('PDF download failed: '+e.message);
+  }finally{
+    if(b&&oldTxt){b.innerHTML=oldTxt;b.disabled=false;}
+  }
 }
 
 /* ===== AUDIT ===== */

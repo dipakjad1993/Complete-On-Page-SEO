@@ -47,6 +47,7 @@ app.use(
         styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
         fontSrc: ["'self'", 'https://fonts.gstatic.com'],
         scriptSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrcAttr: ["'self'", "'unsafe-inline'"],
         imgSrc: ["'self'", 'data:', 'https:'],
         connectSrc: ["'self'", 'https:']
       }
@@ -79,7 +80,7 @@ const configSchema = z
     avgOrderValue: z.number().min(0).max(1e9).optional(),
     conversionRate: z.number().min(0).max(100).optional(),
     sitemap: z.string().max(500).optional(),
-    competitors: z.string().max(2000).optional(),
+    competitors: z.union([z.string().max(2000), z.array(z.string().max(500)).max(25)]).optional(),
     geo: z.string().max(4).optional(),
     currency: z.string().max(4).optional()
   })

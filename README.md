@@ -237,7 +237,7 @@ All 22 levels execute with a live progress stream (Server-Sent Events). When com
 
 ![Findings and issue log](screenshots/08-findings.png)
 
-The report page renders the overall score, **14 concrete deliverables**, the **5-phase executive deep-dive**, and a searchable issue log — with JSON / CSV / PDF export.
+The report page renders the overall score, **14 concrete deliverables**, the **5-phase executive deep-dive**, and a searchable issue log — with JSON / CSV / one-click PDF download (server-rendered, no print dialog).
 
 ### Per-Module Analysis (all 22 levels)
 
@@ -370,6 +370,162 @@ Each module below is shown expanded with its **0–100 score**, its **findings**
 </details>
 
 ---
+
+## Real-World Audit — Gadgets360 in Light Mode (30 screenshots)
+
+Fresh end-to-end run against a live news article (`https://www.gadgets360.com/mobiles/features/iphone-18-pro-max-alternatives-in-india-top-5-android-flagship-phones-12029387` — score 79/100), captured entirely in **light mode**: configure with AUTO badges → live SSE analysis → 22 scored modules → full executive report. Includes the one-click **Download PDF** button (server-rendered binary via `POST /api/export-pdf`, no print dialog).
+
+### Flow (light mode)
+
+![Configure with auto-fill (light)](screenshots/gadgets360/01-configure.png)
+
+![Live analysis progress (light)](screenshots/gadgets360/02-analyzing.png)
+
+![22 scored modules (light)](screenshots/gadgets360/03-module-results.png)
+
+![Report score hero (light)](screenshots/gadgets360/04-report-top.png)
+
+![Report overview stats (light)](screenshots/gadgets360/05-report-overview.png)
+
+![14 deliverables (light)](screenshots/gadgets360/06-deliverables.png)
+
+![Executive deep-dive (light)](screenshots/gadgets360/07-deep-dive.png)
+
+![Findings issue log (light)](screenshots/gadgets360/08-findings.png)
+
+### All 22 modules (light mode, expanded)
+
+<details><summary><strong>Level 1 — Core Hygiene (Gadgets360, light)</strong></summary>
+
+![L1 light](screenshots/gadgets360/modules/01-core-hygiene.png)
+
+</details>
+
+<details><summary><strong>Level 2 — DOM Rendering (Gadgets360, light)</strong></summary>
+
+![L2 light](screenshots/gadgets360/modules/02-dom-rendering.png)
+
+</details>
+
+<details><summary><strong>Level 3 — Semantic Entities (Gadgets360, light)</strong></summary>
+
+![L3 light](screenshots/gadgets360/modules/03-semantic-entities.png)
+
+</details>
+
+<details><summary><strong>Level 4 — LLM/RAG (Gadgets360, light)</strong></summary>
+
+![L4 light](screenshots/gadgets360/modules/04-llm-rag.png)
+
+</details>
+
+<details><summary><strong>Level 5 — Dev Automation (Gadgets360, light)</strong></summary>
+
+![L5 light](screenshots/gadgets360/modules/05-dev-automation.png)
+
+</details>
+
+<details><summary><strong>Level 6 — Edge Computing (Gadgets360, light)</strong></summary>
+
+![L6 light](screenshots/gadgets360/modules/06-edge-computing.png)
+
+</details>
+
+<details><summary><strong>Level 7 — Multimodal (Gadgets360, light)</strong></summary>
+
+![L7 light](screenshots/gadgets360/modules/07-multimodal.png)
+
+</details>
+
+<details><summary><strong>Level 8 — SERP Volatility (Gadgets360, light)</strong></summary>
+
+![L8 light](screenshots/gadgets360/modules/08-serp-volatility.png)
+
+</details>
+
+<details><summary><strong>Level 9 — A/B Testing (Gadgets360, light)</strong></summary>
+
+![L9 light](screenshots/gadgets360/modules/09-ab-testing.png)
+
+</details>
+
+<details><summary><strong>Level 10 — Bot Behavior (Gadgets360, light)</strong></summary>
+
+![L10 light](screenshots/gadgets360/modules/10-bot-behavior.png)
+
+</details>
+
+<details><summary><strong>Level 11 — Synthetic Content (Gadgets360, light)</strong></summary>
+
+![L11 light](screenshots/gadgets360/modules/11-synthetic-content.png)
+
+</details>
+
+<details><summary><strong>Level 12 — Quality Classifier (Gadgets360, light)</strong></summary>
+
+![L12 light](screenshots/gadgets360/modules/12-quality-classifier.png)
+
+</details>
+
+<details><summary><strong>Level 13 — Edge Patching (Gadgets360, light)</strong></summary>
+
+![L13 light](screenshots/gadgets360/modules/13-edge-patching.png)
+
+</details>
+
+<details><summary><strong>Level 14 — Financial ROI (Gadgets360, light)</strong></summary>
+
+![L14 light](screenshots/gadgets360/modules/14-financial.png)
+
+</details>
+
+<details><summary><strong>Level 15 — Passage Vector (Gadgets360, light)</strong></summary>
+
+![L15 light](screenshots/gadgets360/modules/15-passage-vector.png)
+
+</details>
+
+<details><summary><strong>Level 16 — Entity Consensus (Gadgets360, light)</strong></summary>
+
+![L16 light](screenshots/gadgets360/modules/16-entity-consensus.png)
+
+</details>
+
+<details><summary><strong>Level 17 — Autofix Red-Team (Gadgets360, light)</strong></summary>
+
+![L17 light](screenshots/gadgets360/modules/17-autofix-redteam.png)
+
+</details>
+
+<details><summary><strong>Level 18 — Zero-Click (Gadgets360, light)</strong></summary>
+
+![L18 light](screenshots/gadgets360/modules/18-zero-click.png)
+
+</details>
+
+<details><summary><strong>Level 19 — Edge Orchestration (Gadgets360, light)</strong></summary>
+
+![L19 light](screenshots/gadgets360/modules/19-edge-orchestration.png)
+
+</details>
+
+<details><summary><strong>Level 20 — Adversarial (Gadgets360, light)</strong></summary>
+
+![L20 light](screenshots/gadgets360/modules/20-adversarial.png)
+
+</details>
+
+<details><summary><strong>Level 21 — Portfolio Rollup (Gadgets360, light)</strong></summary>
+
+![L21 light](screenshots/gadgets360/modules/21-financial-impact.png)
+
+</details>
+
+<details><summary><strong>Level 22 — AI-Search Readiness (Gadgets360, light)</strong></summary>
+
+![L22 light](screenshots/gadgets360/modules/22-ai-readiness.png)
+
+</details>
 
 ## Architecture
 
@@ -522,7 +678,7 @@ Watch all 22 modules execute with a live progress bar and per-level status text 
 - **5-Phase Executive Deep-Dive** — every module fully rendered and open, grouped by business phase.
 - **All Findings & Executive Issue Log** with live keyword search.
 - **Detailed Module Analysis** — all 22 modules with nested sections.
-- Export as **JSON**, **CSV**, or **Print/PDF**.
+- Export as **JSON**, **CSV**, or one-click **Download PDF** (server-rendered binary, no print dialog).
 
 ---
 
