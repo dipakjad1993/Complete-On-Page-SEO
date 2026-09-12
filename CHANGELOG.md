@@ -2,6 +2,14 @@
 
 All notable changes follow Keep a Changelog + SemVer.
 
+## [Unreleased]
+
+### Fixed
+
+- Inline `onclick` handlers blocked by `script-src-attr 'none'` (Helmet default) — added `script-src-attr 'unsafe-inline'` so all UI buttons work under the hardened CSP.
+- `POST /api/audit` 400 `config.competitors Expected string, received array` — schema now accepts string or string-array (what the UI sends).
+- Report export is now a one-click server-rendered PDF download (`downloadPDF()` → `POST /api/export-pdf` → binary save), replacing the `window.print()` print-dialog flow.
+
 ## [1.3.0] - 2026-09-12
 
 ### Added
