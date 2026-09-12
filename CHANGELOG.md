@@ -4,6 +4,10 @@ All notable changes follow Keep a Changelog + SemVer.
 
 ## [Unreleased]
 
+### Changed
+
+- Standardized on **Node 22+** (`>=22.12.0`): `Dockerfile` (`node:22-slim`), `.nvmrc` (22), `render.yaml` (`NODE_VERSION: 22`), CI matrix (22/24). Puppeteer 25 + vitest 5 declare Node `>=22.12.0` engines; Node 20 builds emitted `EBADENGINE` warnings on Render.
+
 ### Fixed
 
 - Inline `onclick` handlers blocked by `script-src-attr 'none'` (Helmet default) — added `script-src-attr 'unsafe-inline'` so all UI buttons work under the hardened CSP.
