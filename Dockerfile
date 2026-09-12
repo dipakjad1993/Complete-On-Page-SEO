@@ -1,4 +1,4 @@
-FROM node:20-slim
+FROM node:22-slim
 
 # System Chromium so Puppeteer doesn't download ~300MB at runtime.
 RUN apt-get update && apt-get install -y --no-install-recommends chromium ca-certificates fonts-liberation \
