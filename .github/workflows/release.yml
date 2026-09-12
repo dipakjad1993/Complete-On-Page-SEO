@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release (e.g. v1.3.0). Must already exist; workflow rebuilds artifacts from it.'
+        required: true
+        default: 'v1.3.0'
 
 permissions:
   contents: write
@@ -14,6 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref_name }}
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -26,13 +34,16 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Build + push Docker to GHCR
+        env:
+          RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
         run: |
           echo "${{ github.token }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
-          TAG="${GITHUB_REF_NAME#v}"
+          TAG="${RELEASE_TAG#v}"
           docker build -t "ghcr.io/${{ github.repository }}:${TAG}" -t "ghcr.io/${{ github.repository }}:latest" .
           docker push "ghcr.io/${{ github.repository }}:${TAG}"
           docker push "ghcr.io/${{ github.repository }}:latest"
       - name: GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
           generate_release_notes: true

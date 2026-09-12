@@ -3,7 +3,7 @@
 [![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://complete-on-page-seo.onrender.com/)
 [![CI](https://github.com/dipakjad1993/Complete-On-Page-SEO/actions/workflows/ci.yml/badge.svg)](https://github.com/dipakjad1993/Complete-On-Page-SEO/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
-[![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](./.nvmrc)
+[![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](./.nvmrc)
 ![Version](https://img.shields.io/badge/version-1.3.0-blue)
 ![Puppeteer](https://img.shields.io/badge/puppeteer-25.x-yellow)
 ![Tests](https://img.shields.io/badge/tests-56%20passing-brightgreen)
@@ -197,7 +197,7 @@ Each auto-filled field shows a green **AUTO** badge so you can review and adjust
 - Structured winston logging (JSON in prod), `x-request-id` tracing, graceful SIGTERM/SIGINT drain, SSE heartbeat.
 - File-backed audit history (last 200 summaries, `GET /api/history` + `GET /api/diff`).
 - Structured `GET /api/health` (version/levels/uptime/memory/cache/history), `GET /api`, `GET /openapi.yaml` (11 paths).
-- CI: Node 18/20/22, typecheck, `npm audit`, vitest (**56 tests**), ESLint (strict for new code), prettier check.
+- CI: Node 20/22, typecheck, `npm audit`, vitest (**56 tests**), ESLint (strict for new code), prettier check.
 - **Render.com** deployment ready (`render.yaml` + `healthCheckPath: /api/health` + UptimeRobot keep-alive) + `fly.toml` + `Dockerfile` + GHCR release workflow alternatives.
 
 ### 🤖 Machine Interfaces: CLI + MCP
@@ -430,7 +430,7 @@ Full module map + invariants: [`ARCHITECTURE.md`](./ARCHITECTURE.md).
 
 ### Prerequisites
 
-- Node.js **18.x** or higher (20.x recommended, 22.x tested in CI)
+- Node.js **20.x** or higher (22.x tested in CI; puppeteer 25 requires Node 20+)
 - npm **9.x** or higher
 - Git
 - Chrome/Chromium (Puppeteer downloads its own by default)
@@ -766,7 +766,7 @@ Point your MCP client at `node mcp-server.js` (env `SEO_API` selects the API bas
 | AI-search       | RAG chunk sim, passage vectors, LLM-citation heuristics (honestly labeled) + **L22 llms.txt/robots-ai** | AI visibility dashboards / Claude skill   |
 | Revenue         | Revenue-at-risk from YOUR GA4 inputs (`0` + note without them)                                          | Mostly absent                             |
 | Machine use     | JSON/CSV/PDF + CLI `--fail-on` + MCP 5-tool server                                                      | XLSX/Sheets/API                           |
-| CI/tests/Docker | CI green (Node 18/20/22), 56 vitest tests, Dockerfile/GHCR, OpenAPI                                     | CI + releases + installers                |
+| CI/tests/Docker | CI green (Node 20/22), 56 vitest tests, Dockerfile/GHCR, OpenAPI                                        | CI + releases + installers                |
 | Data honesty    | `null`/`N/A` + `dataSource` notes instead of invented numbers                                           | Varies                                    |
 
 Use this tool when you want one URL's deepest honest audit (technical + AI-search + dollars + machine-readable outputs); use a site crawler when you need 1M-URL breadth.
@@ -788,7 +788,7 @@ Complete-On-Page-SEO/
 ├── fly.toml                        # Fly.io alternative (no sleep)
 ├── render.yaml                     # Render.com deployment (health check + keep-alive)
 ├── .env.example / .nvmrc           # Env template / Node 20 pin
-├── .github/workflows/ci.yml        # CI: Node 18/20/22, typecheck, audit, tests, lint, prettier
+├── .github/workflows/ci.yml        # CI: Node 20/22, typecheck, audit, tests, lint, prettier
 ├── .github/workflows/release.yml   # Release: npm + GHCR on v* tags
 ├── .github/dependabot.yml          # Weekly npm + monthly actions
 ├── tests/                          # vitest: helpers (15) + levels (11) + unit (9) + api (9) + api-extended (12) = 56
@@ -962,7 +962,7 @@ Shipped (1.0 → 1.3.0) and scoped next steps with honest non-goals: [`ROADMAP.m
 **Dipak Jadhav** — Full-Stack Node.js Engineer building AI-ready SEO tooling (Puppeteer, Cheerio, RAG, Edge Workers, MCP).
 
 - GitHub: [dipakjad1993](https://github.com/dipakjad1993) · Live demo: [complete-on-page-seo.onrender.com](https://complete-on-page-seo.onrender.com/)
-- 22-level audit engine · ~10.2k LOC · 70 helpers · 56 tests (CI Node 18/20/22) · Docker/GHCR/Render/Fly · OpenAPI · SSE · CLI + MCP · SSRF/zod/Helmet hardened
+- 22-level audit engine · ~10.2k LOC · 70 helpers · 56 tests (CI Node 20/22) · Docker/GHCR/Render/Fly · OpenAPI · SSE · CLI + MCP · SSRF/zod/Helmet hardened
 - **Open to:** Full-stack / Backend (Node.js) / Technical SEO / AI-search engineering roles.
 
 Suggested repo topics: `javascript, nodejs, expressjs, puppeteer, cheerio, seo, technical-seo, on-page-seo, ai-seo, rag, llm, aeo, geo, llms-txt, mcp, core-web-vitals, crux, edge-computing, seo-tools, site-audit`.

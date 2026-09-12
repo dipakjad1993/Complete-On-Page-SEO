@@ -5,7 +5,7 @@ Thanks for stopping by. This is a solo-maintained audit engine; small, reviewed 
 ## Quick start
 
 ```bash
-nvm use        # Node 20 (CI also runs 18 + 22)
+nvm use        # Node 20 (CI also runs 22)
 npm ci
 npm test       # vitest: 56 tests (helpers + levels + SSRF/LRU + API)
 npm run lint   # eslint (strict)

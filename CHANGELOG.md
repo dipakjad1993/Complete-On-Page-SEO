@@ -13,7 +13,7 @@ All notable changes follow Keep a Changelog + SemVer.
 - `mcp-server.js` — zero-dep MCP stdio server (5 tools: `audit_url`, `get_level_info`, `check_ai_readiness`, `get_crux`, `crawl_site`); `npm run mcp`.
 - `src/` modular seam: `logger.js` (winston), `cache.js` (LRU 500/1h + hitRate), `history.js`, `middleware/ssrf.js` (single source of truth), `middleware/errors.js` (requestId/404/handler), `lib/netfetch.js`, `lib/sitemap.js` (robots AI-bot + sitemap XML), `lib/crux.js` (API-key + honest fallback), `levels/index.js` (22-name registry).
 - Packaging: `ARCHITECTURE.md`, `ROADMAP.md`, `docs/{levels,api,deploy,faq,BUDGET}.md`, `CODEOWNERS`, `.github/dependabot.yml`, `.github/workflows/release.yml` (npm + GHCR on `v*`), `README` cut 918 → ~100-line executive.
-- Tests: 24 → **56** (`tests/levels.test.js` 11 pure-level inc. L22, `tests/unit.test.js` 9 SSRF/LRU/sitemap/diff, `tests/api-extended.test.js` 12 SSE/cache/history/diff/crawl/PDF/CrUX/404). CI matrix now Node 18/20/22 + `npm run lint` gate.
+- Tests: 24 → **56** (`tests/levels.test.js` 11 pure-level inc. L22, `tests/unit.test.js` 9 SSRF/LRU/sitemap/diff, `tests/api-extended.test.js` 12 SSE/cache/history/diff/crawl/PDF/CrUX/404). CI matrix now Node 20/22 (puppeteer 25 requires Node 20+ for CJS `require`) + `npm run lint` gate.
 
 ### Changed
 
