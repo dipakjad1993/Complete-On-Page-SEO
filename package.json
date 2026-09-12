@@ -83,7 +83,7 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.14",
-    "vitest": "^2.1.8",
+    "vitest": "^5.0.0",
     "supertest": "^7.0.0",
     "eslint": "^9.18.0",
     "prettier": "^3.4.2"
