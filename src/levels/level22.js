@@ -29,7 +29,17 @@ const AI_BOTS = [
 // Google May 2026 AI Optimization Guide: retrieval/search bots drive citations;
 // training opt-outs do NOT remove pages from AI Overviews / AI Mode.
 const RETRIEVAL_BOTS = ['OAI-SearchBot', 'PerplexityBot', 'Perplexity-User', 'Claude-SearchBot', 'ChatGPT-User', 'Claude-User', 'YouBot'];
-const TRAINING_BOTS = ['GPTBot', 'ClaudeBot', 'CCBot', 'Bytespider', 'Google-Extended', 'Applebot-Extended', 'Applebot', 'Amazonbot', 'Cohere-ai'];
+const TRAINING_BOTS = [
+  'GPTBot',
+  'ClaudeBot',
+  'CCBot',
+  'Bytespider',
+  'Google-Extended',
+  'Applebot-Extended',
+  'Applebot',
+  'Amazonbot',
+  'Cohere-ai'
+];
 
 function level22($, finalUrl, _cfg = {}, net = {}) {
   let p = 0;
@@ -79,7 +89,8 @@ function level22($, finalUrl, _cfg = {}, net = {}) {
     issues.push({
       severity: 'info',
       impact: 'low',
-      message: 'No llms.txt — informational only: Google does not use it for AI citations (May 2026 guide). Useful for dev-docs assistants (Cursor/Copilot), not for ranking.',
+      message:
+        'No llms.txt — informational only: Google does not use it for AI citations (May 2026 guide). Useful for dev-docs assistants (Cursor/Copilot), not for ranking.',
       element: '/llms.txt',
       fix: 'Optional: add /llms.txt (markdown: brand summary + top 20 URLs + docs + contact) for coding assistants. Do not expect citation lift. See https://llmstxt.org/.',
       evidence: 'status=' + ((llmsTxt && llmsTxt.status) || '404')
@@ -117,7 +128,10 @@ function level22($, finalUrl, _cfg = {}, net = {}) {
     issues.push({
       severity: 'info',
       impact: 'low',
-      message: 'robots.txt blocks training opt-outs: ' + blockedTraining.join(', ') + ' — this only opts out of training data, NOT AI Overviews/citations (which use retrieval bots).',
+      message:
+        'robots.txt blocks training opt-outs: ' +
+        blockedTraining.join(', ') +
+        ' — this only opts out of training data, NOT AI Overviews/citations (which use retrieval bots).',
       element: 'robots.txt',
       fix: 'No citation impact. Keep if you want training opt-out; to remove from AI Overviews use Search Console toggle, not robots.txt.',
       evidence: blockedTraining.join(',')
@@ -240,7 +254,8 @@ function level22($, finalUrl, _cfg = {}, net = {}) {
       },
       aiCrawlersChecked: AI_BOTS,
       sitemapHint: { urlsSeen: (sitemapUrls || []).length, dataSource: 'robots Sitemap: + /sitemap.xml probe' },
-      honesty: 'Heuristic surface audit only — no real LLM was queried; citation likelihood is structural, not conversational. llms.txt + training-bot blocks do not drive Google citations.'
+      honesty:
+        'Heuristic surface audit only — no real LLM was queried; citation likelihood is structural, not conversational. llms.txt + training-bot blocks do not drive Google citations.'
     }
   };
 }
