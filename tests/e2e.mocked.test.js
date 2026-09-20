@@ -24,8 +24,7 @@ vi.mock('puppeteer', () => ({
       setViewport: async () => {},
       goto: async () => ({ request: () => ({ redirectChain: () => [] }) }),
       evaluate: async () => ({ ttfb: 100, domContentLoaded: 300, loadComplete: 600 }),
-      content: async () =>
-        '<html><head><title>Mocked page</title></head><body><h1>Mocked</h1></body></html>',
+      content: async () => '<html><head><title>Mocked page</title></head><body><h1>Mocked</h1></body></html>',
       url: () => 'https://example.com/',
       close: async () => {}
     }),
