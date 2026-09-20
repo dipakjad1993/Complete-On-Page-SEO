@@ -1,6 +1,6 @@
 {
   "name": "complete-on-page-seo-2026",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Production-grade 22-level on-page + AI-search (RAG/LLM) SEO auditor with 14 dev-ready deliverables - real measured data, no mocks. Node.js + Puppeteer + Express.",
   "main": "server.js",
   "bin": {

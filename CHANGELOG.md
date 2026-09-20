@@ -2,6 +2,19 @@
 
 All notable changes follow Keep a Changelog + SemVer.
 
+## [1.4.0] - 2026-09-20
+
+### Added
+
+- Weighted scoring (`weightedScore` alongside `overallScore`): L1/L2/L3/L8/L12 1.5x, dev-cluster L5/L13/L17/L19 0.7x, plus `zeroClickBrandValue` 35% AI-citation lift ($0-gated without GA4 inputs). History + diff carry `weightedDelta`.
+- Mocked-Puppeteer e2e (`tests/e2e.mocked.test.js`), coverage-v8 + floor thresholds, CI `test:coverage` gate.
+- L22 honesty per Google May 2026 guide: retrieval vs training bot split, llms.txt demoted to informational.
+
+### Changed
+
+- Deps: puppeteer 25.11, uuid 14.0.2, compromise 14.17, vitest 5.0.1, zod 4.6.5 (v3/v4 compat shim in `parseBody`).
+- Docs: Docker/Fly primary demo, Render secondary (sleep note).
+
 ## [Unreleased]
 
 ### Changed
