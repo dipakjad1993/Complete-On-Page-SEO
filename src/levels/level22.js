@@ -10,17 +10,26 @@ const { sc } = require('../../helpers');
 const AI_BOTS = [
   'GPTBot',
   'ChatGPT-User',
+  'OAI-SearchBot',
   'PerplexityBot',
   'Perplexity-User',
   'ClaudeBot',
+  'Claude-SearchBot',
   'Claude-User',
   'CCBot',
   'Bytespider',
   'Google-Extended',
   'Applebot',
+  'Applebot-Extended',
   'Amazonbot',
-  'Cohere-ai'
+  'Cohere-ai',
+  'YouBot'
 ];
+
+// Google May 2026 AI Optimization Guide: retrieval/search bots drive citations;
+// training opt-outs do NOT remove pages from AI Overviews / AI Mode.
+const RETRIEVAL_BOTS = ['OAI-SearchBot', 'PerplexityBot', 'Perplexity-User', 'Claude-SearchBot', 'ChatGPT-User', 'Claude-User', 'YouBot'];
+const TRAINING_BOTS = ['GPTBot', 'ClaudeBot', 'CCBot', 'Bytespider', 'Google-Extended', 'Applebot-Extended', 'Applebot', 'Amazonbot', 'Cohere-ai'];
 
 function level22($, finalUrl, _cfg = {}, net = {}) {
   let p = 0;
@@ -63,13 +72,16 @@ function level22($, finalUrl, _cfg = {}, net = {}) {
       evidence: 'status=200 bytes=' + (llmsTxt.text || '').length
     });
   } else {
-    p += 22;
+    // Google Search Central (June 15 2026): Google does not use llms.txt for
+    // AI Overviews / AI Mode. ~97% of llms.txt get zero hits (Ahrefs May 2026).
+    // Keep as informational dev-docs signal (Cursor/Copilot), not a ranking factor.
+    p += 4;
     issues.push({
-      severity: 'warning',
-      impact: 'medium',
-      message: 'No llms.txt — AI assistants must scrape HTML instead of a clean context file.',
+      severity: 'info',
+      impact: 'low',
+      message: 'No llms.txt — informational only: Google does not use it for AI citations (May 2026 guide). Useful for dev-docs assistants (Cursor/Copilot), not for ranking.',
       element: '/llms.txt',
-      fix: 'Add /llms.txt (markdown: brand summary + top 20 URLs + docs + contact). See https://llmstxt.org/.',
+      fix: 'Optional: add /llms.txt (markdown: brand summary + top 20 URLs + docs + contact) for coding assistants. Do not expect citation lift. See https://llmstxt.org/.',
       evidence: 'status=' + ((llmsTxt && llmsTxt.status) || '404')
     });
   }
@@ -88,24 +100,37 @@ function level22($, finalUrl, _cfg = {}, net = {}) {
       blockedBots.push(b);
     }
   }
-  if (blockedBots.length) {
-    p += 15;
+  const blockedRetrieval = blockedBots.filter((b) => RETRIEVAL_BOTS.includes(b));
+  const blockedTraining = blockedBots.filter((b) => TRAINING_BOTS.includes(b) && !RETRIEVAL_BOTS.includes(b));
+  if (blockedRetrieval.length) {
+    p += 18;
     issues.push({
-      severity: 'warning',
+      severity: 'critical',
       impact: 'high',
-      message: 'robots.txt blocks AI crawlers: ' + blockedBots.join(', ') + ' — page is invisible to those AI answers.',
+      message: 'robots.txt blocks AI retrieval bots: ' + blockedRetrieval.join(', ') + ' — page cannot be cited by those AI answers.',
       element: 'robots.txt',
-      fix: 'If AI visibility matters, Allow AI bots explicitly. If intentional (paywall), keep + note it.',
-      evidence: blockedBots.join(',')
+      fix: 'If AI citations matter, Allow retrieval bots (OAI-SearchBot, PerplexityBot, Claude-SearchBot) explicitly. If intentional (paywall), keep + note it.',
+      evidence: blockedRetrieval.join(',')
     });
-  } else if (!mentionedBots.length && robotsTxt) {
+  }
+  if (blockedTraining.length) {
+    issues.push({
+      severity: 'info',
+      impact: 'low',
+      message: 'robots.txt blocks training opt-outs: ' + blockedTraining.join(', ') + ' — this only opts out of training data, NOT AI Overviews/citations (which use retrieval bots).',
+      element: 'robots.txt',
+      fix: 'No citation impact. Keep if you want training opt-out; to remove from AI Overviews use Search Console toggle, not robots.txt.',
+      evidence: blockedTraining.join(',')
+    });
+  }
+  if (!blockedBots.length && !mentionedBots.length && robotsTxt) {
     issues.push({
       severity: 'info',
       impact: 'low',
       message:
-        'robots.txt has no AI-bot rules — crawlers fall back to User-agent: *. Add explicit GPTBot/PerplexityBot/ClaudeBot lines to be deliberate.',
+        'robots.txt has no AI-bot rules — crawlers fall back to User-agent: *. Add explicit OAI-SearchBot/PerplexityBot/Claude-SearchBot lines to be deliberate.',
       element: 'robots.txt',
-      fix: 'Add explicit AI-bot Allow/Disallow so future policy changes are intentional.',
+      fix: 'Add explicit AI retrieval-bot Allow lines so future policy changes are intentional. Training opt-outs (GPTBot/CCBot/Google-Extended) do not affect citations.',
       evidence: 'no-ai-bot-user-agent'
     });
   }
@@ -189,8 +214,23 @@ function level22($, finalUrl, _cfg = {}, net = {}) {
     score,
     issues,
     data: {
-      llmsTxt: { status: llmsStatus, bytes: llmsBytes, hints: llmsHints, dataSource: 'live GET /llms.txt (SSRF-guarded, 8s timeout)' },
-      robotsAi: { mentionedBots, blockedBots, wildcardBlocksAll: wildcardBlock, dataSource: 'live GET /robots.txt' },
+      llmsTxt: {
+        status: llmsStatus,
+        bytes: llmsBytes,
+        hints: llmsHints,
+        dataSource: 'live GET /llms.txt (SSRF-guarded, 8s timeout)',
+        note: 'Informational only per Google May 2026 guide: Google does not use llms.txt for AI Overviews/Mode. Value is for dev-docs assistants (Cursor/Copilot).'
+      },
+      robotsAi: {
+        mentionedBots,
+        blockedBots,
+        blockedRetrieval,
+        blockedTraining,
+        retrievalBots: RETRIEVAL_BOTS,
+        trainingBots: TRAINING_BOTS,
+        wildcardBlocksAll: wildcardBlock,
+        dataSource: 'live GET /robots.txt'
+      },
       citationSurface: {
         titleLen: title.length,
         hasDescription: !!desc,
@@ -200,9 +240,9 @@ function level22($, finalUrl, _cfg = {}, net = {}) {
       },
       aiCrawlersChecked: AI_BOTS,
       sitemapHint: { urlsSeen: (sitemapUrls || []).length, dataSource: 'robots Sitemap: + /sitemap.xml probe' },
-      honesty: 'Heuristic surface audit only — no real LLM was queried; citation likelihood is structural, not conversational.'
+      honesty: 'Heuristic surface audit only — no real LLM was queried; citation likelihood is structural, not conversational. llms.txt + training-bot blocks do not drive Google citations.'
     }
   };
 }
 
-module.exports = { level22, AI_BOTS };
+module.exports = { level22, AI_BOTS, RETRIEVAL_BOTS, TRAINING_BOTS };

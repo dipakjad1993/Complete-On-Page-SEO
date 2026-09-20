@@ -91,7 +91,7 @@ describe('L22 AI-search readiness', () => {
     expect(r.data.llmsTxt.status).toBe('found');
     expect(r.score).toBeGreaterThan(50);
   });
-  it('flags missing llms.txt + blocked AI bots', () => {
+  it('flags missing llms.txt as info per Google May 2026 guide + blocked training bot as info', () => {
     const r = level22(
       $(),
       'https://example.com/',
@@ -103,8 +103,27 @@ describe('L22 AI-search readiness', () => {
         sitemapUrls: []
       }
     );
-    expect(r.issues.some((i) => /llms\.txt/i.test(i.message))).toBe(true);
+    const llmsIssue = r.issues.find((i) => /llms\.txt/i.test(i.message));
+    expect(llmsIssue).toBeTruthy();
+    expect(llmsIssue.severity).toBe('info');
     expect(r.data.robotsAi.blockedBots).toContain('GPTBot');
+    expect(r.data.robotsAi.blockedTraining).toContain('GPTBot');
+    expect(r.data.robotsAi.blockedRetrieval.length).toBe(0);
+  });
+  it('flags blocked retrieval bots as critical (citation impact)', () => {
+    const r = level22(
+      $(),
+      'https://example.com/',
+      {},
+      {
+        responseHeaders: {},
+        robotsTxt: 'User-agent: PerplexityBot\nDisallow: /\n',
+        llmsTxt: { status: 404, text: '' },
+        sitemapUrls: []
+      }
+    );
+    expect(r.data.robotsAi.blockedRetrieval).toContain('PerplexityBot');
+    expect(r.issues.some((i) => i.severity === 'critical' && /retrieval/i.test(i.message))).toBe(true);
   });
   it('flags missing title as critical (citation surface)', () => {
     const bad = load('<html><head></head><body><p>' + 'word '.repeat(150) + '</p></body></html>');
