@@ -95,13 +95,15 @@ const urlOnlySchema = z.object({ url: z.string().min(4).max(2000) });
 function parseBody(schema, body) {
   const r = schema.safeParse(body || {});
   if (!r.success) {
-    const e = new Error(
-      'Invalid request: ' +
-        r.error.issues
+    // zod v3 (issues) + v4 (issues getter / problems) compat
+    const issues = (r.error && (r.error.issues || r.error.problems)) || [];
+    const detail = issues.length
+      ? issues
           .slice(0, 3)
-          .map((i) => i.path.join('.') + ' ' + i.message)
+          .map((i) => (Array.isArray(i.path) ? i.path.join('.') : '') + ' ' + (i.message || 'invalid'))
           .join('; ')
-    );
+      : String((r.error && r.error.message) || 'invalid input');
+    const e = new Error('Invalid request: ' + detail);
     e.status = 400;
     throw e;
   }
@@ -150,7 +152,10 @@ const {
   level18,
   level19,
   level20,
-  level21
+  level21,
+  LEVEL_WEIGHTS,
+  computeWeightedScore,
+  zeroClickBrandValue
 } = require('./src/levels');
 const { level22 } = require('./src/levels/level22');
 
@@ -911,19 +916,24 @@ async function auditUrl(url, onProgress, config) {
   });
 
   const overallScore = levelResults.length > 0 ? Math.round(totalScore / levelResults.length) : 0;
+  const weightedScore = computeWeightedScore(levelResults);
+  const brandValue = zeroClickBrandValue(cfg);
   const duration = ((Date.now() - startTime) / 1000).toFixed(1);
 
-  sendProgress(22, 'complete', 'Audit complete! Score: ' + overallScore + '/100 in ' + duration + 's');
+  sendProgress(22, 'complete', 'Audit complete! Score: ' + overallScore + '/100 (weighted ' + weightedScore + ') in ' + duration + 's');
 
   return {
     url: finalUrl,
     overallScore,
+    weightedScore,
     levels: levelResults,
     summary: {
       criticalIssues: critical,
       warnings: warnings,
       info: info,
-      topFixes: Math.min(critical + warnings, 10)
+      topFixes: Math.min(critical + warnings, 10),
+      weightedScore,
+      zeroClickBrandValue: brandValue
     },
     duration,
     meta: {

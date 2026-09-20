@@ -90,7 +90,7 @@ paths:
                   config: { monthlyTraffic: 50000, avgOrderValue: 75, conversionRate: 2.5, currency: USD }
       responses:
         '200':
-          description: audit result (22 levels + summary + meta + history-recorded)
+          description: audit result (22 levels + overallScore + weightedScore + summary + meta + history-recorded)
         '400':
           description: invalid URL or blocked private host (SSRF guard)
         '429':

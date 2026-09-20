@@ -43,7 +43,7 @@ function saveAll(arr) {
 
 /**
  * Record a completed audit (summary only — full levels stay in cache, not on disk).
- * @param {{url:string, overallScore:number, duration:string|number, summary:any, levels?:Array, meta?:any}} result
+ * @param {{url:string, overallScore:number, weightedScore?:number, duration:string|number, summary:any, levels?:Array, meta?:any}} result
  */
 function record(result) {
   try {
@@ -52,6 +52,7 @@ function record(result) {
       id: (result.meta && result.meta.auditId) || String(Date.now()),
       url: result.url,
       overallScore: result.overallScore,
+      weightedScore: result.weightedScore != null ? result.weightedScore : result.overallScore,
       duration: result.duration,
       summary: result.summary || null,
       levelScores: Array.isArray(result.levels) ? result.levels.map((l) => ({ level: l.level, score: l.score })) : [],
@@ -74,8 +75,8 @@ function byUrl(url, limit = 20) {
 
 /**
  * Diff two audits for the same URL: score deltas per level + verdict.
- * @param {{levelScores:Array, overallScore:number}} a older
- * @param {{levelScores:Array, overallScore:number}} b newer
+ * @param {{levelScores:Array, overallScore:number, weightedScore?:number}} a older
+ * @param {{levelScores:Array, overallScore:number, weightedScore?:number}} b newer
  */
 function diff(a, b) {
   const mapA = new Map((a.levelScores || []).map((l) => [l.level, l.score]));
@@ -90,10 +91,14 @@ function diff(a, b) {
     levels.push({ level: lvl, from, to, delta: from == null || to == null ? null : to - from });
   }
   const overallDelta = b.overallScore - a.overallScore;
+  const wa = a.weightedScore != null ? a.weightedScore : a.overallScore;
+  const wb = b.weightedScore != null ? b.weightedScore : b.overallScore;
+  const weightedDelta = wb - wa;
   return {
-    from: { url: a.url, timestamp: a.timestamp, overallScore: a.overallScore },
-    to: { url: b.url, timestamp: b.timestamp, overallScore: b.overallScore },
+    from: { url: a.url, timestamp: a.timestamp, overallScore: a.overallScore, weightedScore: wa },
+    to: { url: b.url, timestamp: b.timestamp, overallScore: b.overallScore, weightedScore: wb },
     overallDelta,
+    weightedDelta,
     verdict: overallDelta >= 5 ? 'improved' : overallDelta <= -5 ? 'regressed' : 'stable',
     levels
   };
