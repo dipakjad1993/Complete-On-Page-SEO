@@ -67,7 +67,7 @@
     "axios": "^1.18.1",
     "cheerio": "^1.2.0",
     "compression": "^1.8.1",
-    "compromise": "^14.16.0",
+    "compromise": "^14.17.0",
     "cors": "^2.8.6",
     "css-select": "^7.0.0",
     "express": "^5.2.1",
