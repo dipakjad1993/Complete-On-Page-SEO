@@ -79,7 +79,11 @@ function zeroClickBrandValue({ monthlyTraffic = 0, avgOrderValue = 0, conversion
   const aov = Number(avgOrderValue) || 0;
   const cvr = (Number(conversionRate) || 0) / 100;
   if (!t || !aov || !cvr) {
-    return { monthlyBrandValue: 0, hasRealInputs: false, note: '$0 without GA4 inputs (monthlyTraffic+avgOrderValue+conversionRate required)' };
+    return {
+      monthlyBrandValue: 0,
+      hasRealInputs: false,
+      note: '$0 without GA4 inputs (monthlyTraffic+avgOrderValue+conversionRate required)'
+    };
   }
   const baseRevenue = t * aov * cvr;
   return {
