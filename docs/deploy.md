@@ -1,12 +1,9 @@
 # Deploy
 
-## Render.com (public demo — sleeps on free tier)
+> **Recruiter demo reliability:** use Docker or Fly.io as primary demo (no sleep).
+> Render free-tier sleeps → first click 503/wake ~50s. Keep Render as secondary link only.
 
-Blueprint `render.yaml`: `npm run render-build` → `npm start`, `healthCheckPath: /api/health`.
-Stop the sleep→503: free [UptimeRobot](https://uptimerobot.com/) HTTP(s) monitor, 5-min interval, on
-`https://<app>.onrender.com/api/health` (env `KEEP_ALIVE_URL` documents it). First cold load ≈ 50 s.
-
-## Docker (self-host, no sleep — recommended)
+## Docker (self-host, no sleep — recommended primary)
 
 ```bash
 docker build -t complete-on-page-seo .
@@ -17,11 +14,17 @@ docker run -p 3000:3000 complete-on-page-seo
 
 System Chromium is baked in (`CHROME_PATH=/usr/bin/chromium`, `PUPPETEER_SKIP_DOWNLOAD=true`).
 
-## Fly.io (persistent, no sleep)
+## Fly.io (persistent, no sleep — recommended primary)
 
 ```bash
 fly launch && fly deploy   # fly.toml: iad, 1×1024MB, /api/health checks
 ```
+
+## Render.com (public demo — sleeps on free tier, secondary)
+
+Blueprint `render.yaml`: `npm run render-build` → `npm start`, `healthCheckPath: /api/health`.
+Stop the sleep→503: free [UptimeRobot](https://uptimerobot.com/) HTTP(s) monitor, 5-min interval, on
+`https://<app>.onrender.com/api/health` (env `KEEP_ALIVE_URL` documents it). First cold load ≈ 50 s.
 
 ## VPS / bare metal
 

@@ -22,7 +22,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "audit": "npm audit --omit=dev --audit-level=high",
-    "typecheck": "node --check server.js && node --check helpers.js && node --check levels.js && node --check src/levels/level22.js && node --check mcp-server.js && node --check bin/seo-audit.js"
+    "typecheck": "node --check server.js && node --check helpers.js && node --check levels.js && node --check src/levels/level22.js && node --check src/levels/index.js && node --check src/history.js && node --check src/lib/sitemap.js && node --check mcp-server.js && node --check bin/seo-audit.js"
   },
   "keywords": [
     "seo",

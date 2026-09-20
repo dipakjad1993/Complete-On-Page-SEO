@@ -9,7 +9,13 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'lcov'],
       include: ['server.js', 'helpers.js', 'levels.js', 'src/**/*.js'],
-      exclude: ['node_modules/**', 'tests/**', 'public/**', 'screenshots/**']
+      exclude: ['node_modules/**', 'tests/**', 'public/**', 'screenshots/**'],
+      thresholds: {
+        statements: 60,
+        branches: 50,
+        functions: 55,
+        lines: 60
+      }
     }
   }
 });

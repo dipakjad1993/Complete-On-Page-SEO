@@ -24,5 +24,6 @@ jobs:
       # major (vitest 5) and never ship to Render - tracked, not gated.
       - run: npm audit --omit=dev --audit-level=high
       - run: npm test
+      - run: npm run test:coverage
       - run: npm run lint
       - run: npx prettier --check .
