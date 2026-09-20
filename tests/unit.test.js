@@ -3,6 +3,7 @@ import { isPrivateHostname, normaliseUserUrl } from '../src/middleware/ssrf.js';
 import { parseRobots, parseSitemapXml, isSitemapIndex } from '../src/lib/sitemap.js';
 import { LruCache } from '../src/cache.js';
 import { diff } from '../src/history.js';
+import { computeWeightedScore, zeroClickBrandValue, LEVEL_WEIGHTS } from '../src/levels/index.js';
 
 describe('SSRF guard hardening (1.3.0)', () => {
   it('blocks classic privates', () => {
@@ -74,5 +75,29 @@ describe('history diff', () => {
     expect(d.overallDelta).toBe(10);
     expect(d.verdict).toBe('improved');
     expect(d.levels[0].delta).toBe(20);
+  });
+});
+
+describe('weighted scoring + zero-click brand value', () => {
+  it('weights foundation levels higher than dev-cluster', () => {
+    expect(LEVEL_WEIGHTS[1]).toBeGreaterThan(LEVEL_WEIGHTS[5]);
+    const levels = [
+      { level: 1, score: 100 },
+      { level: 5, score: 0 }
+    ];
+    const w = computeWeightedScore(levels);
+    // L1 1.5x vs L5 0.7x => (150+0)/2.2 = 68
+    expect(w).toBe(68);
+  });
+  it('zeroClickBrandValue is $0-gated without GA4 inputs', () => {
+    const r = zeroClickBrandValue({});
+    expect(r.monthlyBrandValue).toBe(0);
+    expect(r.hasRealInputs).toBe(false);
+  });
+  it('zeroClickBrandValue monetizes with GA4 inputs (35% lift assumption)', () => {
+    const r = zeroClickBrandValue({ monthlyTraffic: 50000, avgOrderValue: 75, conversionRate: 2.5 });
+    // 50000*75*0.025=93750 *0.35=32812.5 => 32813
+    expect(r.monthlyBrandValue).toBe(32813);
+    expect(r.hasRealInputs).toBe(true);
   });
 });
