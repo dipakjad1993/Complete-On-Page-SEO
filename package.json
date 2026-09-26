@@ -76,7 +76,7 @@
     "node-fetch": "^2.7.0",
     "puppeteer": "^25.11.0",
     "schema-dts": "^2.0.0",
-    "terser": "^5.49.0",
+    "terser": "^5.51.2",
     "uuid": "^14.0.2",
     "winston": "^3.19.0",
     "zod": "^4.6.5"
