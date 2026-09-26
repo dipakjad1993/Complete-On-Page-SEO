@@ -83,7 +83,7 @@
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^5.0.1",
-    "eslint": "^10.10.0",
+    "eslint": "^10.11.0",
     "nodemon": "^3.1.14",
     "prettier": "^3.4.2",
     "supertest": "^7.0.0",
